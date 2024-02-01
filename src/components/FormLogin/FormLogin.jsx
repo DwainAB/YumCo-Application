@@ -24,7 +24,7 @@ function LoginForm(){
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Mot de passe"
-                keyboardType="password"
+                secureTextEntry={true}
             />
             <TouchableOpacity style={styles.buttonLogin} onPress={handleSubmit}>
                 <Text style={styles.textButtonLogin}>Se connecter</Text>

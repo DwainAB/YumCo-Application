@@ -1,11 +1,14 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import Header from "../components/Header/Header"
+import Menu from "../components/Menu/Menu";
 
-function HomeScreen(navigation){
+function HomeScreen(){
     return(
-        <View>
-            <Text>Home</Text>
-        </View>
+        <ScrollView>
+            <Header/>
+            <Menu/>
+        </ScrollView>
     )
 }
 
