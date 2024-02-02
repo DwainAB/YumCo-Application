@@ -108,7 +108,8 @@ const styles = StyleSheet.create({
     width: "30%",
     backgroundColor : "#dcdcdc",
     borderRadius:20,
-    marginLeft:20
+    marginLeft:20,
+
  },
  imageCard:{
     width: "100%",
