@@ -2,8 +2,6 @@ import react from "react";
 import {View, Text, StyleSheet} from "react-native"
 import Ionicons from "react-native-vector-icons/Ionicons"
 
-
-
 function About(){
     return(
         <View style={styles.containerAbout}>
@@ -35,7 +33,7 @@ const styles = StyleSheet.create({
         flexDirection:"column", 
         alignItems:"center", 
         justifyContent:"center", 
-        marginTop: 40
+        marginTop: 70
     },
     titleAbout :{
         fontSize:30,
