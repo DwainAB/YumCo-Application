@@ -1,13 +1,49 @@
-import {react, useState} from "react";
+import {react, useState, useEffect} from "react";
 import { View, Text, StyleSheet, TouchableOpacity} from "react-native";
 import ContentBasket from "../components/ContentBasket/ContentBasket";
 import FormOrder from "../components/FormOrder/FormOrder";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EventEmitter } from "../components/EventEmitter/EventEmitter";
 
 
 function BasketScreen(){
-    const [showForm, setShowForm] = useState(false)
+    const [showForm, setShowForm] = useState(true);
+    const [cartItems, setCartItems] = useState([]); // Renommé pour refléter qu'il s'agit d'une liste d'éléments
 
-    function activeForm (){
+    useEffect(() => {
+        const loadBasketItems = async () => {
+            try {
+                const storedItems = await AsyncStorage.getItem('cartItems');
+                if (storedItems !== null) {
+                    const items = JSON.parse(storedItems);
+                    setCartItems(items);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des articles du panier', error);
+            }
+        };
+    
+        loadBasketItems();
+    
+        // Souscrire à l'événement 'cartUpdated'
+        const unsubscribeCartUpdate = EventEmitter.subscribe('cartUpdated', (updatedCart) => {
+            setCartItems([...updatedCart]);
+        });
+    
+        // Souscrire à l'événement 'quantityChanged'
+        const unsubscribeQuantityChange = EventEmitter.subscribe('quantityChanged', (updatedCart) => {
+            setCartItems([...updatedCart])
+        });
+    
+        // Nettoyer l'abonnement lors du démontage du composant
+        return () => {
+            unsubscribeCartUpdate();
+            unsubscribeQuantityChange();
+        };
+    }, []);
+    
+
+    function activeForm() {
         setShowForm(!showForm);
     }
 
@@ -26,8 +62,8 @@ function BasketScreen(){
 
             <View style={styles.containerButtonBasket}>
                 {showForm ? (
-                    <TouchableOpacity style={styles.buttonBasket} onPress={activeForm}>
-                        <Text style={styles.textButtonBasket}>Suivant</Text>
+                    <TouchableOpacity style={cartItems.length > 0 ? styles.buttonBasket : styles.disabledButton} disabled={cartItems.length > 0 ? false : true} onPress={activeForm}>
+                        <Text style={cartItems.length > 0 ? styles.textButtonBasket : styles.disabledText}>Suivant</Text>
                     </TouchableOpacity>
                 ):(
                     <TouchableOpacity style={styles.buttonBasket} onPress={activeForm}>
@@ -74,6 +110,18 @@ const styles = StyleSheet.create({
     textButtonBasket: {
         color: "#fff"
     },
+    disabledButton:{
+        backgroundColor : "#dcdcdc",
+        height: 50,
+        width: "50%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius:20
+    },
+    disabledText:{
+        color:'grey'
+    }
 
     
 })

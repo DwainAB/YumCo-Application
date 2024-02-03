@@ -53,6 +53,7 @@ function ContentBasket(){
         setBasketFull(newBasket);
         calculateTotal(newBasket);
         await AsyncStorage.setItem('cartItems', JSON.stringify(newBasket));
+        EventEmitter.dispatch('quantityChanged', newBasket);
     };
 
     const decreaseQuantity = async (index) => {
@@ -65,9 +66,10 @@ function ContentBasket(){
         setBasketFull(newBasket);
         calculateTotal(newBasket);
         await AsyncStorage.setItem('cartItems', JSON.stringify(newBasket));
+        EventEmitter.dispatch('quantityChanged', newBasket);
     }; 
 
-    console.log(basketFull);
+    console.log('lala',basketFull);
 
     return(
         <View style={styles.containerContentBasket}>
