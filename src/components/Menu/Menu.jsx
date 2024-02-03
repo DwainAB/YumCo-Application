@@ -1,11 +1,50 @@
-import {react, useState} from "react";
+import {react, useState, useEffect} from "react";
 import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView} from "react-native"
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons"
 import imagePlat from "../../assets/nemspoulet.jpg"
+import {apiService} from "../API/ApiService"
 
 function Menu(){
     const [filter, setFilter] = useState('Tous')
+    const [foods, setFoods] = useState([])
+    const [categorys, setCategorys] = useState([])
+    const [selectedCategory, setSelectedCategory] = useState('Tous')
+
+    useEffect(() => {
+        const fetchFoodsAndCategorys = async () => {
+            try {
+                const fetchedFoods = await apiService.getFoods();
+                setFoods(fetchedFoods);
+            } catch (error) {
+                console.log("Erreur lors du chargement des produits", error);
+            }
+    
+            try {
+                const fetchedCategorys = await apiService.getAllCategories();
+                const categoryOptions = [
+                    { label: 'Tous', value: 'Tous' }, // Option par défaut
+                    ...fetchedCategorys.map(category => ({
+                        label: category.name,
+                        value: category.name
+                    }))
+                ];
+                setCategorys(categoryOptions);
+            } catch (error) {
+                console.log("Erreur lors du chargement des catégories", error);
+            }
+        };
+    
+        fetchFoodsAndCategorys();
+    }, []);
+
+    const handleCategoryClick = (category) => {
+        setSelectedCategory(category);
+    };
+
+    const filteredFoods = foods.filter((food) => {
+        return selectedCategory === 'Tous' || food.category === selectedCategory;
+    });
 
     return(
         <View style={styles.containerMenu}>
@@ -13,15 +52,9 @@ function Menu(){
 
             <View style={styles.containerFilter}>
                 <RNPickerSelect
-                    onValueChange={(value) => setFilter(value)}
-                    items={[
-                    { label: 'Tous', value: 'Tous' },
-                    { label: 'Sushi', value: 'Sushi' },
-                    { label: 'Entrées', value: 'Enrées' },
-                    { label: 'Plats chauds', value: 'Plats chauds' },
-                    { label: 'Yakitori', value: 'Yakitori' },
-                    ]}
-                    value={filter}
+                    onValueChange={(value) => handleCategoryClick(value)}
+                    items={categorys}
+                    value={selectedCategory}
                     style={{ inputIOS: styles.picker, inputAndroid: styles.picker }} // Appliquez le style ici
                     useNativeAndroidPickerStyle={false}
                     Icon={() => {
@@ -32,37 +65,23 @@ function Menu(){
 
             <ScrollView horizontal={true} style={styles.containerCards}>
 
-                <View style={styles.card}>
-                    <Image source={imagePlat} style={styles.imageCard}/>
-                    <Text style={styles.textCard}>Nouilles sautées au légumes</Text>
-                    <View style={styles.containerBottomCard}>
-                        <Text style={styles.priceCard}>6.50€</Text>
-                        <View style={styles.containerButtonCard}>
-                            <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
+                {filteredFoods ? (
+                    filteredFoods.map((food) =>(
+                        <View key={food.id} style={styles.card}>
+                            <Image source={{uri : `https://back-wok-rosny.onrender.com/${food.image}`}} style={styles.imageCard}/>
+                            <Text style={styles.textCard}>{food.title}</Text>
+                            <View style={styles.containerBottomCard}>
+                                <Text style={styles.priceCard}>{food.price}€</Text>
+                                <View style={styles.containerButtonCard}>
+                                    <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
+                                </View>
+                            </View>
                         </View>
-                    </View>
-                </View>
-                <View style={styles.card}>
-                    <Image source={imagePlat} style={styles.imageCard}/>
-                    <Text style={styles.textCard}>Nouilles sautées au légumes</Text>
-                    <View style={styles.containerBottomCard}>
-                        <Text style={styles.priceCard}>6.50€</Text>
-                        <View style={styles.containerButtonCard}>
-                            <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-                <View style={styles.card}>
-                    <Image source={imagePlat} style={styles.imageCard}/>
-                    <Text style={styles.textCard}>Nouilles sautées </Text>
-                    <View style={styles.containerBottomCard}>
-                        <Text style={styles.priceCard}>6.50€</Text>
-                        <View style={styles.containerButtonCard}>
-                            <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-
+                    ))
+                ) : (
+                    <Text>Chargement...</Text>
+                )}
+               
             </ScrollView>
         </View>
     )
@@ -105,7 +124,7 @@ const styles = StyleSheet.create({
     gap: 30,
  },
  card:{
-    width: "30%",
+    width: 230,
     backgroundColor : "#dcdcdc",
     borderRadius:20,
     marginLeft:20,
