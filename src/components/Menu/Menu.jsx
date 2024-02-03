@@ -2,8 +2,10 @@ import {react, useState, useEffect} from "react";
 import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView} from "react-native"
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons"
-import imagePlat from "../../assets/nemspoulet.jpg"
+import { EventEmitter } from "../EventEmitter/EventEmitter"; 
 import {apiService} from "../API/ApiService"
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 function Menu(){
     const [filter, setFilter] = useState('Tous')
@@ -46,6 +48,32 @@ function Menu(){
         return selectedCategory === 'Tous' || food.category === selectedCategory;
     });
 
+    const addToCart = async (food) => {
+        try {
+            // Récupérer le panier actuel
+            const storedCart = await AsyncStorage.getItem('cartItems');
+            let currentCart = storedCart ? JSON.parse(storedCart) : [];
+    
+            // Vérifier si le produit est déjà dans le panier
+            const existingFoodIndex = currentCart.findIndex(item => item.id === food.id);
+            if (existingFoodIndex >= 0) {
+                // Augmenter la quantité
+                currentCart[existingFoodIndex].quantity += 1;
+            } else {
+                // Ajouter le nouvel article
+                currentCart = [...currentCart, { ...food, quantity: 1 }];
+            }
+    
+            // Sauvegarder le panier mis à jour
+            await AsyncStorage.setItem('cartItems', JSON.stringify(currentCart));
+            EventEmitter.dispatch('cartUpdated', currentCart);
+
+            alert(`Ajouté au panier: ${food.title}`);
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout au panier', error);
+        }
+    };
+
     return(
         <View style={styles.containerMenu}>
             <Text style={styles.titleMenu}>Notre carte</Text>
@@ -73,7 +101,7 @@ function Menu(){
                             <View style={styles.containerBottomCard}>
                                 <Text style={styles.priceCard}>{food.price}€</Text>
                                 <View style={styles.containerButtonCard}>
-                                    <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
+                                    <TouchableOpacity onPress={()=> addToCart(food)} style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
                                 </View>
                             </View>
                         </View>

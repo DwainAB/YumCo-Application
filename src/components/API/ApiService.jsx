@@ -61,10 +61,17 @@ export const apiService = {
                 },
                 body: JSON.stringify(clientData),
             });
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+            const responseBody = await response.text();
+            console.log('Réponse brute:', responseBody);
+        
+            // Vérifiez que la réponse n'est pas vide avant de la convertir en JSON
+            if (!responseBody || !responseBody.startsWith('{')) {
+                throw new Error('La réponse du serveur n\'est pas un JSON valide');
             }
-            return await response.json();
+        
+            const responseJson = JSON.parse(responseBody);
+            console.log('Réponse JSON:', responseJson);
+            return responseJson;
         } catch (error) {
             throw error;
         }
