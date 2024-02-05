@@ -46,7 +46,6 @@ function FormOrder(){
         };
     }, []);
 
-    console.log("voila ça", basketFull);
 
     const handleFormChange = (name, value) => {
         setClientData({ ...clientData, [name]: value });

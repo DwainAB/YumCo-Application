@@ -6,6 +6,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import BasketScreen from './src/screens/BasketScreen';
 import Ionicons from "react-native-vector-icons/Ionicons"
 import LoginScreen from './src/screens/LoginScreen';
+import AdminPage from './src/screens/AdminPage';
 
 const tab = createBottomTabNavigator();
 
@@ -40,7 +41,7 @@ export default function App() {
 
         <tab.Screen name="Accueil" component={HomeScreen} />
         <tab.Screen name="Panier" component={BasketScreen} />
-        <tab.Screen name="Connexion" component={LoginScreen} />
+        <tab.Screen name="Connexion" component={AdminPage} />
       </tab.Navigator>
     </NavigationContainer>
   );

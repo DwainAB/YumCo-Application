@@ -69,8 +69,6 @@ function ContentBasket(){
         EventEmitter.dispatch('quantityChanged', newBasket);
     }; 
 
-    console.log('lala',basketFull);
-
     return(
         <View style={styles.containerContentBasket}>
             {basketFull.length > 0 ? (

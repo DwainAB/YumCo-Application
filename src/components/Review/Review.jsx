@@ -27,7 +27,6 @@ function Review(){
     }, []); // Le tableau vide [] assure que l'effet s'exécute une seule fois après le premier rendu
 
 
-    console.log(reviews);
     return(
         <View style={styles.containerReview}>
             {reviews.length > 0 ? (

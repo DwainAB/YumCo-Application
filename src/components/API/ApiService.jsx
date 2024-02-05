@@ -15,18 +15,18 @@ export const apiService = {
         try {
             const response = await fetch(`${BASE_URL}/foods/add`, {
                 method: 'POST',
-                // Ne définissez pas l'en-tête 'Content-Type' lorsque vous envoyez un FormData.
-                // 'Content-Type': 'multipart/form-data' sera automatiquement défini par le navigateur.
                 body: foodData,
             });
+            const responseData = await response.json();
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(responseData.message || `HTTP error! Status: ${response.status}`);
             }
-            return await response.json();
+            return responseData;
         } catch (error) {
             throw error;
         }
     },
+    
     
 
     updateFood: async (id, foodData) => {
@@ -46,11 +46,18 @@ export const apiService = {
             const response = await fetch(`${BASE_URL}/foods/delete/${id}`, {
                 method: 'DELETE',
             });
-            return await response.json();
+            // Vérifier si la réponse est un succès
+            if (response.status === 204) {
+                return { success: true }; // Retourner un objet indiquant le succès
+            } else {
+                // S'il y a une autre réponse, analyser le JSON comme d'habitude
+                return await response.json();
+            }
         } catch (error) {
             throw error;
         }
     },
+    
 
     addClientAndOrder: async (clientData) => {
         try {
