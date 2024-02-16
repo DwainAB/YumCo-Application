@@ -15,12 +15,14 @@ export const apiService = {
         try {
             const response = await fetch(`${BASE_URL}/foods/add`, {
                 method: 'POST',
-                body: foodData,
+                body: foodData
             });
-            const responseData = await response.json();
+
             if (!response.ok) {
-                throw new Error(responseData.message || `HTTP error! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+    
+            const responseData = await response.text();
             return responseData;
         } catch (error) {
             throw error;
@@ -172,14 +174,34 @@ export const apiService = {
         try {
             const response = await fetch(`${BASE_URL}/users/addUsers`, {
                 method: 'POST',
-                body: formData,
+                body: formData, // Utilisation directe du corps de la requête sans JSON.stringify
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded' // Définir le type de contenu approprié
+                }
             });
     
-            // Le reste de votre code...
+            if (!response.ok) {
+                throw new Error(`HTTP status code: ${response.status}`);
+            }
+    
+            const responseData = await response.json();
+    
+            if (response.ok) {
+                console.log('Utilisateur ajouté avec succès', responseData.message);
+                return responseData; // Retourner les données de la réponse
+            } else {
+                console.error('Erreur lors de l\'ajout de l\'utilisateur:', responseData.message);
+                throw new Error(responseData.message); // Lancer une erreur pour la gérer dans le composant
+            }
         } catch (error) {
+            console.error('Erreur lors de l\'envoi à l\'API:', error.message);
             throw error;
         }
     },
+    
+    
+    
+    
     
 
     // Supprimer un utilisateur

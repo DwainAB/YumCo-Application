@@ -168,6 +168,7 @@ function FormOrder(){
             onChangeText={(value) => handleFormChange('phone', value)}
             value={clientData.phone}
             placeholder="Téléphone"
+            keyboardType="numeric"
             />
             <TextInput
             style={styles.inputOrder}

@@ -4,13 +4,14 @@ import ContentBasket from "../components/ContentBasket/ContentBasket";
 import FormOrder from "../components/FormOrder/FormOrder";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EventEmitter } from "../components/EventEmitter/EventEmitter";
-
+import {useFonts} from "expo-font"
 
 function BasketScreen(){
     const [showForm, setShowForm] = useState(true);
     const [cartItems, setCartItems] = useState([]); // Renommé pour refléter qu'il s'agit d'une liste d'éléments
 
     useEffect(() => {
+
         const loadBasketItems = async () => {
             try {
                 const storedItems = await AsyncStorage.getItem('cartItems');
@@ -41,6 +42,15 @@ function BasketScreen(){
             unsubscribeQuantityChange();
         };
     }, []);
+
+    const [loaded] = useFonts({
+        Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
     
 
     function activeForm() {
@@ -78,7 +88,7 @@ function BasketScreen(){
 
 const styles = StyleSheet.create({
     containerTitleBasket: {
-        marginTop: 50,
+        marginTop: 40,
         borderBottomWidth: 1,
         borderColor: "#FF9A00",
         width: "100%",
@@ -87,6 +97,7 @@ const styles = StyleSheet.create({
     titleBasket:{
         textAlign: "center",
         fontSize: 40,
+        fontFamily: "Philosopher"
     },
     containerButtonBasket :{
         display: "flex",
@@ -96,7 +107,8 @@ const styles = StyleSheet.create({
         marginTop:40,
         borderTopWidth: 1,
         paddingTop:20,
-        borderColor: "#ff9a00"
+        borderColor: "#ff9a00",
+        height:0
     },
     buttonBasket :{
         backgroundColor:"#FF9A00",
@@ -105,7 +117,8 @@ const styles = StyleSheet.create({
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        borderRadius:20
+        borderRadius:20,
+        marginTop: 50
     },
     textButtonBasket: {
         color: "#fff"
@@ -117,7 +130,8 @@ const styles = StyleSheet.create({
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        borderRadius:20
+        borderRadius:20,
+        marginTop: 50
     },
     disabledText:{
         color:'grey'

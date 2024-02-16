@@ -1,10 +1,29 @@
 import react from "react";
 import {View, Text, Image, StyleSheet, TouchableOpacity} from "react-native"
 import logo from "../../assets/logo.png"
+import * as Svg from 'react-native-svg';
+import WaveSVG from "../../assets/wave.jsx"
+import {useFonts} from "expo-font"
 
 function Header(){
+
+    const [loaded] = useFonts({
+        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
     return(
         <View style={styles.containerHeader}>
+
+            <View style={styles.containerSvg}>
+                <View style={styles.backgroundWave}></View>
+                <WaveSVG/>
+            </View>
+
             <Image
                 source={logo}
                 style={styles.image}
@@ -33,7 +52,8 @@ const styles = StyleSheet.create({
     },
     titleHeader:{
         textAlign: "center",
-        fontSize: 40
+        fontSize: 45,
+        fontFamily: "Philosopher"
     },
     containerButtonHeader:{
         backgroundColor: "#ff9a00",
@@ -47,7 +67,21 @@ const styles = StyleSheet.create({
     },
     buttonHeader:{
         color: '#fff',
-        fontSize: 18
+        fontSize: 18,
+        fontFamily: "MavenPro"
+    },
+    containerSvg:{
+        position: 'absolute',
+        top: -30,
+        left: 0,
+        width: '100%',
+        height: 95,
+        zIndex: -1,
+    },
+    backgroundWave:{
+        backgroundColor: "#ff9a00",
+        height: 100,
+        marginBottom: -10
     }
 })
 

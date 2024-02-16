@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { apiService } from '../API/ApiService';
+import {useFonts} from "expo-font"
+import {ModalDeleteFood} from "../Modal/Modal"
 
 function MenuAdmin() {
   const [foods, setFoods] = useState([]);
@@ -10,6 +12,8 @@ function MenuAdmin() {
   const [isSmallScreen, setIsSmallScreen] = useState(false); // Pas de gestion de la taille de l'écran sur React Native
   const [itemsPerPage, setItemsPerPage] = useState(isSmallScreen ? 6 : 10);
   const [categories, setCategories] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedFoodId, setSelectedFoodId] = useState(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -96,6 +100,7 @@ function MenuAdmin() {
             console.log('Suppression réussie');
             const updatedFoods = await apiService.getFoods();
             setFoods(updatedFoods);
+            setModalVisible(false);
             alert('Suppression réussi')
         } else {
             console.error('Erreur lors de la suppression:', response);
@@ -106,19 +111,29 @@ function MenuAdmin() {
     }
 };
 
-  
-  
-
   const filteredFoods = foods.filter(food => selectedCategory === 'Tous' || food.category === selectedCategory);
+
+  const [loaded] = useFonts({
+    Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+    MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+    PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
+  });
+
+  if (!loaded) {
+    // Peut-être afficher un indicateur de chargement ici
+    return null;
+  } 
+
+  
 
   return (
     <View style={styles.container}>
-      <ScrollView  style={styles.containerScroll}>
+      <ScrollView horizontal={true}  style={styles.containerScroll}>
         <View style={styles.listProduct}>
           {filteredFoods.map((food) => (
             <View style={styles.productInfo} key={food.id}>
               <TouchableOpacity style={styles.fileUploadButton} onPress={() => console.log('Changer l\'image')}>
-                <Text>Changer l'image</Text>
+                <Text style={styles.textUpdateImage}>Changer l'image</Text>
               </TouchableOpacity>
               <TextInput
                 style={styles.input}
@@ -137,8 +152,9 @@ function MenuAdmin() {
                 placeholder="prix du plat"
                 value={editableFoods[food.id]?.price !== undefined ? editableFoods[food.id]?.price : food.price}
                 onChangeText={(newValue) => handleInputChange(food.id, newValue, 'price')}
+                keyboardType="numeric"
               />
-              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteFood(food.id)}>
+              <TouchableOpacity style={styles.deleteButton} onPress={() => { setModalVisible(true); setSelectedFoodId(food.id)}}>
                 <Text style={styles.textButtonDelete}>Supprimer</Text>
               </TouchableOpacity>
             </View>
@@ -146,6 +162,7 @@ function MenuAdmin() {
         </View>
       </ScrollView>
       <TouchableOpacity onPress={handleUpdateAllFoods} style={styles.containerbtnUpdate}><Text style={styles.textButtonUpdate}>Modifier les éléments</Text></TouchableOpacity>
+      <ModalDeleteFood isVisible={modalVisible} foodId={selectedFoodId} handleDeleteFood={handleDeleteFood} onClose={() => setModalVisible(false)} />
     </View>
   );
 }
@@ -195,15 +212,18 @@ const styles = StyleSheet.create({
     }, 
     listProduct:{
         width: "100%",
+        display: "flex",
+        flexDirection: "row",
+        height: 400
     },
     productInfo:{
-        width: "100%",
+        width: 400,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
     }, 
     containerScroll:{
-        height: 400,
+        height: "58%",
         width: "100%"
     },
     containerbtnUpdate:{
@@ -217,10 +237,15 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#ff9a00",
+        marginTop: 30
     },
     textButtonUpdate:{
         color:  "#fff",
-    }
+    },
+    textUpdateImage:{
+      fontFamily: "MavenPro"
+    },
+  
 
 })
 

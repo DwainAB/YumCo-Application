@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView } from "react-native";
 import { apiService } from "../API/ApiService";
-import * as ImagePicker from 'expo-image-picker';
+import {launchImageLibraryAsync, MediaTypeOptions, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImageManipulator from 'expo-image-manipulator';
+import img from "../../assets/logo.png"
+import * as FileSystem from 'expo-file-system';
+import {useFonts} from "expo-font"
 
 
 function FormAddProduct() {
+    const [fullImage, setFullImage] =  useState({})
     const [productData, setProductData] = useState({
         title: "",
         description: "",
         price: "",
-        imageURL: null,
-        image: null,
+        imageURI: null,
         category: "",
     });
 
@@ -33,36 +36,61 @@ function FormAddProduct() {
     }, []);
 
     const handleSubmit = async () => {
+
+        
+        const jsonData = {
+            title: productData.title,
+            description: productData.description,
+            category: productData.category,
+            price: productData.price,
+            imageURI: {
+              base64: productData.imageURI.base64,
+              fileName: productData.imageURI.fileName,
+              type: productData.imageURI.mimeType
+            }
+          };
+          
         try {
             const formData = new FormData();
             formData.append('title', productData.title);
             formData.append('description', productData.description);
             formData.append('category', productData.category);
             formData.append('price', productData.price);
-            formData.append('image', {
-                uri: productData.image.uri,
-                type: "image/jpg",
-                name: `product-image-${Date.now()}.jpg`,
-            });
+            formData.append('imageURI', JSON.stringify(jsonData) )
 
-            console.log("uri", productData.image.uri);
+            console.log("formdata:",formData);
 
-            const result = await apiService.addFood(formData);
-            alert('Plat ajouté avec succès!');
-            resetForm();
+            let data = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' 
+                },
+                body: formData
+            }
+
+            return fetch('https://back-wok-rosny.onrender.com/api/foods/add', data)
+                    .then(response => response.text()    )
+                    .then(json => 
+                        console.log('result', json),
+                        alert('Plat ajouté avec succès!'),
+                       // resetForm()
+                        )
+                    .catch((err)=>{console.error("ERROR", err)})
         } catch (error) {
             console.error(error);
             alert('Une erreur est survenue lors de l\'ajout du plat.');
         }
     };
 
+    
+
+
     const resetForm = () => {
         setProductData({
             title: "",
             description: "",
             price: "",
-            imageURL: null,
-            image: null,
+            imageURI: null,
             category: "",
         });
     };
@@ -75,51 +103,61 @@ function FormAddProduct() {
             setProductData({ ...productData, price: convertedValue });
         }
     };
+    
+    const handleClickUpload = async() =>{
 
-    const handleImageChange = async (result) => {
-        if (result && result.uri) {
-            try {
-                const manipulatedUri = await ImageManipulator.manipulateAsync(
-                    result.uri,
-                    [
-                        { resize: { width: 500 } }, // Redimensionner à une largeur de 500 pixels
-                    ],
-                    { compress: 0.8 } // Compresser à 80% de qualité
-                );
-                setProductData({ ...productData, image: result, imageURL: manipulatedUri });
-                console.log('reussi');
-            } catch (error) {
-                console.error('Erreur lors de la manipulation de limage:', error);
-                setProductData({ ...productData, image: null, imageURL: null });
-            }
-        } else {
-            setProductData({ ...productData, image: null, imageURL: null });
-        }
-    };
-    
-    
-    
+        const {status} = await requestMediaLibraryPermissionsAsync()
 
-    const pickFile = async () => {
-        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permissionResult.granted) {
-            alert('Permission refusée pour accéder aux fichiers.');
-            return;
+        if(status !== 'granted'){
+            alert("accès refusé")
+            return
         }
-      
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            quality: 1,
+
+        let options={
+            mediaType: 'photo',
+            includeBase64: true
+        }
+
+        let result  = await launchImageLibraryAsync(options)
+        console.log('result',result);
+        
+        if(result.didCancel ==true){
+            console.log('user cancel');
+        }else if(result.errorCode && parseInt(result.errorCode)) {
+            console.log('upload error');
+        }else{
+            console.log('upload succès');
+            uploadImage(result)
+        }
+    }
+
+
+    const uploadImage = async(imageData) =>{
+        const { uri } = imageData.assets[0];
+        try {
+        const base64Image = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
         });
-    
-        if (!result.cancelled && result.assets.length > 0) {
-            handleImageChange(result.assets[0]); // Pass the first asset object
+        imageData.assets[0].base64 = base64Image
+        // Utilisez base64Image comme nécessaire pour télécharger ou traiter l'image
+        } catch (error) {
+            console.error('Erreur lors de la lecture de l\'image:', error);
         }
-    };
-    
+        setProductData({...productData, imageURI: imageData.assets[0]});
+        console.log(imageData);
+    }
 
-    console.log(productData);
+    const [loaded] = useFonts({
+        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+        PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
+
     
     return (
         <ScrollView style={styles.containerScrollAddProduct}>
@@ -152,13 +190,14 @@ function FormAddProduct() {
                     placeholder="Prix"
                     value={productData.price}
                     onChangeText={handlePriceChange}
+                    keyboardType="numeric"
                 />
-                <TouchableOpacity style={styles.buttonImageAddProduct} onPress={pickFile}><Text style={styles.textAddImage}>Choisir une image</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.buttonImageAddProduct} onPress={() => handleClickUpload() }><Text style={styles.textAddImage}>Choisir une image</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.buttonAddProduct} onPress={handleSubmit}><Text style={styles.textAddProduct}>Ajouter</Text></TouchableOpacity>
             
                 <View>
                     <View style={styles.card}>
-                        <Image source={{ uri: productData.imageURL }} style={styles.imageCard}/>
+                    <Image source={productData.image && productData.imageURI ? { uri: productData.imageURI } : img} style={styles.imageCard}/>
                         <Text style={styles.textCard}>{productData.title}</Text>
                         <View style={styles.containerBottomCard}>
                             <Text style={styles.priceCard}>{productData.price} €</Text>
@@ -199,6 +238,7 @@ const styles = StyleSheet.create({
         borderColor: "#ff9a00",
         borderRadius: 10,
         marginBottom: 10,
+        fontFamily : "MavenPro"
     },
     containerSelectAddForm:{
         width: "80%"
@@ -216,7 +256,9 @@ const styles = StyleSheet.create({
     },
     textAddImage:{
         color: "#ff9a00",
-        fontWeight: "700"
+        fontWeight: "700",
+        fontFamily : "MavenPro"
+
     },
     buttonAddProduct:{
         backgroundColor:"#ff9a00",
@@ -230,7 +272,8 @@ const styles = StyleSheet.create({
     },
     textAddProduct:{
         color:"white",
-        fontWeight: "700"
+        fontWeight: "700",
+        fontFamily : "MavenPro"
     },
     card:{
         width: 230,
@@ -253,7 +296,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         marginBottom:20,
         marginTop: 20,
-        height: 50
+        height: 50,
+        fontFamily : "MavenPro"
      },
      containerBottomCard:{
         display:"flex", 
@@ -269,7 +313,8 @@ const styles = StyleSheet.create({
         color:  "#fff"
      }, 
      priceCard:{
-        fontSize:18
+        fontSize:18,
+        fontFamily : "MavenPro"
      },
      containerButtonCard:{
         display: "flex",

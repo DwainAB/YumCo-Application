@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-nati
 import { apiService } from "../API/ApiService";
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons"
-
+import {ModalDeleteOrder} from "../Modal/Modal"
 
 function CardsOrder() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [filter, setFilter] = useState('Tous');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -44,6 +46,7 @@ function CardsOrder() {
       await apiService.deleteClient(clientId);
       alert("Client et commandes supprimés avec succès");
       fetchOrders();
+      setModalVisible(false)
     } catch (error) {
       console.error('Erreur lors de la suppression du client:', error);
     }
@@ -54,6 +57,9 @@ function CardsOrder() {
   };
 
   const currentOrders = filteredOrders;
+
+
+
   return (
     <View style={styles.container}>
 
@@ -66,6 +72,7 @@ function CardsOrder() {
             { label: 'Livraison', value: 'Livraison' }
           ]}
           value={filter}
+          useNativeAndroidPickerStyle={false}
           style={{ inputAndroid: { ...styles.filterOrder, height: 40 }, inputIOS: { ...styles.filterOrder, height: 40 } }}
           Icon={() => {
             return <Ionicons name="chevron-down" size={24} color="gray" margin={10}/>;
@@ -99,7 +106,7 @@ function CardsOrder() {
                             <Text style={styles.textClient}><Text style={styles.bold}>Adresse:</Text> {order.client_address}</Text>
                             <Text style={styles.totalOrder}><Text style={styles.bold}>Total:</Text> {order.total ? order.total.toFixed(2) : '0.00'} €</Text>
 
-                            <TouchableOpacity style={styles.deleteOrder} onPress={() => handleDelete(order.client_id)} >
+                            <TouchableOpacity style={styles.deleteOrder} onPress={() => { setModalVisible(true); setSelectedOrderId(order.client_id)}}>
                                 <Text style={styles.deleteOrderText}>Supprimer</Text>
                             </TouchableOpacity>
 
@@ -111,6 +118,8 @@ function CardsOrder() {
         )) : <Text style={styles.textEmptyOrder}>Aucune commande trouvée.</Text>}
         </View>
       </ScrollView>
+      <ModalDeleteOrder isVisible={modalVisible} orderId={selectedOrderId} handleDelete={handleDelete} onClose={() => setModalVisible(false)} />
+      
     </View>
   );
 }
@@ -153,7 +162,7 @@ const styles = StyleSheet.create({
     },
     titleCardOrder:{
         textAlign:"center",
-        fontSize: 22
+        fontSize: 22,
     },
     textMethod:{
         textAlign: "center",
@@ -165,10 +174,10 @@ const styles = StyleSheet.create({
     },
     textClient:{
         fontSize:18,
-        marginBottom: 5
+        marginBottom: 5,
     },
     bold:{
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     }, 
     totalOrder:{
         fontSize:18,
@@ -181,7 +190,7 @@ const styles = StyleSheet.create({
         width: "40%",
     }, 
     filterOrder:{
-        width: "100%",
+        width: 170,
         marginBottom: 20,
         borderWidth: 2,
         borderColor: "#ff9a00",

@@ -8,6 +8,9 @@ import MenuAdmin from "../components/MenuAdmin/MenuAdmin";
 import { useNavigation } from '@react-navigation/native';
 import { EventEmitter } from "../components/EventEmitter/EventEmitter";
 import CardOrder from "../components/CardOrder/CardOrder";
+import Utilisateur from "../components/Utilisateur/Utilisateur";
+import {useFonts} from "expo-font"
+
 
 function Dashboard (){
     const [selectedValue, setSelectedValue] = useState(null);
@@ -81,7 +84,7 @@ function Dashboard (){
           case 'Commande':
             return <CardOrder/>;
           case 'Utilisateur':
-            return <Text>Afficher le contenu lié à l'utilisateur</Text>;
+            return <Utilisateur/>
           default:
             return (
                 <View>
@@ -100,6 +103,16 @@ function Dashboard (){
             )
         }
     };
+
+    const [loaded] = useFonts({
+        Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
+        MavenPro: require('../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
 
     return(
         <View>
@@ -133,7 +146,8 @@ const styles = StyleSheet.create({
     titleDashboard: {
         fontSize:  40,
         marginTop: 100,
-        marginLeft: 20
+        marginLeft: 20,
+        fontFamily : "Philosopher"
     },
     picker:{
         paddingLeft: 20,
@@ -156,7 +170,8 @@ const styles = StyleSheet.create({
     textPresentation:{
         fontSize: 20,
         marginLeft:20,
-        marginRight: 20
+        marginRight: 20,
+        fontFamily : "MavenPro"
     },
     containerButtonLogout:{
         backgroundColor: "red",
@@ -169,7 +184,9 @@ const styles = StyleSheet.create({
         marginTop: 50
     }, 
     textLogout:{
-        color:"#fff"
+        color:"#fff",
+        fontFamily : "MavenPro",
+        fontSize: 16
     },
     ViewButtonLogout:{
         display:"flex",

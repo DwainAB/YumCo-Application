@@ -1,6 +1,7 @@
 import {react, useEffect, useState} from "react";
 import {View, Text, StyleSheet, Image, ScrollView} from "react-native"
 import Ionicons from "react-native-vector-icons/Ionicons"
+import {useFonts} from "expo-font"
 
 
 function Review(){
@@ -8,7 +9,6 @@ function Review(){
     const [reviews, setReviews] = useState([])
 
     useEffect(() => {
-        // ID de Place et clé API (remplacez par vos propres valeurs)
         const placeId = 'ChIJE9HLgd0S5kcRjqY585LUGjg'; 
         const apiKey = 'AIzaSyBWCVfz4hi__lsl5xctq5O1D90VCezfzP4'; 
 
@@ -20,12 +20,18 @@ function Review(){
         .then(data => {
             setReviews(data.result.reviews)
             console.log("Données récupérées de l'API Google Places :", data);
-            // ... (traitement des données)
         })
         .catch(error => console.error('Erreur lors de la récupération des avis:', error));
     
-    }, []); // Le tableau vide [] assure que l'effet s'exécute une seule fois après le premier rendu
+    }, []); 
 
+    const [loaded] = useFonts({
+        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+    });
+
+    if (!loaded) {
+        return null;
+    }
 
     return(
         <View style={styles.containerReview}>
@@ -73,7 +79,8 @@ const styles = StyleSheet.create({
     titleReview:{
         textAlign: "center",
         marginTop: 70,
-        fontSize: 30,
+        fontSize: 35,
+        fontFamily: "Philosopher"
     },
     listReview:{
         display: "flex",

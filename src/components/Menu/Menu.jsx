@@ -5,6 +5,7 @@ import Ionicons from "react-native-vector-icons/Ionicons"
 import { EventEmitter } from "../EventEmitter/EventEmitter"; 
 import {apiService} from "../API/ApiService"
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFonts} from "expo-font"
 
 
 function Menu(){
@@ -48,6 +49,17 @@ function Menu(){
         return selectedCategory === 'Tous' || food.category === selectedCategory;
     });
 
+    const [loaded] = useFonts({
+        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
+
     const addToCart = async (food) => {
         try {
             // Récupérer le panier actuel
@@ -83,7 +95,7 @@ function Menu(){
                     onValueChange={(value) => handleCategoryClick(value)}
                     items={categorys}
                     value={selectedCategory}
-                    style={{ inputIOS: styles.picker, inputAndroid: styles.picker }} // Appliquez le style ici
+                    style={{ inputIOS: styles.picker, inputAndroid: styles.pickerAndroid }} // Appliquez le style ici
                     useNativeAndroidPickerStyle={false}
                     Icon={() => {
                         return <Ionicons name="chevron-down" size={20} color="#FF9A00" margin={11}/>;
@@ -123,9 +135,10 @@ const styles = StyleSheet.create({
     width: "100%",
  },
  titleMenu :{
-    fontSize: 30,
+    fontSize: 35,
     textAlign:"center",
-    marginTop: 50
+    marginTop: 50,
+    fontFamily: "Philosopher"
  },
  containerFilter:{
     display: "flex",
@@ -144,6 +157,15 @@ const styles = StyleSheet.create({
     borderColor: "#FF9A00",
     paddingLeft:10
  }, 
+ pickerAndroid:{
+    width: 150,
+    height:40,
+    color: "#FF9A00",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#FF9A00",
+    paddingLeft:10
+ },
  containerCards:{
     width: "100%",
     display: "flex",
@@ -170,7 +192,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom:20,
     marginTop: 20,
-    height: 50
+    height: 50,
+    fontFamily : "MavenPro"
  },
  containerBottomCard:{
     display:"flex", 
@@ -183,10 +206,12 @@ const styles = StyleSheet.create({
  }, 
  textButtonCard:{
     fontSize: 18,
-    color:  "#fff"
+    color:  "#fff",
  }, 
  priceCard:{
-    fontSize:18
+    fontSize:18,
+    fontFamily : "MavenPro"
+
  },
  containerButtonCard:{
     display: "flex",

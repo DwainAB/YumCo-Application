@@ -1,8 +1,21 @@
 import react from "react";
 import {View, Text, StyleSheet} from "react-native"
 import Ionicons from "react-native-vector-icons/Ionicons"
+import {useFonts} from "expo-font"
 
 function About(){
+
+    const [loaded] = useFonts({
+        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
+        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
+        PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
+    });
+
+    if (!loaded) {
+        // Peut-être afficher un indicateur de chargement ici
+        return null;
+    }
+
     return(
         <View style={styles.containerAbout}>
             <Text style={styles.titleAbout}>Nos caractéristiques</Text>
@@ -36,7 +49,8 @@ const styles = StyleSheet.create({
         marginTop: 70
     },
     titleAbout :{
-        fontSize:30,
+        fontSize:35,
+        fontFamily: "Philosopher"
     },
     containerAboutItem:{
         display: "flex",
@@ -56,11 +70,13 @@ const styles = StyleSheet.create({
     textAboutItem:{
         fontSize: 16,
         textAlign: "center",
+        fontFamily: "MavenPro"
     }, 
     titleAboutItem:{
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: "700",
         marginBottom: 20,
+        fontFamily: "PhilosopherBold"
     }
 })
 
