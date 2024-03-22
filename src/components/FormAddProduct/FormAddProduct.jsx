@@ -147,16 +147,6 @@ function FormAddProduct() {
         console.log(imageData);
     }
 
-    const [loaded] = useFonts({
-        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
-        PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
-    });
-
-    if (!loaded) {
-        // Peut-être afficher un indicateur de chargement ici
-        return null;
-    }
 
     
     return (
@@ -238,7 +228,6 @@ const styles = StyleSheet.create({
         borderColor: "#ff9a00",
         borderRadius: 10,
         marginBottom: 10,
-        fontFamily : "MavenPro"
     },
     containerSelectAddForm:{
         width: "80%"
@@ -257,8 +246,6 @@ const styles = StyleSheet.create({
     textAddImage:{
         color: "#ff9a00",
         fontWeight: "700",
-        fontFamily : "MavenPro"
-
     },
     buttonAddProduct:{
         backgroundColor:"#ff9a00",
@@ -273,7 +260,6 @@ const styles = StyleSheet.create({
     textAddProduct:{
         color:"white",
         fontWeight: "700",
-        fontFamily : "MavenPro"
     },
     card:{
         width: 230,
@@ -297,7 +283,6 @@ const styles = StyleSheet.create({
         marginBottom:20,
         marginTop: 20,
         height: 50,
-        fontFamily : "MavenPro"
      },
      containerBottomCard:{
         display:"flex", 
@@ -314,7 +299,6 @@ const styles = StyleSheet.create({
      }, 
      priceCard:{
         fontSize:18,
-        fontFamily : "MavenPro"
      },
      containerButtonCard:{
         display: "flex",

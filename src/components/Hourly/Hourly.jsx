@@ -18,14 +18,6 @@ function Hourly(){
         Linking.openURL(url);
     };
 
-    const [loaded] = useFonts({
-        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-    });
-
-    if (!loaded) {
-        // Peut-être afficher un indicateur de chargement ici
-        return null;
-    }
 
 
     return(
@@ -77,7 +69,6 @@ const styles = StyleSheet.create({
     titleHourly: {
         fontSize:35,
         textAlign:"center",
-        fontFamily:"Philosopher"
     },
     containerHourly:{
         marginTop:70

@@ -146,144 +146,135 @@ const Utilisateur = () => {
         }
     };
 
-    const [loaded] = useFonts({
-        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
-        PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
-      });
-    
-      if (!loaded) {
-        // Peut-être afficher un indicateur de chargement ici
-        return null;
-      } 
-    
     console.log(users);
     return (
-        <ScrollView>
-            <View style={styles.containerGlobalUsers}>
-                <View style={styles.containerListUsers}>
-                    <ScrollView horizontal={true} style={styles.listUsers}>
-                        {users.map((user) => {
-                            console.log(user);
-                            return(
-                            <View style={styles.userInfo} key={user.id}>
+        <View>
+            <ModalDeleteUser isVisible={modalVisible} userId={selectedUserId} handleDeleteUser={handleDeleteUser} onClose={() => setModalVisible(false)} />
+            <ScrollView>
+                <View style={styles.containerGlobalUsers}>
+                    <View style={styles.containerListUsers}>
+                        <ScrollView horizontal={true} style={styles.listUsers}>
+                            {users.map((user) => {
+                                console.log(user);
+                                return(
+                                <View style={styles.userInfo} key={user.id}>
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Prénom"
+                                        value={editableUsers[user.id]?.firstname ?? user.firstname}
+                                        onChangeText={(value) => handleInputChange(user.id, 'firstname', value)}
+                                    />
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Nom"
+                                        value={editableUsers[user.id]?.lastname ?? user.lastname}
+                                        onChangeText={(value) => handleInputChange(user.id, 'lastname', value)}
+                                    />
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Email"
+                                        value={editableUsers[user.id]?.email ?? user.email}
+                                        onChangeText={(value) => handleInputChange(user.id, 'email', value)}
+                                    />
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Téléphone"
+                                        value={editableUsers[user.id]?.tel.toString() ?? user.tel.toString()}
+                                        onChangeText={(value) => handleInputChange(user.id, 'tel', value)}
+                                        keyboardType="numeric"
+                                    />
+
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Adresse"
+                                        value={editableUsers[user.id]?.address ?? user.address}
+                                        onChangeText={(value) => handleInputChange(user.id, 'address', value)}
+                                    />
+                                    <TextInput
+                                        style={styles.userInput}
+                                        placeholder="Role"
+                                        value={editableUsers[user.id]?.role ?? user.role}
+                                        onChangeText={(value) => handleInputChange(user.id, 'role', value)}
+                                    />
+                                    <TouchableOpacity style={styles.ContainerDeleteUser} onPress={() => { setModalVisible(true); setSelectedUserId(user.id)}}>
+                                        <Text style={styles.btnDeleteUser}>Supprimer</Text>
+                                    </TouchableOpacity>
+                                </View>)
+                            })}
+                        </ScrollView>
+                        <TouchableOpacity style={styles.containerBtnUpdateUser} onPress={handleUpdateAllUsers}>
+                                <Text style={styles.btnUpdateUser}>Mettre à jour</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.containerGlobalAddUser}>
+                        <Text style={styles.titleUser}>Ajouter un nouvel utilisateur</Text>
+                        <View style={styles.containerFormAddUser}>
+                            <View style={styles.containerAddUserSectionTop}>
                                 <TextInput
                                     style={styles.userInput}
                                     placeholder="Prénom"
-                                    value={editableUsers[user.id]?.firstname ?? user.firstname}
-                                    onChangeText={(value) => handleInputChange(user.id, 'firstname', value)}
-                                />
+                                    value={newUser.firstname}
+                                    name="firstname"
+                                    onChangeText={(value) => handleNewUserInputChange('firstname', value)}
+                                    />
                                 <TextInput
                                     style={styles.userInput}
                                     placeholder="Nom"
-                                    value={editableUsers[user.id]?.lastname ?? user.lastname}
-                                    onChangeText={(value) => handleInputChange(user.id, 'lastname', value)}
+                                    value={newUser.lastname}
+                                    name='lastname'
+                                    onChangeText={(value) => handleNewUserInputChange('lastname', value)}
                                 />
                                 <TextInput
                                     style={styles.userInput}
-                                    placeholder="Email"
-                                    value={editableUsers[user.id]?.email ?? user.email}
-                                    onChangeText={(value) => handleInputChange(user.id, 'email', value)}
+                                    placeholder="Mail"
+                                    name="email"
+                                    value={newUser.email}
+                                    onChangeText={(value) => handleNewUserInputChange('email', value)}
                                 />
+                                <TextInput
+                                    style={styles.userInput}
+                                    placeholder="Mot de passe"
+                                    name="password"
+                                    value={newUser.password}
+                                    secureTextEntry={true}
+                                    onChangeText={(value) => handleNewUserInputChange('password', value)}
+                                />
+                            </View>
+
+                            <View style={styles.containerAddUserSectionBottom}>
                                 <TextInput
                                     style={styles.userInput}
                                     placeholder="Téléphone"
-                                    value={editableUsers[user.id]?.tel.toString() ?? user.tel.toString()}
-                                    onChangeText={(value) => handleInputChange(user.id, 'tel', value)}
+                                    name="tel"
+                                    value={newUser.tel}
+                                    onChangeText={(value) => handleNewUserInputChange('tel', value)}
                                     keyboardType="numeric"
                                 />
-
                                 <TextInput
                                     style={styles.userInput}
                                     placeholder="Adresse"
-                                    value={editableUsers[user.id]?.address ?? user.address}
-                                    onChangeText={(value) => handleInputChange(user.id, 'address', value)}
+                                    name="address"
+                                    value={newUser.address}
+                                    onChangeText={(value) => handleNewUserInputChange('address', value)}
                                 />
                                 <TextInput
                                     style={styles.userInput}
                                     placeholder="Role"
-                                    value={editableUsers[user.id]?.role ?? user.role}
-                                    onChangeText={(value) => handleInputChange(user.id, 'role', value)}
+                                    name="role"
+                                    value={newUser.role}
+                                    onChangeText={(value) => handleNewUserInputChange('role', value)}
                                 />
-                                <TouchableOpacity style={styles.ContainerDeleteUser} onPress={() => { setModalVisible(true); setSelectedUserId(user.id)}}>
-                                    <Text style={styles.btnDeleteUser}>Supprimer</Text>
+                                <TouchableOpacity style={styles.containerButtonAddUser} onPress={handleAddNewUser}>
+                                    <Text style={styles.btnAddUser}>Ajouter</Text>
                                 </TouchableOpacity>
-                            </View>)
-                        })}
-                    </ScrollView>
-                    <TouchableOpacity style={styles.containerBtnUpdateUser} onPress={handleUpdateAllUsers}>
-                            <Text style={styles.btnUpdateUser}>Mettre à jour</Text>
-                    </TouchableOpacity>
-                    <ModalDeleteUser isVisible={modalVisible} userId={selectedUserId} handleDeleteUser={handleDeleteUser} onClose={() => setModalVisible(false)} />
-
-                </View>
-
-                <View style={styles.containerGlobalAddUser}>
-                    <Text style={styles.titleUser}>Ajouter un nouvel utilisateur</Text>
-                    <View style={styles.containerFormAddUser}>
-                        <View style={styles.containerAddUserSectionTop}>
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Prénom"
-                                value={newUser.firstname}
-                                name="firstname"
-                                onChangeText={(value) => handleNewUserInputChange('firstname', value)}
-                                />
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Nom"
-                                value={newUser.lastname}
-                                name='lastname'
-                                onChangeText={(value) => handleNewUserInputChange('lastname', value)}
-                            />
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Mail"
-                                name="email"
-                                value={newUser.email}
-                                onChangeText={(value) => handleNewUserInputChange('email', value)}
-                            />
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Mot de passe"
-                                name="password"
-                                value={newUser.password}
-                                secureTextEntry={true}
-                                onChangeText={(value) => handleNewUserInputChange('password', value)}
-                            />
-                        </View>
-
-                        <View style={styles.containerAddUserSectionBottom}>
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Téléphone"
-                                name="tel"
-                                value={newUser.tel}
-                                onChangeText={(value) => handleNewUserInputChange('tel', value)}
-                                keyboardType="numeric"
-                            />
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Adresse"
-                                name="address"
-                                value={newUser.address}
-                                onChangeText={(value) => handleNewUserInputChange('address', value)}
-                            />
-                            <TextInput
-                                style={styles.userInput}
-                                placeholder="Role"
-                                name="role"
-                                value={newUser.role}
-                                onChangeText={(value) => handleNewUserInputChange('role', value)}
-                            />
-                            <TouchableOpacity style={styles.containerButtonAddUser} onPress={handleAddNewUser}>
-                                <Text style={styles.btnAddUser}>Ajouter</Text>
-                            </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </View>
+
     );
 };
 
@@ -343,13 +334,13 @@ const styles = StyleSheet.create({
     },
     containerGlobalAddUser:{
         height: 500,
+        zIndex: -1
     }, 
     titleUser:{
         fontSize: 23,
         textAlign: "center",
         marginTop : 30,
         marginBottom: 30,
-        fontFamily:"PhilosopherBold"
     },
     containerAddUserSectionTop:{
         gap: 10,

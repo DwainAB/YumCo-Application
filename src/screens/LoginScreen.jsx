@@ -5,16 +5,6 @@ import {useFonts} from "expo-font"
 
 function LoginScreen(){
 
-    const [loaded] = useFonts({
-        Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
-        MavenPro: require('../assets/fonts/MavenPro-VariableFont_wght.ttf'),
-    });
-
-    if (!loaded) {
-        // Peut-être afficher un indicateur de chargement ici
-        return null;
-    }
-
     return(
         <View style={styles.containerScreenLogin}>
             <Text style={styles.titleLogin}>Connexion</Text>
@@ -35,7 +25,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
         fontSize: 40,
         marginBottom: 50,
-        fontFamily: 'Philosopher'
     }
 })
 

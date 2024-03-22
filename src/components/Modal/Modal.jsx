@@ -62,7 +62,7 @@ export function ModalDeleteUser({ isVisible, userId, handleDeleteUser, onClose }
     <View style={styles.containerModal}>
       <View style={styles.modalContent}>
         <Text style={styles.titleModal}>Êtes vous sûr ?</Text>
-        <Text>Après la suppression la commande ne sera plus disponible.</Text>
+        <Text>Après la suppression l'utilisateur ne sera plus disponible.</Text>
         <View style={styles.containerBottomModal}>
           <Text onPress={onClose}>Annuler</Text>
           <TouchableOpacity style={styles.btnDeleteModal} onPress={() => handleDeleteUser(userId)}>
@@ -78,13 +78,14 @@ export function ModalDeleteUser({ isVisible, userId, handleDeleteUser, onClose }
 const styles = StyleSheet.create({
   containerModal:{
     position: 'absolute',
-    top: 0,
+    top: -390,
     left: 0,
     width: '100%',
-    height: '100%',
+    height: 1090,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999
   },
   modalContent:{
     backgroundColor:"#dcdcdc",

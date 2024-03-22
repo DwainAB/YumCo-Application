@@ -113,19 +113,6 @@ function MenuAdmin() {
 
   const filteredFoods = foods.filter(food => selectedCategory === 'Tous' || food.category === selectedCategory);
 
-  const [loaded] = useFonts({
-    Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-    MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
-    PhilosopherBold: require('../../assets/fonts/Philosopher-Bold.ttf'),
-  });
-
-  if (!loaded) {
-    // Peut-être afficher un indicateur de chargement ici
-    return null;
-  } 
-
-  
-
   return (
     <View style={styles.container}>
       <ScrollView horizontal={true}  style={styles.containerScroll}>
@@ -243,7 +230,6 @@ const styles = StyleSheet.create({
         color:  "#fff",
     },
     textUpdateImage:{
-      fontFamily: "MavenPro"
     },
   
 

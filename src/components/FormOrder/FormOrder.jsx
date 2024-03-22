@@ -5,8 +5,11 @@ import Ionicons from "react-native-vector-icons/Ionicons"
 import { EventEmitter } from "../EventEmitter/EventEmitter";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {apiService} from "../API/ApiService"
+import { useNavigation } from '@react-navigation/native';
+
 
 function FormOrder(){
+    const navigation = useNavigation();
     const [basketFull, setBasketFull] = useState([])
     const [clientData,  setClientData] = useState({
         firstname:"",
@@ -113,6 +116,7 @@ function FormOrder(){
     
             alert("Votre commande a bien été envoyée ! Un email de confirmation vous a été envoyé.");
             clearCartItems();
+            navigation.navigate('Accueil'); // Remplacez 'RouteName' par le nom de la route vers laquelle vous souhaitez naviguer
         } catch (error) {
             console.error("Erreur lors de l'envoi du formulaire client : ", error);
             alert('Une erreur est survenue lors de l\'envoi du formulaire.');

@@ -49,16 +49,6 @@ function Menu(){
         return selectedCategory === 'Tous' || food.category === selectedCategory;
     });
 
-    const [loaded] = useFonts({
-        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-        MavenPro: require('../../assets/fonts/MavenPro-VariableFont_wght.ttf'),
-
-    });
-
-    if (!loaded) {
-        // Peut-être afficher un indicateur de chargement ici
-        return null;
-    }
 
     const addToCart = async (food) => {
         try {
@@ -138,7 +128,6 @@ const styles = StyleSheet.create({
     fontSize: 35,
     textAlign:"center",
     marginTop: 50,
-    fontFamily: "Philosopher"
  },
  containerFilter:{
     display: "flex",
@@ -193,7 +182,6 @@ const styles = StyleSheet.create({
     marginBottom:20,
     marginTop: 20,
     height: 50,
-    fontFamily : "MavenPro"
  },
  containerBottomCard:{
     display:"flex", 
@@ -210,8 +198,6 @@ const styles = StyleSheet.create({
  }, 
  priceCard:{
     fontSize:18,
-    fontFamily : "MavenPro"
-
  },
  containerButtonCard:{
     display: "flex",

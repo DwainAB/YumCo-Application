@@ -25,13 +25,6 @@ function Review(){
     
     }, []); 
 
-    const [loaded] = useFonts({
-        Philosopher: require('../../assets/fonts/Philosopher-Regular.ttf'),
-    });
-
-    if (!loaded) {
-        return null;
-    }
 
     return(
         <View style={styles.containerReview}>
@@ -80,7 +73,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: 70,
         fontSize: 35,
-        fontFamily: "Philosopher"
     },
     listReview:{
         display: "flex",
