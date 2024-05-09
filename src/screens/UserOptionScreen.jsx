@@ -6,28 +6,24 @@ import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 
-function CardOptionScreen(){
+function UserOptionScreen(){
     const navigation = useNavigation();
     const { t } = useTranslation();
     const { colors } = useColors()
 
     return(
-        <View style={[styles.containerCardPage, {backgroundColor:colors.colorBackground}]}>
+        <View style={[styles.containerUserPage, {backgroundColor: colors.colorBackground}]}>
             
-            <HeaderSetting name={t('cards')} navigateTo="SettingPage"/>
+            <HeaderSetting name={t('users')} navigateTo="SettingPage"/>
 
-            <Text style={[styles.titleCard, {color: colors.colorDetail}]}>{t('menuManagement')}</Text>
+            <Text style={[styles.titleUser, {color: colors.colorDetail}]}>{t('userManagement')}</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('AddProductScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('addProduct')}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('AddUserScreen')} style={styles.containerOptionUser}>
+                <Text style={[styles.textOptionUser, {color: colors.colorText}]}>{t('addUser')}</Text>
                 <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
             </TouchableOpacity>
-            <TouchableOpacity onPress={()=> navigation.navigate('UpdateProductScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('editProduct')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={()=> navigation.navigate('CategoriesScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('categories')}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('UpdateUserScreen')} style={styles.containerOptionUser}>
+                <Text style={[styles.textOptionUser, {color: colors.colorText}]}>{t('userList')}</Text>
                 <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
             </TouchableOpacity>
 
@@ -36,17 +32,16 @@ function CardOptionScreen(){
 }
 
 const styles = StyleSheet.create({
-    containerCardPage:{
+    containerUserPage:{
         height: "100%",
-        backgroundColor: "#161622"
     },
-    titleCard:{
+    titleUser:{
         marginLeft: 30,
         color: "#A2A2A7",
         fontSize: 18,
         marginBottom: 30
     },
-    containerOptionCard:{
+    containerOptionUser:{
         marginLeft: 30,
         marginRight: 30,
         flexDirection: "row",
@@ -57,11 +52,11 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
         marginBottom: 22
     },
-    textOptionCard:{
+    textOptionUser:{
         color: "white",
         fontSize: 18
     }
  
 })
 
-export default CardOptionScreen
+export default UserOptionScreen

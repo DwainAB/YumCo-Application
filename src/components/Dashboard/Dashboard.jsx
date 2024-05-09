@@ -2,51 +2,104 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
-
+import * as Updates from 'expo-updates';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useColors } from "../ColorContext/ColorContext";
+import { useTranslation } from 'react-i18next';
 
 function Dashboard (){
     const navigation = useNavigation(); // Obtenez l'objet de navigation
+    const [storageData, setStorageData] = useState(null);
+    const { colors } = useColors()
+    const { t } = useTranslation();
+    const [language, setLanguage] = useState(null);
 
+
+    useEffect(() => {
+        const getLanguageFromStorage = async () => {
+            try {
+                const storedLanguage = await AsyncStorage.getItem('language');
+                if (storedLanguage !== null) {
+                    setLanguage(storedLanguage);
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération de la langue depuis AsyncStorage :", error);
+            }
+        };
+    
+        getLanguageFromStorage();
+    }, []);
+
+
+    useEffect(() => {
+        const getStorageData = async () => {
+          try {
+            const keys = await AsyncStorage.getAllKeys();
+            const data = await AsyncStorage.multiGet(keys);
+            setStorageData(data);
+          } catch (error) {
+            console.error("Erreur lors de la récupération des données AsyncStorage :", error);
+          }
+        };
+    
+        getStorageData();
+      }, []);
+
+    console.log("storage dashboard: ", storageData);
+
+    const handleRelaunchApp = async () => {
+        try {
+            await AsyncStorage.clear();
+            console.log('Le stockage local a été effacé avec succès.');
+            // Relancer l'application après avoir effacé le stockage
+            Updates.reloadAsync();
+          } catch (error) {
+            console.error('Erreur lors de la suppression du stockage local :', error);
+          }
+    };
 
     return(
-        <ScrollView style={styles.containerSetting}>
-
+        <View style={styles.containerSetting}>
             <View style={styles.containerHeaderSetting}>
                 <View style={styles.containerEmpty}></View>
-                <Text style={styles.textHeaderSetting}>Paramètre</Text>
-                <View style={styles.containerBtnLogout}><Ionicons name="log-out-outline" size={30} color="white"/></View>
+                <Text style={[styles.textHeaderSetting, { color: colors.colorText }]}>{t('titleSetting')}</Text>
+                <TouchableOpacity style={[styles.containerBtnLogout, {backgroundColor: colors.colorBorderAndBlock}]} onPress={handleRelaunchApp}><Ionicons name="log-out-outline" size={30} color={colors.colorText}/></TouchableOpacity>
             </View>
+            <ScrollView style={styles.containerSettingScroll}>
 
-            <View style={styles.containerMenuSetting}>
+                <View style={styles.containerMenuSetting}>
 
-                <View style={styles.containerCategorySetting}>
-                    <Text style={styles.titleCategorySetting}>Général</Text>
-                    <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={styles.textBtnSetting}>Langage</Text><View style={styles.langageSelect}><Text style={styles.textLangageSelect}>Français</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('Personalization')}><Text style={styles.textBtnSetting}>Personnalisation</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                    <View style={styles.containerCategorySetting}>
+                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('general')}</Text>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('language')}</Text><View style={styles.langageSelect}><Text style={[styles.textLangageSelect, {color: colors.colorDetail}]}>{language}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('Personalization')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('personalization')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('SupportScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('support')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                    </View>
+
+                    <View style={styles.containerCategorySetting}>
+                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('myRestaurant')}</Text>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('CardOptionScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('cards')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('UserOptionScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('users')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('hourly')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                    </View>
+
+                    <View style={styles.containerCategorySetting}>
+                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('security')}</Text>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('ResetPassword')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('changePassword')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('PolityPrivacy')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('privacyPolicy')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                    </View>
+
                 </View>
 
-                <View style={styles.containerCategorySetting}>
-                    <Text style={styles.titleCategorySetting}>Mon restaurant</Text>
-                    <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('CardOptionScreen')}><Text style={styles.textBtnSetting}>Cartes</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Utilisateurs</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Avis</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Horaires</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Statistiques</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                </View>
-
-                <View style={styles.containerCategorySetting}>
-                    <Text style={styles.titleCategorySetting}>Sécurité</Text>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Changer le mot de passe</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    <TouchableOpacity style={styles.containerBtnSetting}><Text style={styles.textBtnSetting}>Politique de confidentialité</Text><Ionicons name="chevron-forward-outline" color={"#A2A2A7"} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                </View>
-
-            </View>
-
-        </ScrollView>
+            </ScrollView>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
+    containerSetting:{
+        flex:1,
+    },
     containerHeaderSetting:{
         justifyContent: "space-between", 
         flexDirection:"row",
@@ -105,6 +158,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 20,
         marginRight: 10
+    },
+    containerMenuSetting:{
+        marginBottom: 100
     }
 })
 

@@ -2,17 +2,19 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
+import { useColors } from "../ColorContext/ColorContext";
 
 
 function HeaderSetting({name, navigateTo}){
     const navigation = useNavigation();
+    const { colors } = useColors()
 
     return(
         <View style={styles.containerCardPage}>
             
             <View style={styles.containerHeader}>
-                <TouchableOpacity onPress={() => navigation.navigate(navigateTo)} style={styles.containerBtnBack}><Ionicons name="chevron-back-outline" size={30} color="white"/></TouchableOpacity>
-                <Text style={styles.textHeader}>{name}</Text>
+                <TouchableOpacity onPress={() => navigation.navigate(navigateTo)} style={[styles.containerBtnBack, {backgroundColor: colors.colorBorderAndBlock}]}><Ionicons name="chevron-back-outline" size={30} color={colors.colorText}/></TouchableOpacity>
+                <Text style={[styles.textHeader, {color : colors.colorText}]}>{name}</Text>
                 <View style={styles.containerEmpty}></View>
             </View>
 

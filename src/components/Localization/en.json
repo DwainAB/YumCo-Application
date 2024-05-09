@@ -1,0 +1,101 @@
+{
+  "greeting": "Hello",
+  "changeLanguage": "Change language",
+  "homeStat": "Statistics",
+  "titleScreen": "Home",
+  "lastOrder": "Last order",
+  "titleReview": "Reviews",
+  "updateApp": "UPD",
+  "seeMore": "See more ...",
+
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "August": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December",
+
+  "all": "All",
+  
+  "titleOrder": "Orders",
+  "total": "Total",
+  "alertDeleteOrder": "Client and orders deleted successfully",
+
+      
+  "titleSetting": "Setting",
+  "general": "General",
+  "language": "Language",
+  "personalization": "personalization",
+  "support": "Support",
+  "myRestaurant": "My restaurant",
+  "cards": "Cards",
+  "users": "Users",
+  "hourly": "Hourly",
+  "security": "Security",
+  "changePassword": "change password",
+  "privacyPolicy": "Privacy policy",
+
+
+  "interface": "Interface",
+  "clear": "Clear",
+  "dark": "Dark",
+  "themes": "Themes",
+  "default": "Default",
+  "mars": "Mars",
+  "purple": "Purple",
+  "turquoiseBlue": "Turquoise blue",
+
+  "textSupport": "For any questions, our team is available to assist you from Monday to Friday, from 10:00 AM to 6:00 PM.",
+
+  "menuManagement": "Menu Management",
+  "addProduct": "Add a Product",
+  "editProduct": "Edit My Products",
+  "categories": "Categories",
+
+  "userManagement": "User management",
+  "addUser": "Add User",
+  "userList": "User list",
+
+  "oldPassword":"Old password",
+  "newPassword":"New password",
+  "confirmPassword":"Confirm new password",
+  "matchPassword": "Both password must match",
+  "validate": "Validate",
+
+  "productName": "Product name",
+  "description": "Description",
+  "category": "Category",
+  "selectCategory": "Select a category",
+  "price": "Price",
+  "textImage": "Choose an image", 
+  "add": "Add",
+  "changeImage": "Change image",
+  "delete": "Delete",
+  "editItems": "Edit items",
+
+  "addCategory": "Adding a category",
+  "listCategory": "List of categories",
+
+  "firstname": "First name",
+  "lastname": "Last name",
+  "email": "Email",
+  "password": "Password",
+  "address": "Address",
+  "phoneNumber": "Phone number",
+  "finish": "Finish"
+
+}

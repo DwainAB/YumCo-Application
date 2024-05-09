@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView } from "react-native";
 import { apiService } from "../API/ApiService";
-import {launchImageLibraryAsync, MediaTypeOptions, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
+import {launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import * as ImageManipulator from 'expo-image-manipulator';
-import img from "../../assets/logo.png"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from 'expo-file-system';
-import {useFonts} from "expo-font"
+import { useTranslation } from 'react-i18next';
+import { useColors } from "../ColorContext/ColorContext";
 
 
 function FormAddProduct() {
-    const [fullImage, setFullImage] =  useState({})
+    const pickerKey = useRef(0); 
+    const { colors } = useColors()
+    const { t } = useTranslation();
+    const [listCategorie, setListCategorie] = useState([])
+    const [nameRestaurant, setNameRestaurant] = useState([])
     const [productData, setProductData] = useState({
         title: "",
         description: "",
@@ -20,24 +24,42 @@ function FormAddProduct() {
         category: "",
     });
 
-    const [categorys, setCategorys] = useState([]);
-
+    //Récupération des catégories
     useEffect(() => {
-        const fetchCategories = async () => {
+        async function fetchRefRestaurant() {
             try {
-                const fetchedCategories = await apiService.getAllCategories();
-                setCategorys(fetchedCategories);
+                const user = await AsyncStorage.getItem("user");
+                console.log(user);
+                const refRestaurant = JSON.parse(user).ref_restaurant;
+                setNameRestaurant(refRestaurant);
             } catch (error) {
-                console.error('Erreur lors de la récupération des catégories:', error);
+                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
             }
-        };
-
-        fetchCategories();
+        }      
+        fetchRefRestaurant();
     }, []);
+
+    const fetchCategorie = async () => {
+        try {
+            const fetchedCategories = await apiService.getAllCategories(nameRestaurant);
+            setListCategorie(fetchedCategories); 
+            console.log(fetchedCategories);  
+        } catch (error) {
+            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
+        }
+    };
+    
+    useEffect(() => {
+        if (nameRestaurant) {
+            fetchCategorie();
+        }
+    }, [nameRestaurant]);
+
+
+    //Ajout d'un produit
 
     const handleSubmit = async () => {
 
-        
         const jsonData = {
             title: productData.title,
             description: productData.description,
@@ -53,12 +75,11 @@ function FormAddProduct() {
         try {
             const formData = new FormData();
             formData.append('title', productData.title);
+            formData.append('ref_restaurant', nameRestaurant);
             formData.append('description', productData.description);
             formData.append('category', productData.category);
             formData.append('price', productData.price);
             formData.append('imageURI', JSON.stringify(jsonData) )
-
-            console.log("formdata:",formData);
 
             let data = {
                 method: 'POST',
@@ -67,13 +88,14 @@ function FormAddProduct() {
                 },
                 body: formData
             }
+            console.log(formData)
 
-            return fetch('https://back-wok-rosny.onrender.com/api/foods/add', data)
+            return fetch('http://192.168.1.8/back-website-restaurant-1/api/foods/add', data)
                     .then(response => response.text()    )
                     .then(json => 
                         console.log('result', json),
                         alert('Plat ajouté avec succès!'),
-                       // resetForm()
+                        resetForm()
                         )
                     .catch((err)=>{console.error("ERROR", err)})
         } catch (error) {
@@ -81,8 +103,6 @@ function FormAddProduct() {
             alert('Une erreur est survenue lors de l\'ajout du plat.');
         }
     };
-
-    
 
 
     const resetForm = () => {
@@ -93,7 +113,9 @@ function FormAddProduct() {
             imageURI: null,
             category: "",
         });
+        pickerKey.current += 1; // Incrémentation de la clé pour forcer le RNPickerSelect à se réinitialiser
     };
+
 
     const handlePriceChange = (inputValue) => {
         const convertedValue = inputValue.replace(',', '.');
@@ -104,6 +126,7 @@ function FormAddProduct() {
         }
     };
     
+    //Upload de l'image
     const handleClickUpload = async() =>{
 
         const {status} = await requestMediaLibraryPermissionsAsync()
@@ -152,51 +175,61 @@ function FormAddProduct() {
     return (
         <ScrollView style={styles.containerScrollAddProduct}>
             <View style={styles.containerFormAddProduct}>
+
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('productName')}</Text>
                 <TextInput
-                    style={styles.inputAddProduct}
-                    placeholder="Nom du produit"
+                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    placeholder={t('productName')}
+                    placeholderTextColor="#343434"
                     value={productData.title}
                     onChangeText={(text) => setProductData({ ...productData, title: text })}
                 />
+
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('description')}</Text>
                 <TextInput
-                    style={styles.inputAddProduct}
-                    placeholder="Description"
+                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    placeholder={t('description')}
+                    placeholderTextColor="#343434"
                     value={productData.description}
                     onChangeText={(text) => setProductData({ ...productData, description: text })}
                 />
+
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('category')}</Text>
                 <View style={styles.containerSelectAddForm}>
                     <RNPickerSelect
-                        items={categorys.map(category => ({ label: category.name, value: category.name }))}
+                        placeholder={{
+                            label: t('selectCategory'),
+                            value: null,
+                        }}
+                        items={Array.isArray(listCategorie) && listCategorie.map(category => ({ label: category.name, value: category.name, key: category.id }))}
                         onValueChange={(value) => setProductData({ ...productData, category: value })}
-                        style={{ inputIOS: styles.picker, inputAndroid: styles.picker }}
+                        style={{
+                            inputIOS: [styles.picker, {color: colors.colorText, borderColor: colors.colorText,placeholder:{color: "#343434"}}],
+                            inputAndroid: [styles.picker, {color: colors.colorText, borderColor: colors.colorText,placeholder:{color: "#343434"}}],
+                            borderColor: colors.colorText,
+                            placeholder: {
+                                color: '#343434', // Couleur du placeholder
+                            }
+                        }}
                         useNativeAndroidPickerStyle={false}
                         Icon={() => {
-                            return <Ionicons name="chevron-down" margin={11} size={30} color="#FF9A00" />;
+                            return <Ionicons name="chevron-down" style={{marginRight:40, marginTop:10, fontSize:30, color: colors.colorText}} />;
                         }}
                     />
                 </View>
+
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('price')}</Text>
                 <TextInput
-                    style={styles.inputAddProduct}
-                    placeholder="Prix"
+                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    placeholder={t('price')}
+                    placeholderTextColor="#343434"
                     value={productData.price}
                     onChangeText={handlePriceChange}
                     keyboardType="numeric"
                 />
-                <TouchableOpacity style={styles.buttonImageAddProduct} onPress={() => handleClickUpload() }><Text style={styles.textAddImage}>Choisir une image</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.buttonAddProduct} onPress={handleSubmit}><Text style={styles.textAddProduct}>Ajouter</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.buttonImageAddProduct, {borderColor: colors.colorText}]} onPress={() => handleClickUpload() }><Text style={[styles.textAddImage, {color: colors.colorText}]}>{t('textImage')}</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.buttonAddProduct, {backgroundColor: colors.colorAction}]} onPress={handleSubmit}><Text style={[styles.textAddProduct, {color: colors.colorText}]}>{t('add')}</Text></TouchableOpacity>
             
-                <View>
-                    <View style={styles.card}>
-                    <Image source={productData.image && productData.imageURI ? { uri: productData.imageURI } : img} style={styles.imageCard}/>
-                        <Text style={styles.textCard}>{productData.title}</Text>
-                        <View style={styles.containerBottomCard}>
-                            <Text style={styles.priceCard}>{productData.price} €</Text>
-                            <View style={styles.containerButtonCard}>
-                                <TouchableOpacity style={styles.buttonCard}><Text style={styles.textButtonCard}>+</Text></TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </View>
             </View>
         
         </ScrollView>
@@ -204,111 +237,63 @@ function FormAddProduct() {
 }
 const styles = StyleSheet.create({
     containerScrollAddProduct:{
-        height: 500
-    },
-    containerFormAddProduct: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        height: 500,
     },
     inputAddProduct: {
         borderWidth: 1,
-        borderColor: "#FF9A00",
         height: 50,
-        width: "80%",
-        borderRadius: 10,
+        borderRadius: 15,
         paddingLeft: 20,
-        marginBottom: 10,
+        marginBottom: 20,
+        marginLeft: 30,
+        marginRight: 30,
     },
     picker: {
         paddingLeft: 20,
-        width: "100%",
         borderWidth: 1,
         height: 50,
-        borderColor: "#ff9a00",
         borderRadius: 10,
-        marginBottom: 10,
-    },
-    containerSelectAddForm:{
-        width: "80%"
+        marginBottom: 20,
+        marginLeft: 30,
+        marginRight: 30
     },
     buttonImageAddProduct :{
-        width: "80%",
         borderWidth: 1,
         height: 50,
-        borderColor: "#ff9a00",
         borderRadius: 10,
         marginBottom: 10,
         display: "flex",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        marginLeft: 30,
+        marginRight: 30,
+        marginTop: 20
     },
     textAddImage:{
-        color: "#ff9a00",
+        color: "#CBCBCB",
         fontWeight: "700",
     },
     buttonAddProduct:{
-        backgroundColor:"#ff9a00",
-        width:"50%",
+        backgroundColor:"#0066FF",
         height:50,
         borderRadius:10,
         display:"flex",
         justifyContent:"center",
         alignItems:"center",
-        marginTop: 30
+        marginTop: 30,
+        marginLeft: 30,
+        marginRight: 30
     },
     textAddProduct:{
         color:"white",
         fontWeight: "700",
     },
-    card:{
-        width: 230,
-        backgroundColor : "#dcdcdc",
-        borderRadius:20,
-        marginLeft:20,
-        marginTop: 50,
-        marginBottom: 50
-    
-     },
-     imageCard:{
-        width: "100%",
-        height: 150,
-        objectFit: "cover",
-        borderTopRightRadius: 20,
-        borderTopLeftRadius: 20
-     }, 
-     textCard:{
-        textAlign: "center",
-        fontSize: 18,
-        marginBottom:20,
-        marginTop: 20,
-        height: 50,
-     },
-     containerBottomCard:{
-        display:"flex", 
-        flexDirection: "row",  
-        justifyContent: "space-around",
-        alignItems: "center",
-        borderTopWidth: 1,
-        paddingTop:20,
-        paddingBottom : 20
-     }, 
-     textButtonCard:{
-        fontSize: 18,
-        color:  "#fff"
-     }, 
-     priceCard:{
-        fontSize:18,
-     },
-     containerButtonCard:{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor : "#FF9A00",
-        width:30,
-        height: 30,
-        borderRadius: 6
-     }
+    label:{
+        color:"#cbcbcb",
+        marginLeft: 30,
+        marginBottom: 10,
+        fontSize : 14
+    }
 })
 
 export default FormAddProduct;

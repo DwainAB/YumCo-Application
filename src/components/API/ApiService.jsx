@@ -1,10 +1,10 @@
-const BASE_URL = 'https://back-wok-rosny.onrender.com/api'; 
+const BASE_URL = 'http://192.168.1.8/back-website-restaurant-1/api'; 
 
 export const apiService = {
 
-    getFoods: async () => {
+    getFoods: async ($ref_restaurant) => {
         try {
-            const response = await fetch(`${BASE_URL}/foods`);
+            const response = await fetch(`${BASE_URL}/foods/${$ref_restaurant}`);
             return await response.json();
         } catch (error) {
             throw error;
@@ -86,9 +86,20 @@ export const apiService = {
         }
     },
 
-    getAllOrdersAndClients: async (userId) => {
+    getAllOrdersAndClients: async (refRestaurant) => {
         try {
-            const response = await fetch(`${BASE_URL}/foods/orders`, {
+            const response = await fetch(`${BASE_URL}/foods/orders/${refRestaurant}`, {
+                method: 'GET',
+            });
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    getAllOrdersAndClientsData: async (refRestaurant) => {
+        try {
+            const response = await fetch(`${BASE_URL}/foods/ordersdata/${refRestaurant}`, {
                 method: 'GET',
             });
             return await response.json();
@@ -111,14 +122,10 @@ export const apiService = {
         }
     },
 
-    addCategory: async (categoryName) => {
+    deleteClient: async (clientId) => {
         try {
-            const response = await fetch(`${BASE_URL}/foods/addCategory`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name: categoryName }), // Assurez-vous que ceci est bien le format attendu par votre API
+            const response = await fetch(`${BASE_URL}/foods/deleteClientdata/${clientId}`, {
+                method: 'DELETE',
             });
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -129,9 +136,25 @@ export const apiService = {
         }
     },
 
-    getAllCategories: async () => {
+    addCategory: async (formData) => {
         try {
-            const response = await fetch(`${BASE_URL}/foods/categories`, {
+            const response = await fetch(`${BASE_URL}/foods/addCategory`, {
+                method: 'POST',
+                body: formData,
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    },
+    
+
+    getAllCategories: async (ref_restaurant) => {
+        try {
+            const response = await fetch(`${BASE_URL}/foods/categories/${ref_restaurant}`, {
                 method: 'GET',
             });
             return await response.json();
@@ -145,14 +168,17 @@ export const apiService = {
             const response = await fetch(`${BASE_URL}/foods/categories/delete/${categoryId}`, {
                 method: 'DELETE',
             });
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            return await response.json();
+            return response;
         } catch (error) {
             throw error;
         }
     },
+    
+    
 
     login: async (credentials) => {
         try {
@@ -174,12 +200,13 @@ export const apiService = {
         try {
             const response = await fetch(`${BASE_URL}/users/addUsers`, {
                 method: 'POST',
-                body: formData, // Utilisation directe du corps de la requête sans JSON.stringify
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded' // Définir le type de contenu approprié
-                }
+                    'Content-Type': 'application/json',
+                },
+                body: formData, // Utilisation directe du corps de la requête sans JSON.stringify
             });
-    
+
+
             if (!response.ok) {
                 throw new Error(`HTTP status code: ${response.status}`);
             }
@@ -194,7 +221,7 @@ export const apiService = {
                 throw new Error(responseData.message); // Lancer une erreur pour la gérer dans le composant
             }
         } catch (error) {
-            console.error('Erreur lors de l\'envoi à l\'API:', error.message);
+            console.error('Erreur lors de l\'envoi à l\'API2:', error.message);
             throw error;
         }
     },
@@ -235,16 +262,21 @@ updateUser: async (id, userData) => {
 
 
     // Récupérer tous les utilisateurs
-    getAllUsers: async () => {
+    getAllUsers: async (refRestaurant) => {
         try {
-            const response = await fetch(`${BASE_URL}/users`, {
-                method: 'GET',
-            });
-            return await response.json();
+            const response = await fetch(`${BASE_URL}/users/${refRestaurant}`);
+            if (!response.ok) {
+                throw new Error(`HTTP status code: ${response.status}`);
+            }
+            const responseData = await response.json();
+            console.log('Utilisateurs récupérés avec succès', responseData);
+            return responseData;
         } catch (error) {
+            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
             throw error;
         }
     },
+    
 
     // Récupérer un utilisateur par son ID
     getUserById: async (id) => {

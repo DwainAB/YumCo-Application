@@ -1,0 +1,101 @@
+{
+  "greeting": "Hola",
+  "changeLanguage": "Cambiar idioma",
+  "homeStat": "Estadística",
+  "titleScreen": "Inicio",
+  "lastOrder": "Último pedido",
+  "titleReview": "Opinión",
+  "updateApp": "ACT",
+  "seeMore": "Ver más ...",
+
+  "monday": "Lunes",
+  "tuesday": "Martes",
+  "wednesday": "Miércoles",
+  "thursday": "Jueves",
+  "friday": "Viernes",
+  "saturday": "Sábado",
+  "sunday": "Domingo",
+  
+  "january": "Enero",
+  "february": "Febrero",
+  "march": "Marzo",
+  "april": "Abril",
+  "may": "Mayo",
+  "june": "Junio",
+  "july": "Julio",
+  "August": "Agosto",
+  "september": "Septiembre",
+  "october": "Octubre",
+  "november": "Noviembre",
+  "december": "Diciembre",
+
+  "all": "Todo",
+
+  "titleOrder": "Pedidos",
+  "total": "Total",
+  "alertDeleteOrder": "Cliente y órdenes eliminados exitosamente",
+
+  "titleSetting": "Configuración",
+  "general": "General",
+  "language": "Idioma",
+  "personalization": "Personalización",
+  "support": "Soporte",
+  "myRestaurant": "Mi restaurante",
+  "cards": "Tarjetas",
+  "users": "Usuarios",
+  "hourly": "Por hora",
+  "security": "Seguridad",
+  "changePassword": "Cambiar contraseña",
+  "privacyPolicy": "Política de privacidad",
+
+  "interface": "Interfaz",
+  "clear": "Claro",
+  "dark": "Oscuro",
+  "themes": "Temas",
+  "default": "Por defecto",
+  "mars": "Marte",
+  "purple": "Púrpura",
+  "turquoiseBlue": "Azul turquesa",
+
+  "textSupport": "Para cualquier pregunta, nuestro equipo está disponible para ayudarte de lunes a viernes, de 10:00 a.m. a 6:00 p.m",
+
+
+  "menuManagement": "Gestión del Menú",
+  "addProduct": "Añadir un producto",
+  "editProduct": "Editar mis productos",
+  "categories": "Categorías",
+
+  "userManagement": "Gestión de usuarios",
+  "addUser": "Añadir un usuario",
+  "userList": "Lista de usuarios",
+
+  "oldPassword": "Contraseña antigua",
+  "newPassword": "Nueva contraseña",
+  "confirmPassword": "Confirmar nueva contraseña",
+  "matchPassword": "Ambas contraseñas deben corresponder",
+  "validate": "Validar",
+
+  "productName": "Nombre del producto",
+  "description": "Descripción",
+  "category": "Categoría",
+  "selectCategory": "Seleccionar una categoría",
+  "price": "Precio",
+  "textImage": "Elegir una imagen",
+  "add": "Agregar",
+  "changeImage": "Cambiar imagen",
+  "delete": "Eliminar",
+  "editItems": "Editar elementos",
+
+  "addCategory": "Añadiendo una categoría",
+  "listCategory": "Lista de categorías",
+
+  "firstname": "Nombre",
+  "lastname": "Apellido",
+  "email": "Correo electrónico",
+  "password": "Contraseña",
+  "address": "Dirección",
+  "phoneNumber": "Número de teléfono",
+  "finish": "Finalizar"
+
+
+}
