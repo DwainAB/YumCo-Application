@@ -18,7 +18,7 @@ function Dashboard (){
     useEffect(() => {
         const getLanguageFromStorage = async () => {
             try {
-                const storedLanguage = await AsyncStorage.getItem('language');
+                const storedLanguage = await AsyncStorage.getItem('selectedLanguage');
                 if (storedLanguage !== null) {
                     setLanguage(storedLanguage);
                 }
@@ -71,7 +71,7 @@ function Dashboard (){
 
                     <View style={styles.containerCategorySetting}>
                         <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('general')}</Text>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('language')}</Text><View style={styles.langageSelect}><Text style={[styles.textLangageSelect, {color: colors.colorDetail}]}>{language}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('language')}</Text><View style={styles.langageSelect}><Text style={[styles.textLangageSelect, {color: colors.colorDetail}]}>{language ? language : "Français"}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
                         <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('Personalization')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('personalization')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
                         <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('SupportScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('support')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
                     </View>

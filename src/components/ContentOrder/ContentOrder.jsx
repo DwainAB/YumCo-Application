@@ -10,9 +10,21 @@ import { useColors } from "../ColorContext/ColorContext";
 function BasketScreen() {
     const [nameRestaurant, setNameRestaurant] = useState('');
     const [ordersAndClients, setOrdersAndClients] = useState([]);
+    const [orderMethod, setOrderMehod] = useState('A emporter');
+    const [filteredOrders, setFilteredOrders] = useState([]);
     const navigation = useNavigation(); // Obtenez l'objet de navigation
     const { t } = useTranslation();
     const { colors } = useColors()
+
+
+    const filterOrdersByMethod = (method) => {
+        const filtered = ordersAndClients.filter(order => order.client_method === method);
+        setFilteredOrders(filtered);
+    };
+
+    useEffect(() => {
+        filterOrdersByMethod(orderMethod);
+    }, [ordersAndClients, orderMethod]);
 
 
     useEffect(() => {
@@ -48,6 +60,40 @@ function BasketScreen() {
             console.error('Erreur lors de la récupération des utilisateurs:', error.message);
         }
     };
+
+    useEffect(() => {
+        // Fonction pour effectuer l'appel API et vérifier s'il y a une nouvelle commande
+        const fetchAndCheckForNewOrders = async () => {
+            try {
+                const fetchedUsers = await apiService.getAllOrdersAndClients(nameRestaurant);
+                // Vérifier s'il y a une nouvelle commande
+                const isNewOrder = isNewOrderAvailable(ordersAndClients, fetchedUsers);
+                if (isNewOrder) {
+                    // Mettre à jour les commandes
+                    setOrdersAndClients(fetchedUsers);
+                    console.log('une nouvelle commande de dispo');
+                }else{
+                    console.log('pas de nouvelle commande de dispo');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des utilisateurs:', error.message);
+            }
+        };
+    
+        // Fonction pour vérifier s'il y a une nouvelle commande
+        const isNewOrderAvailable = (currentOrders, newOrders) => {
+            // Comparer le nombre de commandes actuelles avec le nombre de nouvelles commandes
+            return newOrders.length > currentOrders.length;
+        };
+    
+        // Exécuter la fonction toutes les 1 minute
+        const intervalId = setInterval(fetchAndCheckForNewOrders, 60000);
+    
+        // Nettoyer l'intervalle lors du démontage du composant
+        return () => clearInterval(intervalId);
+    }, [nameRestaurant, ordersAndClients]);
+    
+
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
@@ -88,14 +134,28 @@ function BasketScreen() {
                 </TouchableOpacity>
             </View>
             <View style={[styles.line, {borderColor: colors.colorDetail}]}></View>
+
+            
+            <View style={[styles.containerBtnStyle, {borderColor: colors.colorText}]}>
+            <View style={[orderMethod === "A emporter" ? styles.borderBlueLeft : styles.borderBlueRight, {borderColor: colors.colorAction}]}></View>
+                <TouchableOpacity style={styles.containerTextClear} onPress={() => setOrderMehod("A emporter")}>
+                    <Ionicons style={{fontSize:20, color: orderMethod === "A emporter" ? colors.colorAction : colors.colorText}} name="bag-handle-outline"/>
+                    <Text style={[styles.TextClear, {color: orderMethod === "A emporter" ? colors.colorAction : colors.colorText}]}>A emporter</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.containerTextDark} onPress={() => setOrderMehod("Livraison")}>
+                    <Ionicons style={{fontSize:20, color: orderMethod === "Livraison" ? colors.colorAction : colors.colorText}} name="bicycle-outline"/>
+                    <Text style={[styles.textDark, { color: orderMethod === "Livraison" ? colors.colorAction : colors.colorText }]}>Livraison</Text>
+                </TouchableOpacity>
+            </View>
+
                 <ScrollView>
                     <View style={styles.listOrder}>
 
-                    {Array.isArray(ordersAndClients) && ordersAndClients.map((order) => {
+                    {Array.isArray(filteredOrders) && filteredOrders.map((order) => {
                         return(
                             <TouchableOpacity onPress={() => navigation.navigate('OrderSelect', { order })} key={order.client_id} style={styles.containerOrderItem}>
                                 <View style={[styles.containerIconOrderItem , {backgroundColor: colors.colorText}]}>
-                                    <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
+                                 {order.client_method === "A emporter" ? <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/> : <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>}
                                 </View>
                                 <View style={styles.containerTextOrderItem}>
                                     <View>
@@ -180,7 +240,61 @@ const styles = StyleSheet.create({
     listOrder:{
         height: "auto", 
         marginBottom: 300
-    }
+    },
+    containerBtnStyle:{
+        borderWidth: 1,
+        marginLeft: 30,
+        marginRight:30,
+        flexDirection : "row",
+        borderRadius: 50,
+        height: 35,
+        marginBottom: 30
+    },
+    containerTextClear:{
+        width: "50%",
+        alignItems: "center", 
+        flexDirection: "row",
+        paddingLeft: 30,
+        paddingTop:5,
+        paddingBottom:5,
+    },
+    TextClear:{
+        color: "white",
+        fontSize: 16,
+        marginLeft: 15,
+        color: "#0066FF"
+    },
+    containerTextDark:{
+        width: "50%",
+        alignItems: "center",
+        flexDirection: "row",
+        paddingLeft: 30,
+        paddingBottom: 5,
+        paddingTop:5,
+    },
+    textDark:{
+        color: "white",
+        fontSize: 16,
+        marginLeft: 15
+    },
+    borderBlueLeft:{
+        position: "absolute",
+        height: 36,
+        borderWidth: 2,
+        width: "50%",
+        left: -2,
+        top: -2,
+        borderRadius: 50
+    },
+    borderBlueRight:{
+        position: "absolute",
+        height: 36,
+        borderWidth: 2,
+        width: "50%",
+        right: -2,
+        top: -2,
+        borderRadius: 50
+    },
 
     
 })

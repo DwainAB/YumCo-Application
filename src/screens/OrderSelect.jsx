@@ -42,7 +42,6 @@ function OrderSelect() {
     }
   };
 
-
   return (
     <View style={[styles.containerOrderSelect, {backgroundColor: colors.colorBackground}]}>
       <View style={styles.containerHeader}>
@@ -55,7 +54,7 @@ function OrderSelect() {
       <ScrollView>
 
         <View style={[styles.containerTicketOrder, {backgroundColor: colors.colorBorderAndBlock}]}>
-
+          <Text style={{ color: colors.colorDetail, textAlign: "center", fontSize: 20}}>{order.client_method}</Text>
           <View style={[styles.circleLeft, {backgroundColor: colors.colorBackground}]}></View>
           <View style={[styles.circleRight, {backgroundColor: colors.colorBackground}]}></View>
           <View style={styles.ContainerLineTicket}><Text style={{fontSize: 30, color: colors.colorDetail}}>- - - - - - - - - - - - - - - - -</Text></View>

@@ -38,12 +38,12 @@ function Personalization(){
     const handleColorChangeDefault = () => {
         setColors({
             colorBackground: "#161622",
-            colorBorderAndBlock: "#27273A",
+            colorBorderAndBlock: "#1E1E2D",
+            colorRed: "#FF4267",
             colorDetail: "#8B8B94",
             colorAction: "#0066FF",
             colorText: "#ffffff",
-            colorRed: "#FF4267",
-        });
+        })
         storeSelectedTheme("default");
       };
 
@@ -55,7 +55,7 @@ function Personalization(){
             colorAction: "#D76C58",
             colorText: "#ffffff",
             colorRed: "#7f5056",
-        });
+        })
         storeSelectedTheme("mars");
       };
 
@@ -68,7 +68,7 @@ function Personalization(){
             colorText: "#FFFFFF",
             colorRed: "#FF4267",
         });
-        storeSelectedTheme("blue light");
+        storeSelectedTheme("blueLight");
       };
 
     const handleColorChangePurple = () => {
@@ -131,22 +131,6 @@ function Personalization(){
         storeSelectedTheme("test");
       };
 
-
-      const checkStoredTheme = async () => {
-        try {
-            const theme = await AsyncStorage.getItem('selectedTheme');
-            if (theme) {
-                console.log("Stored theme:", theme);
-            } else {
-                console.log("No theme stored.");
-            }
-        } catch (error) {
-            console.error('Error retrieving theme:', error);
-        }
-    };
-
-    console.log('fefe',theme);
-    checkStoredTheme()
     return(
         <View style={[styles.containerPersonalization,{backgroundColor: colors.colorBackground}]}>
 

@@ -5,6 +5,7 @@ import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from "react-i18next";
 import { useColors } from "../components/ColorContext/ColorContext";
 import {useLanguage} from "../components/LanguageContext/LanguageContext"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function LanguagePage(){
     const { i18n } = useTranslation();
@@ -12,11 +13,15 @@ function LanguagePage(){
     const {colors} = useColors()
     const { language, setLanguage } = useLanguage();
 
+    
     const changeLanguage = (lng, languageSelect) => {
         setLanguage(languageSelect);
         i18n.changeLanguage(lng);
-        console.log(languageSelect);
+        console.log(languageSelect, lng);
+        AsyncStorage.setItem('selectedLanguage', languageSelect);
+        AsyncStorage.setItem('codeLanguage', lng);
       };
+    
 
     return(
         <View style={[styles.containerLanguagePage, {backgroundColor: colors.colorBackground}]}>
