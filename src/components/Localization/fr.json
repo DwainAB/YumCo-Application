@@ -8,6 +8,9 @@
     "updateApp": "MAJ",
     "seeMore": "Voir plus ...",
 
+    "listOfStatistics": "Liste des statistiques",
+    "allCommands": "Toutes les commandes",
+
     "monday": "Lundi", 
     "tuesday": "Mardi",
     "wednesday": "Mercredi",
@@ -34,6 +37,10 @@
     "titleOrder": "commandes",
     "total": "Total",
     "alertDeleteOrder": "Client et commandes supprimés avec succès",
+    "delivery": "Livraison",
+    "takeaway": "À emporter",
+    "creditCard": "Carte bancaire",
+    "cash": "Espèces",
     
     "titleSetting": "Paramètres",
     "general": "Général",

@@ -5,6 +5,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 
 const ResetPassword = () => {
@@ -16,6 +17,7 @@ const ResetPassword = () => {
     const [newPassword, setNewPassword] = useState('')
     const [oldPassword, setOldPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('');
+    const styles = useStyles()
 
     const toggleNewPasswordVisibility = () => {
         setShowNewPassword(!showNewPassword);
@@ -40,7 +42,7 @@ const ResetPassword = () => {
                 formData.append('oldPassword', oldPassword);
                 formData.append('newPassword', newPassword);
         
-                const apiUrl = `http://192.168.1.8/back-website-restaurant-1/api/users/update/${userId}`;
+                const apiUrl = `https://sasyumeats.com/api/users/update/${userId}`;
         
                 // Envoyer la requête HTTP POST avec l'ancien et le nouveau mot de passe
                 const response = await fetch(apiUrl, {
@@ -54,8 +56,9 @@ const ResetPassword = () => {
                     // Succès
                     showAlertSuccess()
                     console.log("Mot de passe mis à jour avec succès :", data.message);
-                    // Afficher un message à l'utilisateur (par exemple, avec un toast)
-                } else {
+                    setOldPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');                } else {
                     // Échec
                     showAlertMissed()
                     console.error("Erreur lors de la mise à jour du mot de passe :", data.message);
@@ -194,66 +197,72 @@ const ResetPassword = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    containerResetPassword:{
-        height: "100%",
-    },
-    containerGlobalUsers:{
-        height: "auto"
-    },
-    containerInputPassword:{
-        borderBottomWidth: 1,
-        borderColor: "#232533",
-        height: 50,
-        marginBottom: 20,
-        marginLeft: 30,
-        marginRight: 30,
-        color: "#cbcbcb",
-        alignItems: "center",
-        flexDirection: "row",
-    },
-    containerGlobalAddUser:{
-        height: 500,
-        zIndex: -1
-    }, 
-    containerButtonAddUser:{
-        backgroundColor: "#0066FF",
-        height: 50,
-        display: "flex",
-        justifyContent: "center",
-        alignItems:"center",
-        borderRadius: 20,
-        marginTop: 20,
-        marginLeft: 30,
-        marginRight: 30,
-    },
-    btnAddUser:{
-        color: "#fff",
-    },
-    labelUser:{
-        color: '#cbcbcb',
-        marginLeft: 30,
-        fontSize: 16,
-        marginBottom: 10
-    },
-    infoPassWord:{
-        color: "#cbcbcb",
-        marginLeft: 30,
-        marginTop : -15,
-        marginBottom: 30,
-        fontSize: 12
-    },
-    passwordInput:{
-        color: '#cbcbcb',
-        fontSize: 16,
-        width: 250
-    },
-    eye:{
-        position:'absolute',
-        right: 0,
-        top: '4px'
-    },
 
-})
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerResetPassword:{
+            height: "100%",
+        },
+        containerGlobalUsers:{
+            height: "auto"
+        },
+        containerInputPassword:{
+            borderBottomWidth: 1,
+            borderColor: "#232533",
+            height: 50,
+            marginBottom: 20,
+            marginLeft: 30,
+            marginRight: 30,
+            color: "#cbcbcb",
+            alignItems: "center",
+            flexDirection: "row",
+        },
+        containerGlobalAddUser:{
+            height: 500,
+            zIndex: -1
+        }, 
+        containerButtonAddUser:{
+            backgroundColor: "#0066FF",
+            height: (width > 375) ? 50 : 40,
+            display: "flex",
+            justifyContent: "center",
+            alignItems:"center",
+            borderRadius: 20,
+            marginTop: 20,
+            marginLeft: 30,
+            marginRight: 30,
+        },
+        btnAddUser:{
+            color: "#fff",
+        },
+        labelUser:{
+            color: '#cbcbcb',
+            marginLeft: 30,
+            fontSize: (width > 375) ? 16 : 14,
+            marginBottom: 10
+        },
+        infoPassWord:{
+            color: "#cbcbcb",
+            marginLeft: 30,
+            marginTop : -15,
+            marginBottom: 30,
+            fontSize: 12
+        },
+        passwordInput:{
+            color: '#cbcbcb',
+            fontSize: 16,
+            width: 250
+        },
+        eye:{
+            position:'absolute',
+            right: 0,
+            top: '4px'
+        },
+    
+    })
+}
+
 
 export default ResetPassword;

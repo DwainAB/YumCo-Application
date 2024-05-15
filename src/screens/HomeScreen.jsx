@@ -6,6 +6,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { apiService } from "../components/API/ApiService";
+import { useWindowDimensions } from "react-native";
 
 function HomeScreen(){
     const { colors } = useColors()
@@ -15,6 +16,7 @@ function HomeScreen(){
     const [nameRestaurant, setNameRestaurant] = useState('');
     const [ordersAndClients, setOrdersAndClients] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
+    const styles = useStyles()
 
     //Récupère le nom du restaurant et le stock dans nameRestaurant
     useEffect(() => {
@@ -129,11 +131,11 @@ function HomeScreen(){
 
                         <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
                             <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('titleReview')}</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Review')}><Ionicons name="chatbox-outline" style={{fontSize: 70, color: colors.colorAction}}/></TouchableOpacity>
+                            <TouchableOpacity onPress={() => navigation.navigate('Review')}><Ionicons name="chatbox-outline" style={[styles.iconStat, {color: colors.colorAction}]}/></TouchableOpacity>
                         </View>
                         <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
                             <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('updateApp')}</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('LanguagePage')}><Ionicons name="alert-circle-outline" style={{fontSize: 70, color: colors.colorAction}}/></TouchableOpacity>
+                            <TouchableOpacity onPress={() => navigation.navigate('LanguagePage')}><Ionicons name="alert-circle-outline" style={[styles.iconStat, {color: colors.colorAction}]}/></TouchableOpacity>
                         </View>
 
                     </View>
@@ -143,96 +145,104 @@ function HomeScreen(){
     )
 }
 
-const styles = StyleSheet.create({
-    containerHome:{
-        height: "100%"
-    },
-    titleScreen:{
-        fontSize: 22,
-        textAlign: 'center',
-        marginTop: 70   
-    },
-    containerStats:{
-        marginLeft: 30,
-        marginRight: 30,
-        height: 200,
-        marginTop: 50,
-        borderRadius: 15,
-        padding: 20, 
-        position: "relative"
-    },
-    containerHomeBottom:{
-        flexDirection: "row",
-        marginLeft: 30,
-        marginRight: 30,
-        justifyContent: 'space-between',
-        marginTop: 50
-    },
-    containerReview:{
-        height: 150, 
-        width: 150,
-        borderRadius: 15,
-        padding: 10,
-        position: "relative",
-        justifyContent: 'center',
-        alignItems: "center"
-    },
-    textHello:{
-        marginLeft: 30,
-        fontSize: 35,
-        fontWeight: "500",
-        marginTop: 50
-    },
-    line:{
-        borderWidth:1,
-        marginLeft: 30,
-        marginRight:30,
-        borderColor: "#232533",
-        marginTop: 40,
-    },
-    titleStats:{
-        fontSize: 20,
-        fontWeight: "500",
-    },
-    containerBtnStats:{
-        height: 40, 
-        width: 130,
-        justifyContent: "center",
-        alignItems: "center", 
-        borderRadius: 15, 
-        position: "absolute",
-        bottom: 20,
-        right: 20
-    },
-    containerTopStats:{
-        flexDirection: "row",
-        justifyContent: 'space-between'
-    },
-    containerPriceStats:{
-        height: 50,
-        width: "auto",
-        padding: 10,
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: 15
-    }, 
-    containerLastOrder:{
-        position: "absolute", 
-        bottom: 20,
-        left: 20
-    }, 
-    textLastOrder:{
-        fontSize: 16
-    },
-    titleReview:{
-        position: "absolute",
-        top: 10,
-        left: 10,
-        fontSize: 20,
-        fontWeight: "500",
-    }
+function useStyles(){
 
-})
+    const {width, height} = useWindowDimensions();
 
+    return StyleSheet.create({
+        containerHome:{
+            height: "100%"
+        },
+        titleScreen:{
+            fontSize: (width > 375) ? 22 : 18,
+            textAlign: 'center',
+            marginTop: (height > 750) ? 70 : 40,   
+        },
+        containerStats:{
+            marginLeft: 30,
+            marginRight: 30,
+            height: (width > 375) ? 200 : 150,
+            marginTop: (height > 750) ? 50 : 30,
+            borderRadius: 15,
+            padding: 20, 
+            position: "relative"
+        },
+        containerHomeBottom:{
+            flexDirection: "row",
+            marginLeft: 30,
+            marginRight: 30,
+            justifyContent: 'space-between',
+            marginTop: (height > 750) ? 50 : 30,
+        },
+        containerReview:{
+            height: (width > 375) ? 150 : 120, 
+            width: (width > 375) ? 150 : 120,
+            borderRadius: 15,
+            padding: 10,
+            position: "relative",
+            justifyContent: 'center',
+            alignItems: "center"
+        },
+        textHello:{
+            marginLeft: 30,
+            fontSize: (width > 375) ? 35 : 25,
+            fontWeight: "500",
+            marginTop: (height > 750) ? 50 : 30,
+        },
+        line:{
+            borderWidth:1,
+            marginLeft: 30,
+            marginRight:30,
+            borderColor: "#232533",
+            marginTop: (height > 750) ? 40 : 20,
+        },
+        titleStats:{
+            fontSize: (width > 375) ? 20 : 18,
+            fontWeight: "500",
+        },
+        containerBtnStats:{
+            height: (width > 375) ? 40 : 30, 
+            width: 'auto',
+            paddingHorizontal: 20,
+            justifyContent: "center",
+            alignItems: "center", 
+            borderRadius: 15, 
+            position: "absolute",
+            bottom: 20,
+            right: 20
+        },
+        containerTopStats:{
+            flexDirection: "row",
+            justifyContent: 'space-between'
+        },
+        containerPriceStats:{
+            height: (width > 375) ? 50 : 40,
+            width: "auto",
+            padding: 10,
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: 15,
+        }, 
+        containerLastOrder:{
+            position: "absolute", 
+            bottom: 20,
+            left: 20
+        }, 
+        textLastOrder:{
+            fontSize: (width > 375) ? 16 : 13,
+        },
+        titleReview:{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            fontSize: (width > 375) ? 20 : 16,
+            fontWeight: "500",
+        },
+        iconStat:{
+            fontSize: (width > 375) ? 70 : 50,
+        }
+    
+    })    
+}
 
 export default HomeScreen

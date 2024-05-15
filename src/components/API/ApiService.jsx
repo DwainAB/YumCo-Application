@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.1.8/back-website-restaurant-1/api'; 
+const BASE_URL = 'https://sasyumeats.com/api'; 
 
 export const apiService = {
 
@@ -108,21 +108,33 @@ export const apiService = {
         }
     },
 
-    deleteClient: async (clientId) => {
+    deleteClient: async (clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail,clientMethod, nameRestaurant) => {
         try {
+            console.log('reussi: ', clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail, nameRestaurant);
             const response = await fetch(`${BASE_URL}/foods/deleteClient/${clientId}`, {
                 method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    clientRefOrder: clientRefOrder,
+                    clientLastName: clientLastName,
+                    clientFirstName: clientFirstName,
+                    clientEmail: clientEmail,
+                    clientMethod: clientMethod,
+                    refRestaurant: nameRestaurant
+                })
             });
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+    
             return await response.json();
         } catch (error) {
+            console.log('error:', clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail,clientMethod, nameRestaurant);
             throw error;
         }
     },
+    
 
-    deleteClient: async (clientId) => {
+    deleteClientData: async (clientId) => {
         try {
             const response = await fetch(`${BASE_URL}/foods/deleteClientdata/${clientId}`, {
                 method: 'DELETE',
@@ -289,5 +301,26 @@ updateUser: async (id, userData) => {
             throw error;
         }
     },
+
+    resetPassword: async (email) => {
+        try {
+            const formData = new FormData();
+            formData.append('email', email);
+    
+            const response = await fetch(`${BASE_URL}/users/resetpassword`, {
+                method: 'POST',
+                body: formData,
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const responseData = await response.json();
+            return responseData;
+        } catch (error) {
+            throw error;
+        }
+    },    
 
 };

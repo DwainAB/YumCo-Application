@@ -1,5 +1,5 @@
 import React, {useState,  useEffect} from "react";
-import {View, Text, StyleSheet, TouchableOpacity, Image, TextInput, Alert} from "react-native"
+import {View, Text, StyleSheet, TouchableOpacity, Image, TextInput, Alert } from "react-native"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,12 +7,16 @@ import { EventEmitter } from "../EventEmitter/EventEmitter";
 import imgStat from "../../assets/imgStat.png"
 import imgOrder from "../../assets/imgOrder.png"
 import imgCard from "../../assets/imgCard.png"
+import { useWindowDimensions } from "react-native";
+import { apiService } from "../API/ApiService";
+import { useLoading } from "../Hooks/useLoading";
 
 export  function InfoStat({nextPage}){
+  const styles = useStyles()
 
     return(
         <View style={styles.containerInfoLogin}>
-            <View style={styles.imageInfoLogin}>
+            <View style={styles.containerImageInfoLogin}>
               <Image
                   source={imgStat} 
                   style={styles.imageInfoLogin}
@@ -33,10 +37,11 @@ export  function InfoStat({nextPage}){
 }
 
 export  function InfoOrder({nextPage}){
+    const styles = useStyles()
 
     return(
         <View style={styles.containerInfoLogin}>
-            <View style={styles.imageInfoLogin}>
+            <View style={styles.containerImageInfoLogin}>
               <Image
                 source={imgOrder} 
                 style={styles.imageInfoLogin}
@@ -56,10 +61,11 @@ export  function InfoOrder({nextPage}){
 }
 
 export  function InfoCard({nextPage}){
+    const styles = useStyles()
 
     return(
         <View style={styles.containerInfoLogin}>
-            <View style={styles.imageInfoLogin}>
+            <View style={styles.containerImageInfoLogin}>
               <Image
                 source={imgCard} 
                 style={styles.imageInfoLogin}
@@ -79,257 +85,292 @@ export  function InfoCard({nextPage}){
 }
 
 export function FormLogin() {
-    const navigation = useNavigation();
-    const [showPassword, setShowPassword] = useState(false);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
-    const [storageData, setStorageData] = useState(null);
+  const navigation = useNavigation();
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [storageData, setStorageData] = useState(null);
+  const styles = useStyles();
+  const { startLoading, stopLoading } = useLoading();
 
-    useEffect(() => {
-        const getStorageData = async () => {
+  useEffect(() => {
+      const getStorageData = async () => {
           try {
-            const keys = await AsyncStorage.getAllKeys();
-            const data = await AsyncStorage.multiGet(keys);
-            setStorageData(keys);
+              const keys = await AsyncStorage.getAllKeys();
+              const data = await AsyncStorage.multiGet(keys);
+              setStorageData(keys);
           } catch (error) {
-            console.error("Erreur lors de la récupération des données AsyncStorage :", error);
+              console.error("Erreur lors de la récupération des données AsyncStorage :", error);
           }
-        };
-    
-        getStorageData();
-      }, []);
+      };
 
-    console.log("storage: ", storageData);
+      getStorageData();
+  }, []);
 
-    const showAlert = () => {
+  console.log("storage: ", storageData);
+
+  const showAlert = () => {
       Alert.alert(
-        'Erreur',
-        'Email ou mot de passe incorrect.',
-        [
-          {
-            text: 'Fermer',
-            onPress: () => console.log('Alerte fermée'),
-            style: 'cancel',
-          },
-        ],
-        { cancelable: true } // Permet de fermer l'alerte en touchant à l'extérieur de celle-ci
+          'Erreur',
+          'Email ou mot de passe incorrect.',
+          [
+              {
+                  text: 'Fermer',
+                  onPress: () => console.log('Alerte fermée'),
+                  style: 'cancel',
+              },
+          ],
+          { cancelable: true }
       );
-    };
-  
-    const handleLogin = async () => {
+  };
+
+  const handleLogin = async () => {
       try {
-        const response = await fetch("http://192.168.1.8/back-website-restaurant-1/api/users/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-          }),
-        });
-  
-        const data = await response.json();
-        console.log(data);
-  
-        if (data.token) {
-          EventEmitter.dispatch("loginSuccess");
-          await AsyncStorage.setItem("token", data.token);
-          await AsyncStorage.setItem("user", JSON.stringify(data.user));
-          setErrorMessage(""); // Réinitialiser le message d'erreur
-          navigation.navigate("MainApp");
-        } else {
-          setErrorMessage(data.error || "Une erreur est survenue");
-          showAlert()
-        }
+          const response = await fetch("https://sasyumeats.com/api/users/login", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                  email: email,
+                  password: password,
+              }),
+          });
+
+          const data = await response.json();
+          console.log(data);
+
+          if (data.token) {
+              EventEmitter.dispatch("loginSuccess");
+              await AsyncStorage.setItem("token", data.token);
+              await AsyncStorage.setItem("user", JSON.stringify(data.user));
+              setErrorMessage(""); // Réinitialiser le message d'erreur
+              navigation.navigate("MainApp");
+              startLoading();
+              stopLoading();
+          } else {
+              setErrorMessage(data.error || "Une erreur est survenue");
+              showAlert();
+          }
       } catch (error) {
-        console.error("Erreur lors de la connexion : ", error);
-        setErrorMessage("Erreur de connexion");
+          console.error("Erreur lors de la connexion : ", error);
+          setErrorMessage("Erreur de connexion");
       }
-    };
- 
-    const togglePasswordVisibility = () => {
+  };
+
+  const togglePasswordVisibility = () => {
       setShowPassword(!showPassword);
-    };
-  
-  
-    return (
+  };
+
+  const resetPassword = async () => {
+      if (email) {
+          try {
+              const response = await apiService.resetPassword(email);
+              alert('Votre mot de passe vous a été envoyé par email !');
+              console.log('Nouveau mot de passe :', response.password); // Facultatif, pour déboguer
+          } catch (error) {
+              console.error("Erreur lors de la réinitialisation du mot de passe : ", error);
+              alert('Erreur lors de la réinitialisation du mot de passe');
+          }
+      } else {
+          alert('Veuillez renseigner votre email !');
+      }
+  };
+
+  return (
       <View style={styles.containerLogin}>
           <Text style={styles.titleLogin}>Connexion</Text>
-          
+
           <Text style={styles.titleInput}>Email</Text>
           <View style={styles.containerInputLogin}>
-            <Ionicons color={"#707070"} marginRight={15} size={20} name="mail-outline"/>
-            <TextInput
-                style={styles.inputLogin}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Entrez votre email"
-                name="email"
-                placeholderTextColor="#343434"
-            />
+              <Ionicons color={"#707070"} marginRight={15} size={20} name="mail-outline"/>
+              <TextInput
+                  style={styles.inputLogin}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Entrez votre email"
+                  name="email"
+                  placeholderTextColor="#343434"
+              />
           </View>
 
           <Text style={styles.titleInput}>Mot de passe</Text>
           <View style={styles.containerInputLogin}>
-            <Ionicons marginRight={15} name='key-outline' size={20} color={'#707070'}/>
-            <TextInput
-                style={styles.inputLogin}
-                placeholder="******"
-                placeholderTextColor="#343434"
-                secureTextEntry={!showPassword}
-                onChangeText={setPassword}
-                name='password'
-            />
-            <TouchableOpacity style={styles.eye} onPress={togglePasswordVisibility}>
-              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={'#a2a2a7'} />
-            </TouchableOpacity>  
+              <Ionicons marginRight={15} name='key-outline' size={20} color={'#707070'}/>
+              <TextInput
+                  style={styles.inputLogin}
+                  placeholder="******"
+                  placeholderTextColor="#343434"
+                  secureTextEntry={!showPassword}
+                  onChangeText={setPassword}
+                  name='password'
+              />
+              <TouchableOpacity style={styles.eye} onPress={togglePasswordVisibility}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={'#a2a2a7'} />
+              </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}><Text style={styles.textBtnNextInfoLogin}>Connexion</Text></TouchableOpacity>     
+          <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}><Text style={styles.textBtnNextInfoLogin}>Connexion</Text></TouchableOpacity>
+          <Text onPress={resetPassword} style={styles.textResetPassword}>Mot de passe oublié ?</Text>
       </View>
-    );
-  }
+  );
+}
 
-const styles = StyleSheet.create({
-  btnNextInfoLogin:{
-    marginLeft: 20,
-    marginRight: 20,
-    height: 55,
-    backgroundColor: "#0066FF",
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  textBtnNextInfoLogin:{
-    color:  "white",
-    fontSize: 18
-  },
-  titleInfoLogin:{
-    color: "white",
-    textAlign: "center",
-    fontSize: 28,
-    fontWeight: "700"
-  },
-  descriptionInfoLogin:{
-    color:'#7E848D',
-    fontSize: 16,
-    textAlign:"center",
-    marginBottom: 30,
-    marginTop: 15
-  },
-  imageInfoLogin:{
-    marginTop: 70,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  containerLineInfoLogin:{
-    marginBottom: 36,
-    marginTop: 70,
-    flexDirection: "row",
-    justifyContent: "center"
-  },
-  lineInfoStat1:{
-    width: 25,
-    height: 6,
-    backgroundColor: "#0066ff",
-    borderRadius: 3
-  },
-  lineInfoStat2:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-    marginLeft: 10
-  },
-  lineInfoStat3:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-    marginLeft: 10
-  },
-  lineInfoOrder2:{
-    width: 25,
-    height: 6,
-    backgroundColor: "#0066ff",
-    borderRadius: 3,
-    marginLeft: 10
-  },
-  lineInfoOrder1:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-  },
-  lineInfoOrder3:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-    marginLeft: 10
-  },
-  lineInfoCard3:{
-    width: 25,
-    height: 6,
-    backgroundColor: "#0066ff",
-    borderRadius: 3,
-    marginLeft: 10
-  },
-  lineInfoCard1:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-  },
-  lineInfoCard2:{
-    width:6, 
-    height:6, 
-    backgroundColor: "#707070",
-    borderRadius: 50,
-    marginLeft: 10
-  },
-  titleLogin:{
-    color: "white",
-    fontSize: 40,
-    marginTop: 150,
-    marginLeft:20,
-    fontWeight:"500",
-    marginBottom: 40
-  },
-  containerInputLogin:{
-    flexDirection:'row',
-    marginLeft: 20,
-    marginRight:20,
-    marginBottom: 20,
-    paddingBottom: 10,
-    borderBottomWidth:1,
-    borderColor: "#232533"
-  },
-  titleInput:{
-    color: "#707070",
-    marginLeft:20,
-    marginBottom: 15,
-    fontSize: 16
-  },
-  inputLogin:{
-    width: 250,
-    color: "white"
-  },
-  eye:{
-    position: 'absolute',
-    right: 0,
-    top: 0
-  },
-  btnLogin:{
-    marginLeft: 20,
-    marginRight: 20,
-    marginTop: 40,
-    height: 55,
-    backgroundColor: "#0066FF",
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center" 
+  function useStyles(){
+    const {width, height} = useWindowDimensions();
+  
+    return StyleSheet.create({
+      btnNextInfoLogin:{
+        marginHorizontal: 20,
+        height: (width > 375) ? 55 : 40,
+        backgroundColor: "#0066FF",
+        borderRadius: 15,
+        alignItems: "center",
+        justifyContent: "center"
+      },
+      textBtnNextInfoLogin:{
+        color:  "white",
+        fontSize: (width > 375) ? 18 : 14
+      },
+      titleInfoLogin:{
+        color: "white",
+        textAlign: "center",
+        fontSize: (width > 375) ? 28 : 24,
+        fontWeight: "700",
+      },
+      descriptionInfoLogin:{
+        color:'#7E848D',
+        fontSize: (width > 375) ? 16 : 13,
+        textAlign:"center",
+        marginBottom: 30,
+        marginTop: 15
+      },
+      containerImageInfoLogin:{
+        marginTop: (height > 800) ? 70 : 50,
+        justifyContent: "center",
+        alignItems: "center", 
+        height: (height > 800) ? 400 : 250,
+      },
+      imageInfoLogin:{
+        height: (width > 375) ? 400 : 200,
+        width: 300, 
+        resizeMode: "contain"
+      },
+      containerLineInfoLogin:{
+        marginBottom: 36,
+        marginTop: 30,
+        flexDirection: "row",
+        justifyContent: "center"
+      },
+      lineInfoStat1:{
+        width: 25,
+        height: 6,
+        backgroundColor: "#0066ff",
+        borderRadius: 3
+      },
+      lineInfoStat2:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+        marginLeft: 10
+      },
+      lineInfoStat3:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+        marginLeft: 10
+      },
+      lineInfoOrder2:{
+        width: 25,
+        height: 6,
+        backgroundColor: "#0066ff",
+        borderRadius: 3,
+        marginLeft: 10
+      },
+      lineInfoOrder1:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+      },
+      lineInfoOrder3:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+        marginLeft: 10
+      },
+      lineInfoCard3:{
+        width: 25,
+        height: 6,
+        backgroundColor: "#0066ff",
+        borderRadius: 3,
+        marginLeft: 10
+      },
+      lineInfoCard1:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+      },
+      lineInfoCard2:{
+        width:6, 
+        height:6, 
+        backgroundColor: "#707070",
+        borderRadius: 50,
+        marginLeft: 10
+      },
+      titleLogin:{
+        color: "white",
+        fontSize: (width > 375) ? 40 : 25,
+        marginTop: 150,
+        marginLeft:20,
+        fontWeight:"500",
+        marginBottom: 40
+      },
+      containerInputLogin:{
+        flexDirection:'row',
+        marginLeft: 20,
+        marginRight:20,
+        marginBottom: 20,
+        paddingBottom: 10,
+        borderBottomWidth:1,
+        borderColor: "#232533"
+      },
+      titleInput:{
+        color: "#707070",
+        marginLeft:20,
+        marginBottom: 15,
+        fontSize: (width > 375) ? 16 : 13
+      },
+      inputLogin:{
+        width: 250,
+        color: "white"
+      },
+      eye:{
+        position: 'absolute',
+        right: 0,
+        top: 0
+      },
+      btnLogin:{
+        marginLeft: 20,
+        marginRight: 20,
+        marginTop: 40,
+        height: (width > 375) ? 55 : 40,
+        backgroundColor: "#0066FF",
+        borderRadius: 15,
+        alignItems: "center",
+        justifyContent: "center" 
+      },
+      textResetPassword:{
+        textAlign: "center", 
+        fontSize: (width > 375) ? 16 : 14,
+        color : "#0066FF", 
+        marginTop: 15
+      }
+    })
+    
+    
   }
-})
-

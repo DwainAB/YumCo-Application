@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView} from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform} from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiService } from "../API/ApiService";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
+import { registerForPushNotificationsAsync, sendNotification } from '../Notifications/NotificationsOrder';
+import { useWindowDimensions } from "react-native";
 
 function BasketScreen() {
+    const [expoPushToken, setExpoPushToken] = useState('')
     const [nameRestaurant, setNameRestaurant] = useState('');
     const [ordersAndClients, setOrdersAndClients] = useState([]);
     const [orderMethod, setOrderMehod] = useState('A emporter');
@@ -15,12 +18,23 @@ function BasketScreen() {
     const navigation = useNavigation(); // Obtenez l'objet de navigation
     const { t } = useTranslation();
     const { colors } = useColors()
+    const styles = useStyles()
+
 
 
     const filterOrdersByMethod = (method) => {
         const filtered = ordersAndClients.filter(order => order.client_method === method);
         setFilteredOrders(filtered);
     };
+
+    useEffect(() => {
+        registerForPushNotificationsAsync()
+            .then(token => {
+                console.log('token notification :', token);
+                setExpoPushToken(token);
+            })
+            .catch((err) => console.log(err));
+    }, []);
 
     useEffect(() => {
         filterOrdersByMethod(orderMethod);
@@ -58,7 +72,7 @@ function BasketScreen() {
             setOrdersAndClients(fetchedUsers); 
         } catch (error) {
             console.error('Erreur lors de la récupération des utilisateurs:', error.message);
-        }
+        } 
     };
 
     useEffect(() => {
@@ -71,6 +85,7 @@ function BasketScreen() {
                 if (isNewOrder) {
                     // Mettre à jour les commandes
                     setOrdersAndClients(fetchedUsers);
+                    sendNotification(expoPushToken)
                     console.log('une nouvelle commande de dispo');
                 }else{
                     console.log('pas de nouvelle commande de dispo');
@@ -122,7 +137,7 @@ function BasketScreen() {
         // Formater le prix avec deux décimales et le signe euro
         return roundedPrice.toFixed(2);
     };
-    
+
 
     return(
         <View style={styles.containerScreenBasket}>
@@ -140,11 +155,11 @@ function BasketScreen() {
             <View style={[orderMethod === "A emporter" ? styles.borderBlueLeft : styles.borderBlueRight, {borderColor: colors.colorAction}]}></View>
                 <TouchableOpacity style={styles.containerTextClear} onPress={() => setOrderMehod("A emporter")}>
                     <Ionicons style={{fontSize:20, color: orderMethod === "A emporter" ? colors.colorAction : colors.colorText}} name="bag-handle-outline"/>
-                    <Text style={[styles.TextClear, {color: orderMethod === "A emporter" ? colors.colorAction : colors.colorText}]}>A emporter</Text>
+                    <Text style={[styles.TextClear, {color: orderMethod === "A emporter" ? colors.colorAction : colors.colorText}]}>{t('takeaway')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.containerTextDark} onPress={() => setOrderMehod("Livraison")}>
                     <Ionicons style={{fontSize:20, color: orderMethod === "Livraison" ? colors.colorAction : colors.colorText}} name="bicycle-outline"/>
-                    <Text style={[styles.textDark, { color: orderMethod === "Livraison" ? colors.colorAction : colors.colorText }]}>Livraison</Text>
+                    <Text style={[styles.textDark, { color: orderMethod === "Livraison" ? colors.colorAction : colors.colorText }]}>{t('delivery')}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -176,127 +191,133 @@ function BasketScreen() {
     )
 }
 
-const styles = StyleSheet.create({
-    containerHeaderSetting:{
-        justifyContent: "space-between", 
-        flexDirection:"row",
-        marginTop : 60,
-        paddingRight: 35,
-        paddingLeft : 35,
-        alignItems:'center',
-    },
-    textHeaderSetting:{
-        fontSize: 22,
-        color: "white",
-    },
-    containerBtnLogout:{
-        height:45,
-        width: 45,
-        alignItems: "center",
-        borderRadius: 50,
-        backgroundColor: "#1E1E2D",
-        justifyContent: "center",
-        paddingLeft: 5
-    },
-    containerEmpty:{
-        width: "10%",
-    },
-    line:{
-        borderWidth:1,
-        marginLeft: 30,
-        marginRight:30,
-        marginTop: 40,
-        marginBottom: 40
-    },
-    containerOrderItem:{
-        flexDirection: "row",
-        marginRight: 30,
-        marginLeft: 30,
-        marginBottom:22
-    },
-    containerTextOrderItem:{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center" ,
-        width: "80%"
-    },
-    containerIconOrderItem:{
-        backgroundColor: "white",
-        width: 50,
-        height: 50,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 25,
-        marginRight: 20
-    },
-    textOrderItem:{
-        fontSize: 18,
-        color:"white"
-    },
-    textOrderItemName:{
-        color:"#A2A2A7",
-        fontSize: 14
-    },
-    listOrder:{
-        height: "auto", 
-        marginBottom: 300
-    },
-    containerBtnStyle:{
-        borderWidth: 1,
-        marginLeft: 30,
-        marginRight:30,
-        flexDirection : "row",
-        borderRadius: 50,
-        height: 35,
-        marginBottom: 30
-    },
-    containerTextClear:{
-        width: "50%",
-        alignItems: "center", 
-        flexDirection: "row",
-        paddingLeft: 30,
-        paddingTop:5,
-        paddingBottom:5,
-    },
-    TextClear:{
-        color: "white",
-        fontSize: 16,
-        marginLeft: 15,
-        color: "#0066FF"
-    },
-    containerTextDark:{
-        width: "50%",
-        alignItems: "center",
-        flexDirection: "row",
-        paddingLeft: 30,
-        paddingBottom: 5,
-        paddingTop:5,
-    },
-    textDark:{
-        color: "white",
-        fontSize: 16,
-        marginLeft: 15
-    },
-    borderBlueLeft:{
-        position: "absolute",
-        height: 36,
-        borderWidth: 2,
-        width: "50%",
-        left: -2,
-        top: -2,
-        borderRadius: 50
-    },
-    borderBlueRight:{
-        position: "absolute",
-        height: 36,
-        borderWidth: 2,
-        width: "50%",
-        right: -2,
-        top: -2,
-        borderRadius: 50
-    },
 
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerHeaderSetting:{
+            justifyContent: "space-between", 
+            flexDirection:"row",
+            marginTop : (width > 375) ? 60 : 40,
+            paddingRight: 35,
+            paddingLeft : 35,
+            alignItems:'center',
+        },
+        textHeaderSetting:{
+            fontSize: (width > 375) ? 22 : 18,
+            color: "white",
+        },
+        containerBtnLogout:{
+            height:(width > 375) ? 45 : 35,
+            width: (width > 375) ? 45 : 35,
+            alignItems: "center",
+            borderRadius: 50,
+            backgroundColor: "#1E1E2D",
+            justifyContent: "center",
+            paddingLeft: 5
+        },
+        containerEmpty:{
+            width: "10%",
+        },
+        line:{
+            borderWidth:1,
+            marginLeft: 30,
+            marginRight:30,
+            marginTop: (width > 375) ? 40 : 20,
+            marginBottom: 40
+        },
+        containerOrderItem:{
+            flexDirection: "row",
+            marginRight: 30,
+            marginLeft: 30,
+            marginBottom:22
+        },
+        containerTextOrderItem:{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center" ,
+            width: "80%"
+        },
+        containerIconOrderItem:{
+            backgroundColor: "white",
+            width: (width > 375) ? 50 : 40,
+            height: (width > 375) ? 50 : 40,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 25,
+            marginRight: 20
+        },
+        textOrderItem:{
+            fontSize: (width > 375) ? 18 : 16,
+            color:"white"
+        },
+        textOrderItemName:{
+            color:"#A2A2A7",
+            fontSize: (width > 375) ? 14 : 12,
+        },
+        listOrder:{
+            height: "auto", 
+            marginBottom: 300
+        },
+        containerBtnStyle:{
+            borderWidth: 1,
+            marginLeft: 30,
+            marginRight:30,
+            flexDirection : "row",
+            borderRadius: 50,
+            height: 35,
+            marginBottom: 30
+        },
+        containerTextClear:{
+            width: "50%",
+            alignItems: "center", 
+            flexDirection: "row",
+            paddingLeft: 30,
+            paddingTop:5,
+            paddingBottom:5,
+        },
+        TextClear:{
+            color: "white",
+            fontSize: (width > 375) ? 16 : 13,
+            marginLeft: 15,
+            color: "#0066FF"
+        },
+        containerTextDark:{
+            width: "50%",
+            alignItems: "center",
+            flexDirection: "row",
+            paddingLeft: 30,
+            paddingBottom: 5,
+            paddingTop:5,
+        },
+        textDark:{
+            color: "white",
+            fontSize: (width > 375) ? 16 : 13,
+            marginLeft: 15
+        },
+        borderBlueLeft:{
+            position: "absolute",
+            height: 36,
+            borderWidth: 2,
+            width: "50%",
+            left: -2,
+            top: -2,
+            borderRadius: 50
+        },
+        borderBlueRight:{
+            position: "absolute",
+            height: 36,
+            borderWidth: 2,
+            width: "50%",
+            right: -2,
+            top: -2,
+            borderRadius: 50
+        },
     
-})
+        
+    })
+}
+
 
 export default BasketScreen

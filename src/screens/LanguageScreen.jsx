@@ -6,12 +6,14 @@ import { useTranslation } from "react-i18next";
 import { useColors } from "../components/ColorContext/ColorContext";
 import {useLanguage} from "../components/LanguageContext/LanguageContext"
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useWindowDimensions } from "react-native";
 
 function LanguagePage(){
     const { i18n } = useTranslation();
     const { t } = useTranslation();
     const {colors} = useColors()
     const { language, setLanguage } = useLanguage();
+    const styles = useStyles()
 
     
     const changeLanguage = (lng, languageSelect) => {
@@ -111,75 +113,81 @@ function LanguagePage(){
     )
 }
 
-const styles = StyleSheet.create({
-    containerLanguagePage:{
-        height: "100%"
-    },
-    containerHeaderLanguage:{
-        justifyContent: "space-between", 
-        flexDirection:"row",
-        marginTop : 60,
-        paddingRight: 35,
-        paddingLeft : 35,
-        alignItems:'center',
-    },
-    textHeaderLanguage:{
-        fontSize: 22,
-        color: "white",
-    },
-    containerBtnBack:{
-        height:45,
-        width: 45,
-        alignItems: "center",
-        borderRadius: 50,
-        backgroundColor: "#1E1E2D",
-        justifyContent: "center",
-    },
-    containerEmpty:{
-        width: "10%",
-    },
-    line:{
-        borderWidth:1,
-        marginLeft: 30,
-        marginRight:30,
-        borderColor: "#232533",
-        marginTop: 40,
-        marginBottom: 40
-    },
-    containerImageCountry:{
-        marginRight: 20
-    },
-    containerCountry:{
-        marginLeft: 30,
-        marginRight:30, 
-        flexDirection: "row",
-        alignItems: "center",
-        borderBottomWidth: 1,
-        borderColor : "#F4F4F4",
-        paddingBottom: 15,
-        marginBottom: 22,
-        position: "relative"
-    }, 
-    titleCountry:{
-        fontSize: 18, 
-        color: "white",
-        fontWeight : "600"
-    },
-    image:{
-        width: 60,
-        height: 60
-    },
-    containerCheck:{
-        position: "absolute",
-        right: 15,
-        top: 15,
-        borderRadius: 15,
-        padding: 5
-    },
-    listLanguage:{
-        height: "auto",
-        marginBottom: 100
-    }
-})
+
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerLanguagePage:{
+            height: "100%"
+        },
+        containerHeaderLanguage:{
+            justifyContent: "space-between", 
+            flexDirection:"row",
+            marginTop : 60,
+            paddingRight: 35,
+            paddingLeft : 35,
+            alignItems:'center',
+        },
+        textHeaderLanguage:{
+            fontSize: 22,
+            color: "white",
+        },
+        containerBtnBack:{
+            height:45,
+            width: 45,
+            alignItems: "center",
+            borderRadius: 50,
+            backgroundColor: "#1E1E2D",
+            justifyContent: "center",
+        },
+        containerEmpty:{
+            width: "10%",
+        },
+        line:{
+            borderWidth:1,
+            marginLeft: 30,
+            marginRight:30,
+            borderColor: "#232533",
+            marginTop: 40,
+            marginBottom: 40
+        },
+        containerImageCountry:{
+            marginRight: 20
+        },
+        containerCountry:{
+            marginLeft: 30,
+            marginRight:30, 
+            flexDirection: "row",
+            alignItems: "center",
+            borderBottomWidth: 1,
+            borderColor : "#F4F4F4",
+            paddingBottom: 15,
+            marginBottom: 22,
+            position: "relative"
+        }, 
+        titleCountry:{
+            fontSize: (width > 375) ? 18 : 15, 
+            color: "white",
+            fontWeight : "600"
+        },
+        image:{
+            width: (width > 375) ? 60 : 40,
+            height: (width > 375) ? 60 : 40
+        },
+        containerCheck:{
+            position: "absolute",
+            right: 15,
+            top: (width > 375) ? 15 : 7,
+            borderRadius: 15,
+            padding: 5
+        },
+        listLanguage:{
+            height: "auto",
+            marginBottom: 100
+        }
+    })
+    
+}
 
 export default LanguagePage

@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system';
 import { useColors } from "../ColorContext/ColorContext";
 import ConfirmDialog from "../ModalAction/ModalAction";
 import { useTranslation } from 'react-i18next';
+import { useWindowDimensions } from "react-native";
 
 
 function FormUpdate() {
@@ -18,6 +19,7 @@ function FormUpdate() {
     const [listProduct, setListProduct] = useState([])
     const [nameRestaurant, setNameRestaurant] = useState('')
     const { t } = useTranslation();
+    const styles = useStyles()
 
 
     //Récupération des catégories
@@ -219,126 +221,141 @@ function FormUpdate() {
     
     return (
         <View style={styles.container}>
-            
-        <ScrollView horizontal={true}  style={styles.containerScroll}>
+            <ScrollView>
+                <View style={styles.containerFormProduct}>
+                <ScrollView horizontal={true}  style={styles.containerScroll}>
 
-          <View style={styles.listProduct}>
-            {Array.isArray(listProduct) && listProduct.map((food) => (
-              <View style={styles.productInfo} key={food.id}>
+                <View style={styles.listProduct}>
+                    {Array.isArray(listProduct) && listProduct.map((food) => (
+                    <View style={styles.productInfo} key={food.id}>
 
-                <TextInput
-                  style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
-                  placeholder={food.title}
-                  value={editableFoods[food.id]?.title !== undefined ? editableFoods[food.id]?.title : food.title}
-                  onChangeText={(newValue) => handleInputChange(food.id, newValue, 'title')}
-                />
-                <TextInput
-                  style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
-                  placeholder="description du plat"
-                  value={editableFoods[food.id]?.description !== undefined ? editableFoods[food.id]?.description : food.description}
-                  onChangeText={(newValue) => handleInputChange(food.id, newValue, 'description')}
-                />
-                <TextInput
-                  style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
-                  placeholder="prix du plat"
-                  value={editableFoods[food.id]?.price !== undefined ? editableFoods[food.id]?.price : food.price}
-                  onChangeText={(newValue) => handleInputChange(food.id, newValue, 'price')}
-                  keyboardType="numeric"
-                />
+                        <TextInput
+                        style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
+                        placeholder={food.title}
+                        value={editableFoods[food.id]?.title !== undefined ? editableFoods[food.id]?.title : food.title}
+                        onChangeText={(newValue) => handleInputChange(food.id, newValue, 'title')}
+                        />
+                        <TextInput
+                        style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
+                        placeholder="description du plat"
+                        value={editableFoods[food.id]?.description !== undefined ? editableFoods[food.id]?.description : food.description}
+                        onChangeText={(newValue) => handleInputChange(food.id, newValue, 'description')}
+                        />
+                        <TextInput
+                        style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
+                        placeholder="prix du plat"
+                        value={editableFoods[food.id]?.price !== undefined ? editableFoods[food.id]?.price : food.price}
+                        onChangeText={(newValue) => handleInputChange(food.id, newValue, 'price')}
+                        keyboardType="numeric"
+                        />
 
-                <RNPickerSelect
-                    placeholder={{
-                        label:t('selectCategory'),
-                        value: null,
-                    }}
-                    value={editableFoods[food.id]?.category !== undefined ? editableFoods[food.id]?.category : food.category}
-                    items={Array.isArray(listCategorie) && listCategorie.map(category => ({ label: category.name, value: category.name, key: category.id }))}
-                    onValueChange={(value) => handleInputChange(food.id, value, 'category')}
-                    style={{
-                        inputIOS: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
-                        inputAndroid: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
-                        borderColor: colors.colorText
-                    }}
-                    useNativeAndroidPickerStyle={false}
-                    Icon={() => {
-                        return <Ionicons name="chevron-down" style={{marginRight:20, marginTop:10, fontSize:30, color: colors.colorText}} />;
-                    }}
-                />
+                        <RNPickerSelect
+                            placeholder={{
+                                label:t('selectCategory'),
+                                value: null,
+                            }}
+                            value={editableFoods[food.id]?.category !== undefined ? editableFoods[food.id]?.category : food.category}
+                            items={Array.isArray(listCategorie) && listCategorie.map(category => ({ label: category.name, value: category.name, key: category.id }))}
+                            onValueChange={(value) => handleInputChange(food.id, value, 'category')}
+                            style={{
+                                inputIOS: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
+                                inputAndroid: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
+                                borderColor: colors.colorText
+                            }}
+                            useNativeAndroidPickerStyle={false}
+                            Icon={() => {
+                                return <Ionicons name="chevron-down" style={[styles.iconInput ,{marginRight:20, fontSize:30, color: colors.colorText}]} />;
+                            }}
+                        />
 
-                <TouchableOpacity style={[styles.fileUploadButton, {borderColor: colors.colorText}]} onPress={() => handleClickUpload(food.id)}>
-                    <Text style={[styles.textUpdateImage, { color: colors.colorText }]}>{t('changeImage')}</Text>
-                </TouchableOpacity>
+                        <TouchableOpacity style={[styles.fileUploadButton, {borderColor: colors.colorText}]} onPress={() => handleClickUpload(food.id)}>
+                            <Text style={[styles.textUpdateImage, { color: colors.colorText }]}>{t('changeImage')}</Text>
+                        </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.deleteButton, {backgroundColor: colors.colorRed}]} onPress={() => { handleDeleteFood(food.id)}}>
-                  <Text style={[styles.textButtonDelete, {color: colors.colorText}]}>{t('delete')}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+                        <TouchableOpacity style={[styles.deleteButton, {backgroundColor: colors.colorRed}]} onPress={() => { handleDeleteFood(food.id)}}>
+                        <Text style={[styles.textButtonDelete, {color: colors.colorText}]}>{t('delete')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    ))}
+                </View>
 
+                </ScrollView>
+                <TouchableOpacity onPress={handleUpdateAllFoods} style={[styles.containerbtnUpdate, {backgroundColor: colors.colorAction}]}><Text style={[styles.textButtonUpdate, {color: colors.colorText}]}>{t('editItems')}</Text></TouchableOpacity>
+            </View>
         </ScrollView>
-        <TouchableOpacity onPress={handleUpdateAllFoods} style={[styles.containerbtnUpdate, {backgroundColor: colors.colorAction}]}><Text style={[styles.textButtonUpdate, {color: colors.colorText}]}>{t('editItems')}</Text></TouchableOpacity>
       </View>
     )
 }
-const styles = StyleSheet.create({
-    container:{
-        marginLeft: 30,
-        marginRight: 30,
-        justifyContent: "center",
-    },
-    listProduct:{
-        flexDirection: "row",
-        gap: 100
-    },
-    productInfo:{
-        justifyContent: "center",
-        alignItems: "center", 
-        width: 300
-    },
-    input: {
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 15,
-        paddingLeft: 20,
-        marginBottom: 20,
-        width: "100%"
-    },
-    fileUploadButton:{
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 15,
-        marginBottom: 20,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%"
-    },
-    deleteButton:{
-        height: 50,
-        borderRadius: 15,
-        marginBottom: 20,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%", 
-    },
-    textButtonDelete:{
-        fontWeight: "500"
-    },
-    containerbtnUpdate:{
-        height: 50,
-        borderRadius: 15,
-        marginBottom: 20,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%", 
-        marginTop: 30
-    }, 
-    textButtonUpdate:{
-        fontWeight: "500"
-    }
-})
+
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        container:{
+            marginLeft: 30,
+            marginRight: 30,
+            justifyContent: "center",
+        },
+        listProduct:{
+            flexDirection: "row",
+            gap: 100
+        },
+        productInfo:{
+            justifyContent: "center",
+            alignItems: "center", 
+            width: 300
+        },
+        input: {
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 15,
+            paddingLeft: 20,
+            marginBottom: 20,
+            width: 250
+        },
+        fileUploadButton:{
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 15,
+            marginBottom: 20,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: 250
+        },
+        deleteButton:{
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 15,
+            marginBottom: 20,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: 250, 
+        },
+        textButtonDelete:{
+            fontWeight: "500"
+        },
+        containerbtnUpdate:{
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 15,
+            marginBottom: 20,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%", 
+            marginTop: (width > 375) ? 30 : 15
+        }, 
+        textButtonUpdate:{
+            fontWeight: "500"
+        },
+        iconInput:{
+            marginTop: (width > 375) ? 10 : 5
+        },
+        containerFormProduct:{
+            marginBottom: 200
+        }
+    })
+}
+
 
 export default FormUpdate;

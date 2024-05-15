@@ -7,12 +7,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { apiService } from "../components/API/ApiService";
 import { useTranslation } from 'react-i18next';
+import { useWindowDimensions } from "react-native";
 
 
 function CategoriesScreen(){
     const navigation = useNavigation();
     const { colors } = useColors()
     const { t } = useTranslation();
+    const styles = useStyles()
     const [nameRestaurant, setNameRestaurant] = useState('')
     const [listCategories, setListCategories] = useState('')
     const [categories, setCategories] = useState({
@@ -82,10 +84,9 @@ function CategoriesScreen(){
     const handleDeleteCategorie = async (categorieId) => {
         try {
             await apiService.deleteCategory(categorieId);
-            console.log('Suppression réussie');
             const fetchCategorie = await apiService.getAllCategories(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
             setListCategories(fetchCategorie);
-            alert('Utilisateur supprimé')
+            alert('Catégorie supprimé')
         } catch (error) {
             const fetchCategorie = await apiService.getAllCategories(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
             setListCategories(fetchCategorie);
@@ -116,85 +117,96 @@ function CategoriesScreen(){
             </View>
 
             <Text style={[styles.titleCard, {color: colors.colorDetail}]}>{t('listCategory')}</Text>
-
-            {Array.isArray(listCategories) && listCategories.map((categorie) => {
-                console.log(categorie);
-                return(
-                <View style={styles.categorieInfo} key={categorie.id}>
-                    <View style={[styles.containerNamecategorie, {borderColor: colors.colorDetail}]}>
-                        <Text style={[styles.nameCategorie, {color: colors.colorText}]}>{categorie.name}</Text>
-                    </View>
-                    <TouchableOpacity onPress={()=>handleDeleteCategorie(categorie.id)} style={[styles.ContainerDeleteCategorie, {backgroundColor: colors.colorRed}]}>
-                        <Text style={[styles.btnDeleteCategorie, {color: colors.colorText}]}>X</Text>
-                    </TouchableOpacity>
-                </View>)
-            })}
+            <ScrollView>
+                <View style={styles.containerListCategory}>
+                    {Array.isArray(listCategories) && listCategories.map((categorie) => {
+                        console.log(categorie);
+                        return(
+                        <View style={styles.categorieInfo} key={categorie.id}>
+                            <View style={[styles.containerNamecategorie, {borderColor: colors.colorDetail}]}>
+                                <Text style={[styles.nameCategorie, {color: colors.colorText}]}>{categorie.name}</Text>
+                            </View>
+                            <TouchableOpacity onPress={()=>handleDeleteCategorie(categorie.id)} style={[styles.ContainerDeleteCategorie, {backgroundColor: colors.colorRed}]}>
+                                <Text style={[styles.btnDeleteCategorie, {color: colors.colorText}]}>X</Text>
+                            </TouchableOpacity>
+                        </View>)
+                    })}
+                </View>
+            </ScrollView>
         </View>
     )
 }
 
-const styles = StyleSheet.create({
-    containerCardPage:{
-        height: "100%",
-        backgroundColor: "#161622"
-    },
-    titleCard:{
-        marginLeft: 30,
-        fontSize: 18,
-        marginBottom: 30
-    },
-    containerAddCategories:{
-        flexDirection:"row",
-        marginLeft:30,
-        marginRight:30,
-        justifyContent: "space-between",
-        marginBottom: 50
-    },
-    containerBtnAddCategories:{
-        height: 50,
-        width:50, 
-        justifyContent: "center", 
-        alignItems: "center", 
-        borderRadius: 15
-    },
-    categoriesInput:{
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 20,
-        paddingLeft: 20,
-        marginBottom: 20,
-        width: 250
-    },
-    categorieInfo:{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginLeft: 30, 
-        marginRight: 30
-    },
-    nameCategorie:{
-        marginBottom:10,
-        fontSize: 16
-    },
-    containerNamecategorie:{
-        borderLeftWidth:2,
-        paddingLeft: 10,
-        paddingTop: 10,
-        paddingBottom: 10,
-        marginBottom: 20
-    },
-    ContainerDeleteCategorie:{
-        height: 50,
-        width:50, 
-        justifyContent: "center", 
-        alignItems: "center", 
-        borderRadius: 15, 
-    },
-    btnDeleteCategorie:{
-        fontSize:20,
-        fontWeight: "bold"
-    }
+function useStyles(){
+    const {width, height} = useWindowDimensions();
 
- 
-})
+    return StyleSheet.create({
+        containerCardPage:{
+            height: "100%",
+            backgroundColor: "#161622"
+        },
+        titleCard:{
+            marginLeft: 30,
+            fontSize: (width > 375) ? 18 : 15,
+            marginBottom: (width > 375) ? 30 : 20,
+        },
+        containerAddCategories:{
+            flexDirection:"row",
+            marginLeft:30,
+            marginRight:30,
+            justifyContent: "space-between",
+            marginBottom: (width > 375) ? 50 : 30,
+        },
+        containerBtnAddCategories:{
+            height: (width > 375) ? 50 : 40,
+            width:(width > 375) ? 50 : 40, 
+            justifyContent: "center", 
+            alignItems: "center", 
+            borderRadius: 15
+        },
+        categoriesInput:{
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 20,
+            paddingLeft: 20,
+            marginBottom: 20,
+            width: (width > 375) ? 250 : 200,
+        },
+        categorieInfo:{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginLeft: 30, 
+            marginRight: 30
+        },
+        nameCategorie:{
+            marginBottom:10,
+            fontSize: 16
+        },
+        containerNamecategorie:{
+            borderLeftWidth:2,
+            paddingLeft: 10,
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginBottom: 20
+        },
+        ContainerDeleteCategorie:{
+            height: (width > 375) ? 50 : 40,
+            width:(width > 375) ? 50 : 40, 
+            justifyContent: "center", 
+            alignItems: "center", 
+            borderRadius: 15, 
+        },
+        btnDeleteCategorie:{
+            fontSize:(width > 375) ? 20 : 18,
+            fontWeight: "bold"
+        },
+        containerListCategory:{
+            marginBottom: 90
+        }
+    
+     
+    })
+}
+
 
 export default CategoriesScreen

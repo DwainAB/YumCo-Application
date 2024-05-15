@@ -8,6 +8,9 @@
     "updateApp": "更新",
     "seeMore": "もっと見る...",
 
+    "listOfStatistics": "統計のリスト",
+    "allCommands": "すべてのコマンド",
+
     "monday": "月曜日",
     "tuesday": "火曜日",
     "wednesday": "水曜日",
@@ -34,6 +37,10 @@
     "titleOrder": "注文",
     "total": "合計",
     "alertDeleteOrder": "顧客と注文が正常に削除されました",
+    "delivery": "配達",
+    "takeaway": "持ち帰り",
+    "creditCard": "クレジットカード",
+    "cash": "現金",
 
     "titleSetting": "設定",
     "general": "一般",

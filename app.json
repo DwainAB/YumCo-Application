@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AppWok",
-    "slug": "AppWok",
+    "name": "YumEat",
+    "slug": "yumeat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,19 +15,28 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.YumEat.sendnotification"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "googleServicesFile": "./google-services.json",
+      "package": "com.YumEat.sendnotification"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8878c9cc-f299-47a6-9463-9077b856ed0c"
+      }
+    },
+    "owner": "dwain"
   }
 }

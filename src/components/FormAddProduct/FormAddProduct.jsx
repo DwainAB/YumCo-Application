@@ -8,12 +8,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from 'expo-file-system';
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 
 function FormAddProduct() {
     const pickerKey = useRef(0); 
     const { colors } = useColors()
     const { t } = useTranslation();
+    const styles = useStyles()
     const [listCategorie, setListCategorie] = useState([])
     const [nameRestaurant, setNameRestaurant] = useState([])
     const [productData, setProductData] = useState({
@@ -90,7 +92,7 @@ function FormAddProduct() {
             }
             console.log(formData)
 
-            return fetch('http://192.168.1.8/back-website-restaurant-1/api/foods/add', data)
+            return fetch('https://sasyumeats.com/api/foods/add', data)
                     .then(response => response.text()    )
                     .then(json => 
                         console.log('result', json),
@@ -213,7 +215,7 @@ function FormAddProduct() {
                         }}
                         useNativeAndroidPickerStyle={false}
                         Icon={() => {
-                            return <Ionicons name="chevron-down" style={{marginRight:40, marginTop:10, fontSize:30, color: colors.colorText}} />;
+                            return <Ionicons name="chevron-down" style={[styles.iconInput, {marginRight:40, fontSize:30, color: colors.colorText}]} />;
                         }}
                     />
                 </View>
@@ -235,65 +237,77 @@ function FormAddProduct() {
         </ScrollView>
     )
 }
-const styles = StyleSheet.create({
-    containerScrollAddProduct:{
-        height: 500,
-    },
-    inputAddProduct: {
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 15,
-        paddingLeft: 20,
-        marginBottom: 20,
-        marginLeft: 30,
-        marginRight: 30,
-    },
-    picker: {
-        paddingLeft: 20,
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 10,
-        marginBottom: 20,
-        marginLeft: 30,
-        marginRight: 30
-    },
-    buttonImageAddProduct :{
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 10,
-        marginBottom: 10,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        marginLeft: 30,
-        marginRight: 30,
-        marginTop: 20
-    },
-    textAddImage:{
-        color: "#CBCBCB",
-        fontWeight: "700",
-    },
-    buttonAddProduct:{
-        backgroundColor:"#0066FF",
-        height:50,
-        borderRadius:10,
-        display:"flex",
-        justifyContent:"center",
-        alignItems:"center",
-        marginTop: 30,
-        marginLeft: 30,
-        marginRight: 30
-    },
-    textAddProduct:{
-        color:"white",
-        fontWeight: "700",
-    },
-    label:{
-        color:"#cbcbcb",
-        marginLeft: 30,
-        marginBottom: 10,
-        fontSize : 14
-    }
-})
+
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerScrollAddProduct:{
+            height: 500,
+        },
+        inputAddProduct: {
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 15,
+            paddingLeft: 20,
+            marginBottom: 20,
+            marginLeft: 30,
+            marginRight: 30,
+        },
+        picker: {
+            paddingLeft: 20,
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 10,
+            marginBottom: 20,
+            marginLeft: 30,
+            marginRight: 30
+        },
+        buttonImageAddProduct :{
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 10,
+            marginBottom: 10,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginLeft: 30,
+            marginRight: 30,
+            marginTop: 20
+        },
+        textAddImage:{
+            color: "#CBCBCB",
+            fontWeight: "700",
+        },
+        buttonAddProduct:{
+            backgroundColor:"#0066FF",
+            height:(width > 375) ? 50 : 40,
+            borderRadius:10,
+            display:"flex",
+            justifyContent:"center",
+            alignItems:"center",
+            marginTop: 30,
+            marginLeft: 30,
+            marginRight: 30
+        },
+        textAddProduct:{
+            color:"white",
+            fontWeight: "700",
+        },
+        label:{
+            color:"#cbcbcb",
+            marginLeft: 30,
+            marginBottom: 10,
+            fontSize : 14
+        },
+        containerFormAddProduct:{
+            marginBottom: 80
+        },
+        iconInput: {
+            marginTop: (width > 375) ? 10 : 5,
+        }
+    })
+    
+}
 
 export default FormAddProduct;

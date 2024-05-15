@@ -5,11 +5,13 @@ import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 function PolityPrivacy(){
     const navigation = useNavigation();
     const { t } = useTranslation();
     const { colors } = useColors()
+    const styles = useStyles()
 
     return(
         <View style={[styles.containerPrivacyPolicy, { backgroundColor: colors.colorBackground }]}>
@@ -42,23 +44,29 @@ function PolityPrivacy(){
     )
 }
 
-const styles = StyleSheet.create({
 
-    containerPrivacyPolicy:{
-        height: "100%",
-    },
-    textPrivacyPolicy:{
-        fontSize: 16, 
-        marginBottom: 20
-    },
-    containerTextPolicy:{
-        marginBottom: 300,
-        height: 'auto',
-        marginRight: 30,
-        marginLeft: 30,
-        
-    }
- 
-})
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+
+        containerPrivacyPolicy:{
+            height: "100%",
+        },
+        textPrivacyPolicy:{
+            fontSize: (width > 375) ? 16 : 14, 
+            marginBottom: 20
+        },
+        containerTextPolicy:{
+            marginBottom: 300,
+            height: 'auto',
+            marginRight: 30,
+            marginLeft: 30,
+            
+        }
+     
+    })
+    
+}
 
 export default PolityPrivacy

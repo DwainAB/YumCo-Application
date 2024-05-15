@@ -4,6 +4,7 @@ import { apiService } from '../API/ApiService';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ConfirmDialog from "../ModalAction/ModalAction";
 import { useColors } from "../ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 
 const Utilisateur = () => {
@@ -11,6 +12,7 @@ const Utilisateur = () => {
     const { colors } = useColors()
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [nameRestaurant, setNameRestaurant] = useState('')
+    const styles = useStyles()
 
     //Récupère le nom du restaurant et le stock dans nameRestaurant
     useEffect(() => {
@@ -77,7 +79,6 @@ const Utilisateur = () => {
         }
     };
 
-    console.log(users);
     return (
         <View>
             <ScrollView>
@@ -105,49 +106,54 @@ const Utilisateur = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    containerGlobalUsers:{
-        height: 1800,
-    },
-    containerListUsers:{
-        height: 500,
-    },
-    listUsers:{
-        width: "100%",
-        height:"auto",
-    },
-    userInfo:{
-        gap: 10,
-        marginLeft: 30,
-        marginRight:20,
-        flexDirection:"row",
-        justifyContent: "space-between",
-        marginBottom: 30,
-        alignItems: "center",
-        borderLeftWidth: 2,
-        paddingLeft: 20
-    },
-    containerNameUser:{
-        flexDirection: "row",
-        gap: 20
-    },
-    nameUser:{
-        fontSize: 18,
-    },
-    ContainerDeleteUser:{
-        backgroundColor: "red",
-        display: "flex",
-        justifyContent:"center",
-        alignItems: 'center',
-        height: 50,
-        borderRadius: 10,
-        width: 50
-    },
-    containerListUsers:{
-        display: "flex",
-        justifyContent:'center',
-        alignItems:"center"
-    },
-})
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerGlobalUsers:{
+            height: 1800,
+        },
+        containerListUsers:{
+            height: 500,
+        },
+        listUsers:{
+            width: "100%",
+            height:"auto",
+        },
+        userInfo:{
+            gap: 10,
+            marginLeft: 30,
+            marginRight:20,
+            flexDirection:"row",
+            justifyContent: "space-between",
+            marginBottom: 30,
+            alignItems: "center",
+            borderLeftWidth: 2,
+            paddingLeft: 20
+        },
+        containerNameUser:{
+            flexDirection: "row",
+            gap: 20
+        },
+        nameUser:{
+            fontSize: (width > 375) ? 18 : 15,
+        },
+        ContainerDeleteUser:{
+            backgroundColor: "red",
+            display: "flex",
+            justifyContent:"center",
+            alignItems: 'center',
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 10,
+            width: (width > 375) ? 50 : 40,
+        },
+        containerListUsers:{
+            display: "flex",
+            justifyContent:'center',
+            alignItems:"center"
+        },
+    })
+    
+}
 
 export default Utilisateur;

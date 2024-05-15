@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
 import RNPickerSelect from 'react-native-picker-select';
+import { useWindowDimensions } from "react-native";
 
 
 function AllOrders({ refreshCounter, onRefresh }) {
@@ -17,6 +18,7 @@ function AllOrders({ refreshCounter, onRefresh }) {
     const { colors } = useColors()
     const [selectedMonth, setSelectedMonth] = useState('');
     const [orderFiltred, setOrderFiltred] = useState([]);
+    const styles = useStyles()
 
 
 
@@ -191,11 +193,14 @@ function AllOrders({ refreshCounter, onRefresh }) {
                 style={{
                     inputIOS: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
                     inputAndroid: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
-                    borderColor: colors.colorText
+                    borderColor: colors.colorText,
+                    iconContainer: {
+                        left: 200,
+                    },
                 }}
                 useNativeAndroidPickerStyle={false}
                 Icon={() => {
-                    return <Ionicons name="chevron-down" style={{position: "absolute", right: 180, marginTop:10, fontSize:30, color: colors.colorText}} />;
+                    return <Ionicons name="chevron-down" style={[styles.iconInput, {fontSize:30, color: colors.colorText}]} />;
                 }}
             />
         </View>
@@ -232,86 +237,94 @@ function AllOrders({ refreshCounter, onRefresh }) {
     )
 }
 
-const styles = StyleSheet.create({
-    containerHeaderSetting:{
-        justifyContent: "space-between", 
-        flexDirection:"row",
-        marginTop : 60,
-        paddingRight: 35,
-        paddingLeft : 35,
-        alignItems:'center',
-    },
-    textHeaderSetting:{
-        fontSize: 22,
-        color: "white",
-    },
-    containerEmpty:{
-        width: "10%",
-    },
-    line:{
-        borderWidth:1,
-        marginLeft: 30,
-        marginRight:30,
-        marginTop: 40,
-        marginBottom: 40
-    },
-    containerOrderItem:{
-        flexDirection: "row",
-        marginRight: 30,
-        marginLeft: 30,
-        marginBottom:22
-    },
-    containerTextOrderItem:{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center" ,
-        width: "80%"
-    },
-    containerIconOrderItem:{
-        backgroundColor: "white",
-        width: 50,
-        height: 50,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 25,
-        marginRight: 20
-    },
-    textOrderItem:{
-        fontSize: 18,
-        color:"white"
-    },
-    textOrderItemName:{
-        color:"#A2A2A7",
-        fontSize: 14
-    },
-    input:{
-        marginLeft: 30,
-        width: 220,
-        borderWidth: 1,
-        paddingLeft: 15,
-        fontSize: 18, 
-        height: 45,
-        marginBottom: 30,
-        borderRadius: 20,
-        position: "relative"
-    },
-    dayHeader:{
-        fontSize: 18, 
-        marginLeft: 30,
-        marginBottom: 20
-    },
-    line:{
-        marginLeft: 30,
-        marginRight: 30, 
-        height: 1,
-        marginBottom: 20
-    },
-    listOrder: {
-        height: "auto", 
-        marginBottom: 300
-    }
 
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerHeaderSetting:{
+            justifyContent: "space-between", 
+            flexDirection:"row",
+            marginTop : (height > 800) ? 60: 40,
+            paddingRight: 35,
+            paddingLeft : 35,
+            alignItems:'center',
+        },
+        textHeaderSetting:{
+            fontSize: 22,
+            color: "white",
+        },
+        containerEmpty:{
+            width: "10%",
+        },
+        line:{
+            borderWidth:1,
+            marginLeft: 30,
+            marginRight:30,
+            marginTop: (height > 800) ? 60: 40,
+            marginBottom: 40
+        },
+        containerOrderItem:{
+            flexDirection: "row",
+            marginRight: 30,
+            marginLeft: 30,
+            marginBottom:22
+        },
+        containerTextOrderItem:{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center" ,
+            width: "80%"
+        },
+        containerIconOrderItem:{
+            backgroundColor: "white",
+            width: (width > 375) ? 50: 40,
+            height: (width > 375) ? 50: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 25,
+            marginRight: 20
+        },
+        textOrderItem:{
+            fontSize: (width > 375) ? 18: 15,
+            color:"white"
+        },
+        textOrderItemName:{
+            color:"#A2A2A7",
+            fontSize: (width > 375) ? 14: 12,
+        },
+        input:{
+            marginLeft: 30,
+            width: 220,
+            borderWidth: 1,
+            paddingLeft: 15,
+            fontSize: (width > 375) ? 18: 15, 
+            height: (width > 375) ? 45: 35,
+            marginBottom: 30,
+            borderRadius: 20,
+        },
+        dayHeader:{
+            fontSize: (width > 375) ? 18: 15,
+            marginLeft: 30,
+            marginBottom: 20
+        },
+        line:{
+            marginLeft: 30,
+            marginRight: 30, 
+            height: 1,
+            marginBottom: 20
+        },
+        listOrder: {
+            height: "auto", 
+            marginBottom: 300
+        },
+        iconInput:{
+            top : (width>375) ? 10 : 3
+        }
     
-})
+        
+    })
+    
+}
 
 export default AllOrders

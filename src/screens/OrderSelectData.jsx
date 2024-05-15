@@ -6,6 +6,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
+import { useWindowDimensions } from "react-native";
 
 
 function OrderSelectData() {
@@ -14,6 +15,7 @@ function OrderSelectData() {
   const route = useRoute();
   const { order } = route.params;
   const { t } = useTranslation();
+  const styles = useStyles()
 
 
 
@@ -42,6 +44,8 @@ const handleDelete = async (clientId) => {
 };
 
 
+
+
   return (
     <View style={[styles.containerOrderSelect, {backgroundColor: colors.colorBackground}]}>
       <View style={styles.containerHeader}>
@@ -52,17 +56,18 @@ const handleDelete = async (clientId) => {
       <View style={[styles.line, {borderColor: colors.colorDetail}]}></View>
 
       <ScrollView>
-
         <View style={[styles.containerTicketOrder, {backgroundColor: colors.colorBorderAndBlock}]}>
+        <Text style={[styles.textMethod,{color: colors.colorDetail, textAlign: "center"}]}>{order.client_method}</Text>
+        <Text style={[styles.textPayment,{color: colors.colorDetail, textAlign: "center"}]}>{order.client_payment}</Text>
 
           <View style={[styles.circleLeft, {backgroundColor: colors.colorBackground}]}></View>
           <View style={[styles.circleRight, {backgroundColor: colors.colorBackground}]}></View>
           <View style={styles.ContainerLineTicket}><Text style={{fontSize: 30, color: colors.colorDetail}}>- - - - - - - - - - - - - - - - -</Text></View>
 
           <View style={styles.containerProducts}>
-            {order.orders.map((product) => {
+            {order.orders.map((product, index) => {
               return(
-              <View style={styles.productInfo} key={product.id}>
+              <View style={styles.productInfo} key={`${product.id}-${index}`}>
                   <Text style={[styles.titleProduct, {color : colors.colorText}]}><Text style={[styles.quantityProduct, {color : colors.colorDetail}]}>x{product.order_quantity}</Text>  {product.product_title}</Text>
               </View>)
           })} 
@@ -90,138 +95,150 @@ const handleDelete = async (clientId) => {
   );
 }
 
-const styles = StyleSheet.create({
-  containerOrderSelect:{
-    height: "100%",
-  },
-  containerHeader:{
-    flexDirection:"row",
-    marginTop : 60,
-    paddingRight: 35,
-    paddingLeft : 35,
-    alignItems:'center',
-  },
-textHeader:{
-    fontSize: 22,
-    color: "white",
-    marginLeft: 20,
-    fontWeight: "bold"
-},
-containerBtnBack:{
-    height:45,
-    width: 45,
-    alignItems: "center",
-    borderRadius: 50,
-    backgroundColor: "#1E1E2D",
-    justifyContent: "center",
-},
-containerEmpty:{
-    width: "10%",
-},
-line:{
-    borderWidth:1,
-    marginLeft: 30,
-    marginRight:30,
-    borderColor: "#232533",
-    marginTop: 40,
-    marginBottom: 40
-},
-containerTicketOrder:{
-  marginLeft: 30, 
-  marginRight: 30,
-  height: 'auto',
-  borderRadius: 15,
-  position: "relative",
-  paddingTop: 10
-},
-circleLeft:{
-  position: "absolute", 
-  left: -15, 
-  borderRadius: 15,
-  height: 30,
-  width: 30,
-  bottom: 100,
-  zIndex: 999
-},
-circleRight:{
-  position: "absolute", 
-  right: -15, 
-  borderRadius: 15,
-  height: 30,
-  width: 30,
-  bottom: 100,
-  zIndex: 999
-},
-ContainerLineTicket:{
-  position: "absolute",
-  bottom: 100
-},
-test:{
-  fontSize: 30,
-  alignItems: "flex-end"
-}, 
-textLeft:{
-  fontSize: 25, 
-  fontWeight: "600",
-  marginBottom: 30,
-  position: "absolute",
-  bottom: 0,
-  left: 30
-},
-textRight:{
-  fontSize: 25, 
-  fontWeight: "600",
-  marginBottom: 30,
-  position: "absolute",
-  bottom: 0,
-  right: 30
-},
-titleProduct:{
-  fontSize: 16,
-  fontWeight: '500'
+function useStyles(){
+  const {width, height} = useWindowDimensions();
 
-},
-quantityProduct:{
-  fontSize: 16
-},
-productInfo:{
-  marginLeft: 20,
-  marginTop: 10
-},
-containerProducts:{
-  height: "auto",
-  overflow: "hidden",
-},
-containerEmpty:{
-  height: 150
-},
-containerInfoClient:{
-  marginLeft: 30,
-  marginRight: 30,
-  marginTop: 35,
-  padding: 15,
-  borderRadius: 15,
-  gap:5
-},
-infoClient:{
-  fontSize: 16,
-  fontWeight: '500'
-},
-btnDelete:{
-  marginLeft: 30,
-  marginRight: 30,
-  paddingTop: 15,
-  paddingBottom: 15,
-  borderRadius: 15,
-  marginTop: 35,
-  marginBottom: 100
-},
-textBtnDelete:{
-  fontSize: 18,
-  fontWeight: "500",
-  textAlign: 'center'
+  return StyleSheet.create({
+    containerOrderSelect:{
+      height: "100%",
+    },
+    containerHeader:{
+      flexDirection:"row",
+      marginTop : 60,
+      paddingRight: 35,
+      paddingLeft : 35,
+      alignItems:'center',
+    },
+  textHeader:{
+      fontSize: 22,
+      color: "white",
+      marginLeft: 20,
+      fontWeight: "bold"
+  },
+  containerBtnBack:{
+      height:45,
+      width: 45,
+      alignItems: "center",
+      borderRadius: 50,
+      backgroundColor: "#1E1E2D",
+      justifyContent: "center",
+  },
+  containerEmpty:{
+      width: "10%",
+  },
+  line:{
+      borderWidth:1,
+      marginLeft: 30,
+      marginRight:30,
+      borderColor: "#232533",
+      marginTop: 40,
+      marginBottom: 40
+  },
+  containerTicketOrder:{
+    marginLeft: 30, 
+    marginRight: 30,
+    height: 'auto',
+    borderRadius: 15,
+    position: "relative",
+    paddingTop: 10
+  },
+  circleLeft:{
+    position: "absolute", 
+    left: -15, 
+    borderRadius: 15,
+    height: 30,
+    width: 30,
+    bottom: 100,
+    zIndex: 999
+  },
+  circleRight:{
+    position: "absolute", 
+    right: -15, 
+    borderRadius: 15,
+    height: 30,
+    width: 30,
+    bottom: 100,
+    zIndex: 999
+  },
+  ContainerLineTicket:{
+    position: "absolute",
+    bottom: 100
+  },
+  test:{
+    fontSize: 30,
+    alignItems: "flex-end"
+  }, 
+  textLeft:{
+    fontSize: 25, 
+    fontWeight: "600",
+    marginBottom: 30,
+    position: "absolute",
+    bottom: 0,
+    left: 30
+  },
+  textRight:{
+    fontSize: 25, 
+    fontWeight: "600",
+    marginBottom: 30,
+    position: "absolute",
+    bottom: 0,
+    right: 30
+  },
+  titleProduct:{
+    fontSize: 16,
+    fontWeight: '500'
+  
+  },
+  quantityProduct:{
+    fontSize: 16
+  },
+  productInfo:{
+    marginLeft: 20,
+    marginTop: 10
+  },
+  containerProducts:{
+    height: "auto",
+    overflow: "hidden",
+  },
+  containerEmpty:{
+    height: 150
+  },
+  containerInfoClient:{
+    marginLeft: 30,
+    marginRight: 30,
+    marginTop: 35,
+    padding: 15,
+    borderRadius: 15,
+    gap:5
+  },
+  infoClient:{
+    fontSize: 16,
+    fontWeight: '500'
+  },
+  btnDelete:{
+    marginLeft: 30,
+    marginRight: 30,
+    paddingTop: 15,
+    paddingBottom: 15,
+    borderRadius: 15,
+    marginTop: 35,
+    marginBottom: 100
+  },
+  textBtnDelete:{
+    fontSize: 18,
+    fontWeight: "500",
+    textAlign: 'center'
+  },
+  textMethod:{
+    fontSize:(width > 375) ? 20 : 18,
+  },
+  textPayment:{
+    fontSize:(width > 375) ? 15 : 13,
+    marginBottom: (width > 375) ? 30 : 15
+  }
+  
+  });
 }
 
-});
 
 export default OrderSelectData;

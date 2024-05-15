@@ -8,6 +8,9 @@
     "updateApp": "Atual.",
     "seeMore": "Ver mais...",
 
+    "listOfStatistics": "Lista de estatísticas",
+    "allCommands": "Todos os comandos",
+
     "monday": "Segunda-feira",
     "tuesday": "Terça-feira",
     "wednesday": "Quarta-feira",
@@ -34,6 +37,10 @@
     "titleOrder": "Pedidos",
     "total": "Total",
     "alertDeleteOrder": "Cliente e pedidos excluídos com sucesso",
+    "delivery": "Entrega",
+    "takeaway": "Para levar",
+    "creditCard": "Cartão de crédito",
+    "cash": "Dinheiro",
 
     "titleSetting": "Configurações",
     "general": "Geral",

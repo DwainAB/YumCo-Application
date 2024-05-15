@@ -4,10 +4,12 @@ import { apiService } from '../API/ApiService';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 const AddUser = () => {
     const { t } = useTranslation();
     const { colors } = useColors()
+    const styles = useStyles()
     const [newUser, setNewUser] = useState({
          firstname: '',
           lastname: '',
@@ -143,43 +145,49 @@ const AddUser = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    containerGlobalUsers:{
-        height: 1800
-    },
-    userInput:{
-        borderWidth: 1,
-        height: 50,
-        borderRadius: 20,
-        paddingLeft: 20,
-        marginBottom: 20,
-        marginLeft: 30,
-        marginRight: 30,
-    },
-    containerGlobalAddUser:{
-        height: 500,
-        zIndex: -1
-    }, 
-    containerButtonAddUser:{
-        backgroundColor: "#0066FF",
-        height: 50,
-        display: "flex",
-        justifyContent: "center",
-        alignItems:"center",
-        borderRadius: 20,
-        marginTop: 20,
-        marginLeft: 30,
-        marginRight: 30,
-    },
-    btnAddUser:{
-        color: "#fff",
-    },
-    labelUser:{
-        color: '#cbcbcb',
-        marginLeft: 30,
-        fontSize: 16,
-        marginBottom: 10
-    }
-})
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerGlobalUsers:{
+            marginBottom: 200
+        },
+        userInput:{
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 20,
+            paddingLeft: 20,
+            marginBottom: 20,
+            marginLeft: 30,
+            marginRight: 30,
+        },
+        containerGlobalAddUser:{
+            height: 500,
+            zIndex: -1
+        }, 
+        containerButtonAddUser:{
+            backgroundColor: "#0066FF",
+            height: (width > 375) ? 50 : 40,
+            display: "flex",
+            justifyContent: "center",
+            alignItems:"center",
+            borderRadius: 20,
+            marginTop: 20,
+            marginLeft: 30,
+            marginRight: 30,
+        },
+        btnAddUser:{
+            color: "#fff",
+        },
+        labelUser:{
+            color: '#cbcbcb',
+            marginLeft: 30,
+            fontSize: (width > 375) ? 16 : 13,
+            marginBottom: 10
+        }
+    })
+}
+
+
 
 export default AddUser;

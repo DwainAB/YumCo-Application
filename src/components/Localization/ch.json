@@ -8,6 +8,9 @@
     "updateApp": "更新",
     "seeMore": "查看更多...",
 
+    "listOfStatistics": "统计列表",
+    "allCommands": "所有命令",
+
     "monday": "星期一",
     "tuesday": "星期二",
     "wednesday": "星期三",
@@ -34,6 +37,10 @@
     "titleOrder": "订单",
     "total": "总计",
     "alertDeleteOrder": "客户和订单已成功删除",
+    "delivery": "送货",
+    "takeaway": "外卖",
+    "creditCard": "信用卡",
+    "cash": "现金",
 
     "titleSetting": "设置",
     "general": "通用",

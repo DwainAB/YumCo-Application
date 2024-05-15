@@ -5,11 +5,13 @@ import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
+import { useWindowDimensions } from "react-native";
 
 function UserOptionScreen(){
     const navigation = useNavigation();
     const { t } = useTranslation();
     const { colors } = useColors()
+    const styles = useStyles()
 
     return(
         <View style={[styles.containerUserPage, {backgroundColor: colors.colorBackground}]}>
@@ -31,32 +33,37 @@ function UserOptionScreen(){
     )
 }
 
-const styles = StyleSheet.create({
-    containerUserPage:{
-        height: "100%",
-    },
-    titleUser:{
-        marginLeft: 30,
-        color: "#A2A2A7",
-        fontSize: 18,
-        marginBottom: 30
-    },
-    containerOptionUser:{
-        marginLeft: 30,
-        marginRight: 30,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        borderBottomWidth: 1,
-        borderColor: "#232533",
-        paddingBottom: 10,
-        marginBottom: 22
-    },
-    textOptionUser:{
-        color: "white",
-        fontSize: 18
-    }
- 
-})
+function useStyles(){
+    const {width, height} = useWindowDimensions();
+
+    return StyleSheet.create({
+        containerUserPage:{
+            height: "100%",
+        },
+        titleUser:{
+            marginLeft: 30,
+            color: "#A2A2A7",
+            fontSize: (width > 375) ? 18 : 15,
+            marginBottom: 30
+        },
+        containerOptionUser:{
+            marginLeft: 30,
+            marginRight: 30,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottomWidth: 1,
+            borderColor: "#232533",
+            paddingBottom: 10,
+            marginBottom: 22
+        },
+        textOptionUser:{
+            color: "white",
+            fontSize: (width > 375) ? 18 : 15,
+        }
+     
+    })
+}
+
 
 export default UserOptionScreen
