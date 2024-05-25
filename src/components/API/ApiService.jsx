@@ -238,10 +238,6 @@ export const apiService = {
         }
     },
     
-    
-    
-    
-    
 
     // Supprimer un utilisateur
     deleteUser: async (id) => {

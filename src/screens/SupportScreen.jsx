@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Linking } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons"; 
 import imgSupport from '../assets/imgSupport.png'
 import { useNavigation } from "@react-navigation/native";
@@ -7,18 +7,29 @@ import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 
-function SupportScreen(){
+function SupportScreen() {
     const navigation = useNavigation();
     const { t } = useTranslation();
-    const { colors } = useColors()
-    const styles = useStyles()
+    const { colors } = useColors();
+    const styles = useStyles();
 
-    return(
+    const handleCall = (number) => {
+        Linking.openURL(`tel:${number}`);
+    };
+
+    const handleEmail = (email) => {
+        Linking.openURL(`mailto:${email}`);
+    };
+
+    const handleWhatsApp = (number) => {
+        Linking.openURL(`whatsapp://send?phone=${number}`);
+    };
+
+    return (
         <View style={[styles.containerSupport, {backgroundColor: colors.colorBackground}]}>
             <ScrollView>
                 <View style={styles.containerScrollSupport}>
                     <View style={styles.containerImgSupport}>
-
                         <TouchableOpacity onPress={() => navigation.navigate('SettingPage')} style={[styles.containerIconBack, {backgroundColor: colors.colorBorderAndBlock}]}>
                             <Ionicons name="chevron-back" size={20} color={colors.colorText}/>
                         </TouchableOpacity>
@@ -30,42 +41,43 @@ function SupportScreen(){
                         <Text style={[styles.titleSupport, {color: colors.colorText}]}>{t('support')}</Text>
                     </View>
 
-                    <View style={styles.containerTextInfoSupport}><Text style={[styles.textInfoSupport, {color: colors.colorDetail}]}>{t('textSupport')}</Text></View>
-                
-                    <View style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
-                        <View style={styles.containerIconContact}><Ionicons size={20} color={colors.colorText} name="call"/></View>
-                        <Text style={[styles.coordinateText, {color: colors.colorText}]}>01 23 45 67 89</Text>
+                    <View style={styles.containerTextInfoSupport}>
+                        <Text style={[styles.textInfoSupport, {color: colors.colorDetail}]}>{t('textSupport')}</Text>
                     </View>
 
-                    <View style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
+                    <TouchableOpacity onPress={() => handleCall('0761244284')} style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
+                        <View style={styles.containerIconContact}><Ionicons size={20} color={colors.colorText} name="call"/></View>
+                        <Text style={[styles.coordinateText, {color: colors.colorText}]}>07 61 24 42 84</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => handleEmail('support@sasyumeats.com')} style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
                         <View style={styles.containerIconContact}><Ionicons size={20} color={colors.colorText} name="mail"/></View>
                         <Text style={[styles.coordinateText, {color: colors.colorText}]}>support@sasyumeats.com</Text>
-                    </View>
+                    </TouchableOpacity>
 
-                    <View style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
+                    <TouchableOpacity onPress={() => handleWhatsApp('0764293920')} style={[styles.contactContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
                         <View style={styles.containerIconContact}><Ionicons size={20} color={colors.colorText} name="logo-whatsapp"/></View>
-                        <Text style={[styles.coordinateText, {color: colors.colorText}]}>06 12 34 56 78</Text>
-                    </View>
+                        <Text style={[styles.coordinateText, {color: colors.colorText}]}>07 64 29 39 20</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </View>
-    )
+    );
 }
 
-function useStyles(){
-
-    const {width, height} = useWindowDimensions();
+function useStyles() {
+    const { width, height } = useWindowDimensions();
 
     return StyleSheet.create({
-        containerSupport:{
+        containerSupport: {
             height: "100%",
             backgroundColor: "#161622"
         },
-        supportImg:{
+        supportImg: {
             width: "100%",
             height: (height > 750) ? 300 : 200
         },
-        titleSupport:{
+        titleSupport: {
             fontSize: (width > 375) ? 40 : 30,
             color: "white", 
             fontWeight: "bold",
@@ -75,33 +87,33 @@ function useStyles(){
             transform: [{ translateX: -80 }], // Translate pour centrer sur l'axe horizontal
             left: '50%',
         },
-        textInfoSupport:{
+        textInfoSupport: {
             color: "#A8A8A8",
             fontSize: (width > 375) ? 18 : 15,
             marginTop: 20, 
             marginBottom: (height > 750) ? 65 : 50,
-            marginLeft:30,
-            marginRight:30
+            marginLeft: 30,
+            marginRight: 30
         },
-        containerTextInfoSupport:{
+        containerTextInfoSupport: {
             justifyContent: "center",
-            alignItems:'center'
+            alignItems: 'center'
         },
-        contactContainer:{
+        contactContainer: {
             backgroundColor: "#27273A",
             flexDirection: "row",
             height: (width > 375) ? 80 : 50,
             marginBottom: 15,
             marginLeft: 15,
             marginRight: 15,
-            alignItems:"center"
+            alignItems: "center"
         },
-        coordinateText:{
+        coordinateText: {
             color: "white",
             fontSize: (width > 375) ? 18 : 15,
             marginLeft: 16
         },
-        containerIconContact:{
+        containerIconContact: {
             height: (width > 375) ? 40 : 30,
             width: (width > 375) ? 40 : 30,
             borderRadius: 20,
@@ -110,7 +122,7 @@ function useStyles(){
             alignItems: "center",
             marginLeft: 20
         },
-        containerIconBack:{
+        containerIconBack: {
             position: "absolute",
             backgroundColor: "#1E1E2D",
             width: (width > 375) ? 45 : 35,
@@ -122,11 +134,10 @@ function useStyles(){
             left: 30,
             zIndex: 999
         },
-        containerScrollSupport:{
+        containerScrollSupport: {
             marginBottom: 100
         }
-    })
+    });
 }
 
-
-export default SupportScreen
+export default SupportScreen;

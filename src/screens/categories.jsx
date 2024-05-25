@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
@@ -9,53 +9,52 @@ import { apiService } from "../components/API/ApiService";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 
-
-function CategoriesScreen(){
+function CategoriesScreen() {
     const navigation = useNavigation();
-    const { colors } = useColors()
+    const { colors } = useColors();
     const { t } = useTranslation();
-    const styles = useStyles()
-    const [nameRestaurant, setNameRestaurant] = useState('')
-    const [listCategories, setListCategories] = useState('')
+    const styles = useStyles();
+    const [nameRestaurant, setNameRestaurant] = useState('');
+    const [listCategories, setListCategories] = useState([]);
     const [categories, setCategories] = useState({
-         name: '',
-         ref_restaurant: ''
-       });
-
+        name: '',
+        ref_restaurant: ''
+    });
 
     useEffect(() => {
         async function fetchRefRestaurant() {
             try {
                 const user = await AsyncStorage.getItem("user");
-                console.log(user);
                 const refRestaurant = JSON.parse(user).ref_restaurant;
                 setNameRestaurant(refRestaurant);
                 setCategories(prevState => ({ ...prevState, ref_restaurant: refRestaurant }));
             } catch (error) {
                 console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
             }
-        }      
+        }
         fetchRefRestaurant();
     }, []);
 
+    useEffect(() => {
+        if (nameRestaurant) {
+            fetchCategorie();
+        }
+    }, [nameRestaurant]);
 
     const handleNewCategoriesInputChange = (name, value) => {
         setCategories(prevState => ({ ...prevState, [name]: value }));
     };
 
-
-    const handleAddNewCategories = async (event) => {
+    const handleAddNewCategories = async () => {
         try {
             const formData = new FormData();
             formData.append('name', categories.name);
             formData.append('ref_restaurant', categories.ref_restaurant);
-    
+
             const addCategories = await apiService.addCategory(formData, { timeout: 10000 });
-            console.log('Réponse de l\'API:', addCategories);
             if (addCategories.success) {
-                console.log('Catégorie ajoutée avec succès', addCategories.message);
-                setCategories({ name: '', ref_restaurant: '' });
-                fetchCategorie()
+                setCategories({ name: '', ref_restaurant: nameRestaurant });
+                fetchCategorie();
             } else {
                 console.error('Erreur lors de l\'ajout de la catégorie', addCategories.message);
             }
@@ -67,75 +66,57 @@ function CategoriesScreen(){
     const fetchCategorie = async () => {
         try {
             const fetchedCategories = await apiService.getAllCategories(nameRestaurant);
-            setListCategories(fetchedCategories); 
-            console.log(fetchedCategories);  
+            setListCategories(fetchedCategories);
         } catch (error) {
             console.error('Erreur lors de la récupération des utilisateurs:', error.message);
         }
     };
-    
-    useEffect(() => {
-        if (nameRestaurant) {
-            fetchCategorie();
-        }
-    }, [nameRestaurant]);
-
 
     const handleDeleteCategorie = async (categorieId) => {
         try {
             await apiService.deleteCategory(categorieId);
-            const fetchCategorie = await apiService.getAllCategories(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
-            setListCategories(fetchCategorie);
-            alert('Catégorie supprimé')
+            fetchCategorie();
+            alert('Catégorie supprimée');
         } catch (error) {
-            const fetchCategorie = await apiService.getAllCategories(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
-            setListCategories(fetchCategorie);
             console.error('Erreur lors de la suppression', error.message);
         }
     };
-    
 
-    return(
-        <View style={[styles.containerCardPage, {backgroundColor : colors.colorBackground}]}>
-            
-            <HeaderSetting name="Catégories" navigateTo="CardOptionScreen"/>
-
-            <Text style={[styles.titleCard, {color : colors.colorDetail}]}>{t('addCategory')}</Text>
-
+    return (
+        <View style={[styles.containerCardPage, { backgroundColor: colors.colorBackground }]}>
+            <HeaderSetting name="Catégories" navigateTo="CardOptionScreen" />
+            <Text style={[styles.titleCard, { color: colors.colorDetail }]}>{t('addCategory')}</Text>
             <View style={styles.containerAddCategories}>
                 <TextInput
-                    style={[styles.categoriesInput, {borderColor: colors.colorText, color : colors.colorText}]}
+                    style={[styles.categoriesInput, { borderColor: colors.colorText, color: colors.colorText }]}
                     placeholder={t('category')}
                     placeholderTextColor="#343434"
                     value={categories.name}
-                    name='lastname'
                     onChangeText={(value) => handleNewCategoriesInputChange('name', value)}
-                    
                 />
-
-                <TouchableOpacity onPress={()=>handleAddNewCategories() } style={[styles.containerBtnAddCategories, {backgroundColor: colors.colorAction }]}><Ionicons name="checkmark-outline" style={{ fontSize: 30, color: colors.colorText}}/></TouchableOpacity>
+                <TouchableOpacity onPress={handleAddNewCategories} style={[styles.containerBtnAddCategories, { backgroundColor: colors.colorAction }]}>
+                    <Ionicons name="checkmark-outline" style={{ fontSize: 30, color: colors.colorText }} />
+                </TouchableOpacity>
             </View>
-
-            <Text style={[styles.titleCard, {color: colors.colorDetail}]}>{t('listCategory')}</Text>
+            <Text style={[styles.titleCard, { color: colors.colorDetail }]}>{t('listCategory')}</Text>
             <ScrollView>
                 <View style={styles.containerListCategory}>
-                    {Array.isArray(listCategories) && listCategories.map((categorie) => {
-                        console.log(categorie);
-                        return(
+                    {Array.isArray(listCategories) && listCategories.map((categorie) => (
                         <View style={styles.categorieInfo} key={categorie.id}>
-                            <View style={[styles.containerNamecategorie, {borderColor: colors.colorDetail}]}>
-                                <Text style={[styles.nameCategorie, {color: colors.colorText}]}>{categorie.name}</Text>
+                            <View style={[styles.containerNamecategorie, { borderColor: colors.colorDetail }]}>
+                                <Text style={[styles.nameCategorie, { color: colors.colorText }]}>{categorie.name}</Text>
                             </View>
-                            <TouchableOpacity onPress={()=>handleDeleteCategorie(categorie.id)} style={[styles.ContainerDeleteCategorie, {backgroundColor: colors.colorRed}]}>
-                                <Text style={[styles.btnDeleteCategorie, {color: colors.colorText}]}>X</Text>
+                            <TouchableOpacity onPress={() => handleDeleteCategorie(categorie.id)} style={[styles.ContainerDeleteCategorie, { backgroundColor: colors.colorRed }]}>
+                                <Text style={[styles.btnDeleteCategorie, { color: colors.colorText }]}>X</Text>
                             </TouchableOpacity>
-                        </View>)
-                    })}
+                        </View>
+                    ))}
                 </View>
             </ScrollView>
         </View>
-    )
+    );
 }
+
 
 function useStyles(){
     const {width, height} = useWindowDimensions();

@@ -12,10 +12,9 @@ const LoadingScreen = ({ visible, message }) => {
             <View style={styles.container}>
                 <View style={styles.innerContainer}>
                     <Image 
-                        source={require('../assets/china-flag-round-medium.png')} // Assurez-vous que le chemin est correct
+                        source={require('../assets/logo.png')} // Assurez-vous que le chemin est correct
                         style={styles.logo}
                     />
-                    <Text style={styles.text}>YumEats</Text>
                     {message && <Text style={styles.message}>{message}</Text>}
                     <ActivityIndicator size="large" color="#fff" />
                 </View>
@@ -44,8 +43,10 @@ const styles = StyleSheet.create({
         alignItems:"center"
     },
     logo: {
-        width: 100,
-        height: 100,
+        width: 300,
+        height: 300,
+        marginLeft: 30, 
+        marginRight: 30,
         marginBottom: 20,
     },
     text: {

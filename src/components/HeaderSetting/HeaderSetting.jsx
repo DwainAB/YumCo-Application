@@ -44,8 +44,8 @@ function useStyles(){
             color: "white",
         },
         containerBtnBack:{
-            height:(width > 375) ? 45 : 35,
-            width: (width > 375) ? 45 : 35,
+            height:(width > 375) ? 55 : 35,
+            width: (width > 375) ? 55 : 35,
             alignItems: "center",
             borderRadius: 50,
             backgroundColor: "#1E1E2D",

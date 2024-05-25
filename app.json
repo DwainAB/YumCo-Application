@@ -4,12 +4,12 @@
     "slug": "yumeat",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png", 
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#161622"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,15 +19,22 @@
       "bundleIdentifier": "com.YumEat.sendnotification"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "googleServicesFile": "./google-services.json",
-      "package": "com.YumEat.sendnotification"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo-adaptative.png",
+        "backgroundColor": "#161622"
+      },
+      "package": "com.YumEat.sendnotification",
+      "permissions": [
+        "WAKE_LOCK",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "RECEIVE_BOOT_COMPLETED",
+        "FOREGROUND_SERVICE"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       "expo-font"
@@ -35,7 +42,8 @@
     "extra": {
       "eas": {
         "projectId": "8878c9cc-f299-47a6-9463-9077b856ed0c"
-      }
+      },
+      "oneSignalAppId": "Y9fca395b-abc8-47ce-86e6-e342656ab582"
     },
     "owner": "dwain"
   }

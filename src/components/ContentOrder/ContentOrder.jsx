@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiService } from "../API/ApiService";
@@ -8,19 +8,44 @@ import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
 import { registerForPushNotificationsAsync, sendNotification } from '../Notifications/NotificationsOrder';
 import { useWindowDimensions } from "react-native";
+import { useLoading } from "../Hooks/useLoading";
+
 
 function BasketScreen() {
-    const [expoPushToken, setExpoPushToken] = useState('')
+    const [expoPushToken, setExpoPushToken] = useState('');
     const [nameRestaurant, setNameRestaurant] = useState('');
     const [ordersAndClients, setOrdersAndClients] = useState([]);
     const [orderMethod, setOrderMehod] = useState('A emporter');
     const [filteredOrders, setFilteredOrders] = useState([]);
     const navigation = useNavigation(); // Obtenez l'objet de navigation
     const { t } = useTranslation();
-    const { colors } = useColors()
-    const styles = useStyles()
+    const { colors } = useColors();
+    const styles = useStyles();
+    const [remove, setRemove] = useState(false);
+    const { startLoading, stopLoading } = useLoading();
 
+    useEffect(() => {
+        if (expoPushToken) {
+            updateNotificationToken(expoPushToken);
+        }
+    }, [expoPushToken]);
 
+        // Fonction pour mettre à jour le token de notification de l'utilisateur
+        const updateNotificationToken = async (token) => {
+            try {
+                const user = await AsyncStorage.getItem("user");
+                const userObject = JSON.parse(user);
+                const userId = userObject.id;
+    
+                const formData = new FormData();
+                formData.append('id_notification', token);
+    
+                await apiService.updateUser(userId, formData);
+                console.log('Notification token updated successfully');
+            } catch (error) {
+                console.error('Failed to update notification token:', error);
+            }
+        };
 
     const filterOrdersByMethod = (method) => {
         const filtered = ordersAndClients.filter(order => order.client_method === method);
@@ -39,7 +64,6 @@ function BasketScreen() {
     useEffect(() => {
         filterOrdersByMethod(orderMethod);
     }, [ordersAndClients, orderMethod]);
-
 
     useEffect(() => {
         const fetchRefRestaurant = async () => {
@@ -63,86 +87,101 @@ function BasketScreen() {
 
     const refreshOrder = () => {
         fetchOrdersAndClients();
-        alert('Commandes mis à jour')
-    }
+        alert('Commandes mis à jour');
+    };
 
     const fetchOrdersAndClients = async () => {
         try {
             const fetchedUsers = await apiService.getAllOrdersAndClients(nameRestaurant);
-            setOrdersAndClients(fetchedUsers); 
+            setOrdersAndClients(fetchedUsers);
         } catch (error) {
             console.error('Erreur lors de la récupération des utilisateurs:', error.message);
-        } 
+        }
     };
 
     useEffect(() => {
-        // Fonction pour effectuer l'appel API et vérifier s'il y a une nouvelle commande
-        const fetchAndCheckForNewOrders = async () => {
-            try {
-                const fetchedUsers = await apiService.getAllOrdersAndClients(nameRestaurant);
-                // Vérifier s'il y a une nouvelle commande
-                const isNewOrder = isNewOrderAvailable(ordersAndClients, fetchedUsers);
-                if (isNewOrder) {
-                    // Mettre à jour les commandes
-                    setOrdersAndClients(fetchedUsers);
-                    sendNotification(expoPushToken)
-                    console.log('une nouvelle commande de dispo');
-                }else{
-                    console.log('pas de nouvelle commande de dispo');
-                }
-            } catch (error) {
-                console.error('Erreur lors de la récupération des utilisateurs:', error.message);
-            }
-        };
-    
-        // Fonction pour vérifier s'il y a une nouvelle commande
-        const isNewOrderAvailable = (currentOrders, newOrders) => {
-            // Comparer le nombre de commandes actuelles avec le nombre de nouvelles commandes
-            return newOrders.length > currentOrders.length;
-        };
-    
-        // Exécuter la fonction toutes les 1 minute
-        const intervalId = setInterval(fetchAndCheckForNewOrders, 60000);
-    
-        // Nettoyer l'intervalle lors du démontage du composant
-        return () => clearInterval(intervalId);
-    }, [nameRestaurant, ordersAndClients]);
-    
-
-
-    useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            // Rechargez les commandes chaque fois que l'écran est mis au premier plan
             fetchOrdersAndClients();
         });
-        // Retournez une fonction de nettoyage pour annuler l'écouteur
         return unsubscribe;
-    }, [nameRestaurant, navigation]); // Écouter les changements de navigation
+    }, [nameRestaurant, navigation]);
 
-    // Fonction pour calculer le prix total d'une commande
     const calculateAndFormatTotalPrice = (order) => {
         let totalPrice = 0;
         order.orders.forEach((product) => {
             totalPrice += product.product_price * product.order_quantity;
         });
-    
-        // Vérifier si le prix est un nombre
+
         if (typeof totalPrice !== 'number' || isNaN(totalPrice)) {
             return 'Prix invalide';
         }
-    
-        // Arrondir le prix à deux décimales
+
         const roundedPrice = Math.round(totalPrice * 100) / 100;
-    
-        // Formater le prix avec deux décimales et le signe euro
-        return roundedPrice.toFixed(2);
+        return `${roundedPrice.toFixed(2)} €`;
     };
 
+    const [selectedOrders, setSelectedOrders] = useState([]);
 
+    const updateSelectedOrders = (id) => {
+        setSelectedOrders((prevSelectedOrders) => {
+            if (prevSelectedOrders.includes(id)) {
+                return prevSelectedOrders.filter(orderId => orderId !== id);
+            } else {
+                return [...prevSelectedOrders, id];
+            }
+        });
+    };
+
+    const ModeremoveOrder = () => {
+        setRemove(!remove);
+    };
+
+    const removeItems = async () => {
+        for (let orderId of selectedOrders) {
+            const order = ordersAndClients.find(order => order.client_id === orderId);
+            if (order) {
+                startLoading();
+                try {
+                    await apiService.deleteClient(
+                        order.client_id,
+                        order.client_ref_order,
+                        order.client_lastname,
+                        order.client_firstname,
+                        order.client_email,
+                        order.client_method,
+                        nameRestaurant
+                    );
+                    console.log('Deleted order:', orderId);
+                } catch (error) {
+                    console.error('Failed to delete order:', orderId, error);
+                } finally {
+                    stopLoading();
+                }
+            }
+        }
+        setRemove(false);
+        fetchOrdersAndClients();
+        setSelectedOrders([]);
+    };
+    
     return(
         <View style={styles.containerScreenBasket}>
             <View style={styles.containerHeaderSetting}>
-                <View style={styles.containerEmpty}></View>
+
+                {remove === false ? (
+                <TouchableOpacity onPress={()=> ModeremoveOrder()} style={styles.containerBtnRemove}>
+                    <Text>
+                        <Ionicons size={30} color={colors.colorText} name="trash-outline"/>
+                    </Text>
+                </TouchableOpacity>
+                ):
+                <TouchableOpacity onPress={()=> ModeremoveOrder()} style={styles.containerBtnRemove}>
+                    <Text>
+                        <Ionicons size={30} color={colors.colorRed} name="trash-outline"/>
+                    </Text>
+                </TouchableOpacity>
+                }
+
                 <Text style={[styles.textHeaderSetting, {color: colors.colorText}]}>{t('titleOrder')}</Text>
                 <TouchableOpacity onPress={() => refreshOrder()} style={[styles.containerBtnLogout, , {backgroundColor: colors.colorBorderAndBlock}]}>
                     <Ionicons name="reload-outline" size={25} color={colors.colorText}/>
@@ -150,7 +189,7 @@ function BasketScreen() {
             </View>
             <View style={[styles.line, {borderColor: colors.colorDetail}]}></View>
 
-            
+            {remove === true ? (<View><TouchableOpacity onPress={removeItems} style={{backgroundColor: colors.colorRed, marginHorizontal: 30, height: 40, borderRadius: 10, justifyContent: "center", alignItems:"center", marginBottom: 30}}><Text style={{color: colors.colorText, fontSize: 18}}>Supprimer</Text></TouchableOpacity></View>) : ''}
             <View style={[styles.containerBtnStyle, {borderColor: colors.colorText}]}>
             <View style={[orderMethod === "A emporter" ? styles.borderBlueLeft : styles.borderBlueRight, {borderColor: colors.colorAction}]}></View>
                 <TouchableOpacity style={styles.containerTextClear} onPress={() => setOrderMehod("A emporter")}>
@@ -166,27 +205,63 @@ function BasketScreen() {
                 <ScrollView>
                     <View style={styles.listOrder}>
 
-                    {Array.isArray(filteredOrders) && filteredOrders.map((order) => {
-                        return(
-                            <TouchableOpacity onPress={() => navigation.navigate('OrderSelect', { order })} key={order.client_id} style={styles.containerOrderItem}>
-                                <View style={[styles.containerIconOrderItem , {backgroundColor: colors.colorText}]}>
-                                 {order.client_method === "A emporter" ? <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/> : <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>}
-                                </View>
-                                <View style={styles.containerTextOrderItem}>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.client_ref_order}</Text>
-                                        <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>{order.client_lastname} {order.client_firstname}</Text>
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{calculateAndFormatTotalPrice(order)} €</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
+                    {
+                        remove === false ? (
+                            Array.isArray(filteredOrders) && filteredOrders.map((order) => {
+                                return (
+                                    <TouchableOpacity onPress={() => navigation.navigate('OrderSelect', { order })} key={order.client_id} style={styles.containerOrderItem}>
+                                        <View style={[styles.containerIconOrderItem, {backgroundColor: colors.colorText}]}>
+                                            {order.client_method === "A emporter" ? (
+                                                <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
+                                            ) : (
+                                                <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>
+                                            )}
+                                        </View>
+                                        <View style={styles.containerTextOrderItem}>
+                                            <View>
+                                                <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.client_ref_order}</Text>
+                                                <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>{order.client_lastname} {order.client_firstname}</Text>
+                                            </View>
+                                            <View>
+                                                <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{calculateAndFormatTotalPrice(order)}</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                )
+                            })
+                        ) : (
+                            Array.isArray(filteredOrders) && filteredOrders.map((order) => {
+                                return (
+                                    <TouchableOpacity onPress={() => updateSelectedOrders(order.client_id)} key={order.client_id} style={[styles.containerOrderItem, {backgroundColor: selectedOrders.includes(order.client_id) ? colors.colorAction : 'transparent', borderRadius: 30}]}>
+
+                                        <View style={[styles.containerIconOrderItem, {backgroundColor: colors.colorText}]}>
+                                            {order.client_method === "A emporter" ? (
+                                                <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
+                                            ) : (
+                                                <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>
+                                            )}
+                                        </View>
+                                        <View style={styles.containerTextOrderItem}>
+                                            <View>
+                                                <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.client_ref_order}</Text>
+                                                <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>{order.client_lastname} {order.client_firstname}</Text>
+                                            </View>
+                                            <View>
+                                                <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{calculateAndFormatTotalPrice(order)} €</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                )
+                            })
                         )
-                    })}
+                    }
+
+
                     </View>
                 </ScrollView>
-            
+
+
+
         </View>
     )
 }
@@ -203,6 +278,15 @@ function useStyles(){
             paddingRight: 35,
             paddingLeft : 35,
             alignItems:'center',
+        },
+        containerBtnRemove:{
+
+            height:(width > 375) ? 55 : 35,
+            width: (width > 375) ? 55 : 35,
+            alignItems: "center",
+            borderRadius: 50,
+            backgroundColor: "#1E1E2D",
+            justifyContent: "center",
         },
         textHeaderSetting:{
             fontSize: (width > 375) ? 22 : 18,

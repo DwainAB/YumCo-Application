@@ -23,6 +23,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const App = () => {
+
   return (
     <LanguageProvider>
       <I18nextProvider i18n={i18n}>
