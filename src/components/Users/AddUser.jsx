@@ -1,193 +1,315 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { apiService } from '../API/ApiService';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
+import RNPickerSelect from 'react-native-picker-select';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from 'expo-constants';
+
 
 const AddUser = () => {
     const { t } = useTranslation();
-    const { colors } = useColors()
-    const styles = useStyles()
+    const { colors } = useColors();
+    const styles = useStyles();
+    const [restaurantId, setRestaurantId] = useState('')
+    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
+
     const [newUser, setNewUser] = useState({
-         firstname: '',
-          lastname: '',
-          email: '',
-          password: '',
-          ref_restaurant: '',
-          place_id:'',
-          address: '',
-          tel: '',
-          role: ''
-        });
+        firstname: '',
+        lastname: '',
+        email: '',
+        phone: '',
+        street: '',
+        city: '',
+        postal_code: '',
+        country: '',
+        type: '',
+    });
 
-
-        
     useEffect(() => {
-        async function fetchRefRestaurant() {
+        const fetchRestaurantId = async () => {
             try {
-                const user = await AsyncStorage.getItem("user");
-                console.log(user);
-                const refRestaurant = JSON.parse(user).ref_restaurant;
-                const placeId = JSON.parse(user).place_id
-                setNewUser(prevState => ({ ...prevState, ref_restaurant: refRestaurant }));
-                setNewUser(prevState => ({ ...prevState, place_id: placeId }));
+                const owner = await AsyncStorage.getItem("owner");
+                const ownerData = JSON.parse(owner);                
+                setRestaurantId(ownerData.restaurantId);
+                
+                
             } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
-        }      
-        fetchRefRestaurant();
+        };
+        fetchRestaurantId();
     }, []);
 
     const handleNewUserInputChange = (name, value) => {
         setNewUser({ ...newUser, [name]: value });
     };
-       
 
-    const handleAddNewUser = async (event) => {
-        event.preventDefault();
-    
-        // Créer un nouvel objet FormData
-        const formData = new FormData();
-        formData.append('ref_restaurant', newUser.ref_restaurant);
-        formData.append('place_id', newUser.place_id);
-        formData.append('firstname', newUser.firstname);
-        formData.append('lastname', newUser.lastname);
-        formData.append('email', newUser.email);
-        formData.append('password', newUser.password);
-        formData.append('address', newUser.address);
-        formData.append('tel', newUser.tel);
-        formData.append('role', newUser.role);
-    
+    const handleAddNewUser = async () => {
+        const payload = {
+            first_name: newUser.firstname,
+            last_name: newUser.lastname,
+            email: newUser.email,
+            phone: newUser.phone,
+            street: newUser.street,
+            city: newUser.city,
+            postal_code: newUser.postal_code,
+            country: newUser.country,
+            category: "CLIENTS",
+            restaurant_id: restaurantId,
+            type: newUser.type,
+        };
+
         try {
-            const addUserResponse = await apiService.addUser(formData, { timeout: 10000 }); // Augmentez le délai d'attente à 10 secondes
-            console.log('Réponse de l\'API:', addUserResponse);
-    
-            // Vérifier si l'ajout de l'utilisateur a réussi
-            if (addUserResponse.success) {
-                alert("Utilisateur ajouté avec succès, un mail d'information a été envoyé !")
-                console.log('Utilisateur ajouté avec succès', addUserResponse.message);
-    
-                // Réinitialiser le formulaire
-                setNewUser({ firstname: '', lastname: '', email: '', password: '', ref_restaurant: '' });
+            const response = await fetch(
+                "https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/createUserWithRelations",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("Utilisateur ajouté avec succès !");
+                setNewUser({
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    phone: '',
+                    street: '',
+                    city: '',
+                    postal_code: '',
+                    country: '',
+                    type: '',
+                });
             } else {
-                console.error('Erreur lors de l\'ajout de l\'utilisateur', addUserResponse.message);
+                alert(`Erreur: ${data.message || "Une erreur s'est produite."}`);
             }
         } catch (error) {
-            console.error('Erreur lors de l\'envoi à l\'API:', error.message);
+            console.error("Erreur lors de l'envoi à Supabase:", error);
+            alert("Une erreur s'est produite lors de l'envoi des données.");
         }
     };
-    
+
+    const pickerItems = [
+        { label: 'ADMIN', value: 'ADMIN' },
+        { label: 'UTILISATEUR', value: 'USER' },
+        { label: 'RESPONSABLE', value: 'CHEF' },
+    ];
 
     return (
-        <View>
-            <ScrollView>
-                <View style={styles.containerGlobalUsers}>
-                    <View style={styles.containerGlobalAddUser}>
-                        <View style={styles.containerFormAddUser}>
-                            <View style={styles.containerAddUserSectionTop}>
+        <View style={styles.mainContainer}>
+            <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                <View style={styles.containerFormAddUser}>
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('firstname')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('firstname')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.firstname}
+                        onChangeText={(value) => handleNewUserInputChange('firstname', value)}
+                    />
 
-                                
-                                <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('firstname')}</Text>
-                                <TextInput
-                                    style={[styles.userInput, {color: colors.colorText, borderColor: colors.colorText}]}
-                                    placeholder={t('firstname')}
-                                    placeholderTextColor={colors.colorDetail}
-                                    value={newUser.lastname}
-                                    name='lastname'
-                                    onChangeText={(value) => handleNewUserInputChange('lastname', value)}
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('lastname')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('lastname')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.lastname}
+                        onChangeText={(value) => handleNewUserInputChange('lastname', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('email')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('email')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.email}
+                        onChangeText={(value) => handleNewUserInputChange('email', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('phone')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('phone')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.phone}
+                        onChangeText={(value) => handleNewUserInputChange('phone', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('street')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('street')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.street}
+                        onChangeText={(value) => handleNewUserInputChange('street', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('city')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('city')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.city}
+                        onChangeText={(value) => handleNewUserInputChange('city', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('postalCode')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('postalCode')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.postal_code}
+                        onChangeText={(value) => handleNewUserInputChange('postal_code', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('country')}</Text>
+                    <TextInput
+                        style={[styles.userInput, { color: colors.colorText, borderColor: colors.colorText }]}
+                        placeholder={t('country')}
+                        placeholderTextColor={colors.colorDetail}
+                        value={newUser.country}
+                        onChangeText={(value) => handleNewUserInputChange('country', value)}
+                    />
+
+                    <Text style={[styles.labelUser, { color: colors.colorText }]}>{t('type')}</Text>
+                    <RNPickerSelect
+                            onValueChange={(value) => handleNewUserInputChange('type', value)}
+                            items={pickerItems}
+                            style={{
+                                inputIOS: [styles.userInput, { 
+                                    color: colors.colorText, 
+                                    borderColor: colors.colorText,
+                                }],
+                                inputAndroid: [styles.userInput, { 
+                                    color: colors.colorText, 
+                                    borderColor: colors.colorText,
+                                }],
+                                iconContainer: {
+                                    position: 'absolute',
+                                    right: 40,
+                                    height: '100%',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }
+                            }}
+                            useNativeAndroidPickerStyle={false}
+                            placeholder={{
+                                label: t("Type d'utilisateur"),
+                                value: '',
+                                color: colors.colorDetail
+                            }}
+                            value={newUser.type}
+                            Icon={() => (
+                                <Ionicons 
+                                    name="chevron-down"
+                                    size={30}
+                                    color={colors.colorText}
+                                    style={{ marginRight: 0, marginTop: -15 }}
                                 />
-                                
-                                <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('lastname')}</Text>
-                                <TextInput
-                                    style={[styles.userInput, {color: colors.colorText, borderColor: colors.colorText}]}
-                                    placeholder={t('lastname')}
-                                    placeholderTextColor={colors.colorDetail}
-                                    value={newUser.firstname}
-                                    name="firstname"
-                                    onChangeText={(value) => handleNewUserInputChange('firstname', value)}
-                                    />
+                            )}
+                        />
 
-                                <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('email')}</Text>
-                                <TextInput
-                                    style={[styles.userInput, {color: colors.colorText, borderColor: colors.colorText}]}
-                                    placeholder={t('email')}
-                                    placeholderTextColor={colors.colorDetail}
-                                    name="email"
-                                    value={newUser.email}
-                                    onChangeText={(value) => handleNewUserInputChange('email', value)}
-                                />
-
-                                <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('password')}</Text>
-                                <TextInput
-                                    style={[styles.userInput, {color: colors.colorText, borderColor: colors.colorText}]}
-                                    placeholder={t('password')}
-                                    placeholderTextColor={colors.colorDetail}
-                                    name="password"
-                                    value={newUser.password}
-                                    secureTextEntry={true}
-                                    onChangeText={(value) => handleNewUserInputChange('password', value)}
-                                />
-                            </View>
-
-                            <View style={styles.containerAddUserSectionBottom}>
-                                <TouchableOpacity style={[styles.containerButtonAddUser, {backgroundColor: colors.colorAction}]} onPress={handleAddNewUser}>
-                                    <Text style={styles.btnAddUser}>{t('add')}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
+                    <TouchableOpacity 
+                        style={[styles.containerButtonAddUser, { backgroundColor: colors.colorAction }]} 
+                        onPress={handleAddNewUser}
+                    >
+                        <Text style={styles.btnAddUser}>{t('add')}</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </View>
-
     );
 };
 
-function useStyles(){
-    const {width, height} = useWindowDimensions();
+function useStyles() {
+    const { width } = useWindowDimensions();
 
     return StyleSheet.create({
-        containerGlobalUsers:{
-            marginBottom: 200
+        mainContainer: {
+            flex: 1,
         },
-        userInput:{
+        scrollViewContent: {
+            flexGrow: 1,
+            paddingBottom: 40,
+        },
+        containerFormAddUser: {
+            paddingTop: 20,
+        },
+        userInput: {
             borderWidth: 1,
             height: (width > 375) ? 50 : 40,
             borderRadius: 20,
             paddingLeft: 20,
             marginBottom: 20,
-            marginLeft: 30,
-            marginRight: 30,
+            marginHorizontal: 30,
         },
-        containerGlobalAddUser:{
-            height: 500,
-            zIndex: -1
-        }, 
-        containerButtonAddUser:{
-            backgroundColor: "#0066FF",
+        containerButtonAddUser: {
             height: (width > 375) ? 50 : 40,
-            display: "flex",
             justifyContent: "center",
-            alignItems:"center",
+            alignItems: "center",
             borderRadius: 20,
             marginTop: 20,
-            marginLeft: 30,
-            marginRight: 30,
+            marginHorizontal: 30,
+            marginBottom: 20,
         },
-        btnAddUser:{
+        btnAddUser: {
             color: "#fff",
         },
-        labelUser:{
-            color: '#cbcbcb',
+        labelUser: {
             marginLeft: 30,
             fontSize: (width > 375) ? 16 : 13,
             marginBottom: 10
-        }
-    })
+        },
+        pickerContainer: {
+            marginHorizontal: 30,
+            marginBottom: 20,
+        },
+        iconInput: {
+            position: 'absolute',
+            right: 0,
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+        }, 
+        pickerWrapper: {
+            position: 'relative',
+            marginHorizontal: 30,
+            marginBottom: 20
+        },
+    });
 }
 
-
+const pickerSelectStyles = StyleSheet.create({
+    inputIOS: {
+        height: 50,
+        fontSize: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderWidth: 1,
+        borderRadius: 20,
+        color: 'black',
+        paddingRight: 30, // pour laisser de la place à l'icône
+    },
+    inputAndroid: {
+        height: 50,
+        fontSize: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderRadius: 20,
+        color: 'black',
+        paddingRight: 30, // pour laisser de la place à l'icône
+    }
+});
 
 export default AddUser;

@@ -10,6 +10,8 @@ import imgCard from "../../assets/imgCard.png"
 import { useWindowDimensions } from "react-native";
 import { apiService } from "../API/ApiService";
 import { useLoading } from "../Hooks/useLoading";
+import { supabase } from "../../lib/supabase";
+import Constants from 'expo-constants';
 
 export  function InfoStat({nextPage}){
   const styles = useStyles()
@@ -93,6 +95,7 @@ export function FormLogin() {
   const [storageData, setStorageData] = useState(null);
   const styles = useStyles();
   const { startLoading, stopLoading } = useLoading();
+  const NEXT_PUBLIC_SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;
 
   useEffect(() => {
       const getStorageData = async () => {
@@ -108,55 +111,109 @@ export function FormLogin() {
       getStorageData();
   }, []);
 
-  console.log("storage: ", storageData);
 
-  const showAlert = () => {
-      Alert.alert(
-          'Erreur',
-          'Email ou mot de passe incorrect.',
-          [
-              {
-                  text: 'Fermer',
-                  onPress: () => console.log('Alerte fermée'),
-                  style: 'cancel',
-              },
-          ],
-          { cancelable: true }
-      );
+  const showAlert = (message) => {
+    Alert.alert(
+      'Erreur',
+      message,
+      [{ text: 'Fermer', style: 'cancel' }],
+      { cancelable: true }
+    );
   };
 
   const handleLogin = async () => {
-      try {
-          const response = await fetch("https://sasyumeats.com/api/users/login", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                  email: email,
-                  password: password,
-              }),
-          });
-
-          const data = await response.json();
-          console.log(data);
-
-          if (data.token) {
-              EventEmitter.dispatch("loginSuccess");
-              await AsyncStorage.setItem("token", data.token);
-              await AsyncStorage.setItem("user", JSON.stringify(data.user));
-              setErrorMessage(""); // Réinitialiser le message d'erreur
-              navigation.navigate("MainApp");
-              startLoading();
-              stopLoading();
-          } else {
-              setErrorMessage(data.error || "Une erreur est survenue");
-              showAlert();
-          }
-      } catch (error) {
-          console.error("Erreur lors de la connexion : ", error);
-          setErrorMessage("Erreur de connexion");
+    try {
+      startLoading();
+      
+      if (!email || !password) {
+        showAlert('Veuillez remplir tous les champs');
+        return;
       }
+
+      // 1. Authentification de base
+      const authResponse = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (authResponse.error) {
+        console.error('Erreur auth détaillée:', authResponse.error);
+        throw authResponse.error;
+      }
+
+      if (!authResponse.data?.user) {
+        throw new Error('Pas de données utilisateur reçues');
+      }
+
+      // 2. Stockage session
+      const session = await supabase.auth.getSession();
+      await AsyncStorage.setItem('session', JSON.stringify(session));
+
+      // 3. Récupération données owner
+      let ownerData = null;
+      let roleData = null;
+      let retryCount = 0;
+      
+      while (retryCount < 3) {
+        // Récupérer les données owner
+        const { data: owner, error: ownerError } = await supabase
+          .from('owners')
+          .select('*')
+          .eq('id', authResponse.data.user.id)
+          .single();
+          
+        if (ownerError) {
+          console.error(`Tentative ${retryCount + 1} échouée pour owner:`, ownerError);
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        if (owner) {
+          ownerData = owner;
+
+          // 4. Récupérer les données de rôle
+          const { data: role, error: roleError } = await supabase
+            .from('roles')
+            .select('*')
+            .eq('owner_id', owner.id)
+            .single();
+
+          if (roleError) {
+            console.error(`Tentative ${retryCount + 1} échouée pour role:`, roleError);
+          } else if (role) {
+            roleData = role;
+            break;
+          }
+        }
+
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      if (!ownerData || !roleData) {
+        throw new Error("Impossible de récupérer toutes les données nécessaires");
+      }
+
+      // 5. Stockage de toutes les données
+      await AsyncStorage.setItem('user', JSON.stringify(authResponse.data.user));
+      await AsyncStorage.setItem('owner', JSON.stringify({
+        ...ownerData,
+        restaurantId: roleData.restaurant_id // Ajouter le restaurant_id aux données owner
+      }));
+      await AsyncStorage.setItem('role', JSON.stringify(roleData));
+
+      navigation.navigate("MainApp");
+    } catch (error) {
+      console.error('Erreur complète:', error);
+      showAlert(
+        error.message.includes('Invalid login credentials')
+        ? 'Email ou mot de passe incorrect'
+        : `Erreur de connexion: ${error.message}`
+      );
+    } finally {
+      stopLoading();
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -164,18 +221,46 @@ export function FormLogin() {
   };
 
   const resetPassword = async () => {
-      if (email) {
-          try {
-              const response = await apiService.resetPassword(email);
-              alert('Votre mot de passe vous a été envoyé par email !');
-              console.log('Nouveau mot de passe :', response.password); // Facultatif, pour déboguer
-          } catch (error) {
-              console.error("Erreur lors de la réinitialisation du mot de passe : ", error);
-              alert('Erreur lors de la réinitialisation du mot de passe');
-          }
-      } else {
-          alert('Veuillez renseigner votre email !');
+    if (!email) {
+      Alert.alert('Erreur', 'Veuillez renseigner votre email !');
+      return;
+    }
+  
+    try {
+      startLoading();
+  
+      const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/resetPassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Utilisation de la même clé anon que pour le client Supabase
+          'Authorization': `Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ email: email.trim() })
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Une erreur est survenue');
       }
+  
+      Alert.alert(
+        'Succès',
+        'Un nouveau mot de passe vous a été envoyé par email. Veuillez vérifier votre boîte de réception.',
+        [{ text: 'OK' }]
+      );
+  
+    } catch (error) {
+      console.error("Erreur lors de la réinitialisation du mot de passe : ", error);
+      Alert.alert(
+        'Erreur',
+        error.message || 'Impossible de réinitialiser votre mot de passe. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      stopLoading();
+    }
   };
 
   return (

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView } from "react-native";
-import { apiService } from "../API/ApiService";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from "react-native";
 import {launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from 'expo-file-system';
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-
+import { supabase } from '../../lib/supabase'; 
+import { decode } from "base64-arraybuffer";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function FormAddProduct() {
     const pickerKey = useRef(0); 
@@ -17,95 +17,108 @@ function FormAddProduct() {
     const { t } = useTranslation();
     const styles = useStyles()
     const [listCategorie, setListCategorie] = useState([])
-    const [nameRestaurant, setNameRestaurant] = useState([])
+    const [restaurantId, setRestaurantId]= useState('');
     const [productData, setProductData] = useState({
         title: "",
         description: "",
         price: "",
         imageURI: null,
         category: "",
+        is_available: true,
+        is_deleted: false,
     });
 
-    //Récupération des catégories
     useEffect(() => {
-        async function fetchRefRestaurant() {
+        const fetchRestaurantId = async () => {
             try {
-                const user = await AsyncStorage.getItem("user");
-                console.log(user);
-                const refRestaurant = JSON.parse(user).ref_restaurant;
-                setNameRestaurant(refRestaurant);
+                const owner = await AsyncStorage.getItem("owner");
+                const ownerData = JSON.parse(owner);                
+                setRestaurantId(ownerData.restaurantId);
+                
+                
             } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
-        }      
-        fetchRefRestaurant();
+        };
+        fetchRestaurantId();
     }, []);
-
-    const fetchCategorie = async () => {
+    
+    
+    const fetchCategories = async () => {
+        if(!restaurantId){
+            return
+        }
         try {
-            const fetchedCategories = await apiService.getAllCategories(nameRestaurant);
-            setListCategorie(fetchedCategories); 
-            console.log(fetchedCategories);  
+            const { data, error } = await supabase
+                .from('categories')
+                .select('*')
+                .eq('restaurant_id', restaurantId);
+            
+            if (error) {
+                throw error;
+            }
+
+            setListCategorie(data);
         } catch (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
+            console.error('Erreur lors de la récupération des catégories:', error.message);
         }
     };
     
     useEffect(() => {
-        if (nameRestaurant) {
-            fetchCategorie();
-        }
-    }, [nameRestaurant]);
-
-
-    //Ajout d'un produit
+        fetchCategories();
+    }, [restaurantId]);
 
     const handleSubmit = async () => {
-
-        const jsonData = {
-            title: productData.title,
-            description: productData.description,
-            category: productData.category,
-            price: productData.price,
-            imageURI: {
-              base64: productData.imageURI.base64,
-              fileName: productData.imageURI.fileName,
-              type: productData.imageURI.mimeType
-            }
-          };
-          
         try {
-            const formData = new FormData();
-            formData.append('title', productData.title);
-            formData.append('ref_restaurant', nameRestaurant);
-            formData.append('description', productData.description);
-            formData.append('category', productData.category);
-            formData.append('price', productData.price);
-            formData.append('imageURI', JSON.stringify(jsonData) )
-
-            let data = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json' 
-                },
-                body: formData
+            // 1. Upload de l'image vers Supabase Storage
+            let imageUrl = null;
+            if (productData.imageURI?.base64) {
+                const fileName = `${Date.now()}-${productData.title.replace(/\s+/g, '-').toLowerCase()}.jpg`;
+                
+                // Convertir la base64 en ArrayBuffer
+                const arrayBuffer = decode(productData.imageURI.base64);
+    
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, arrayBuffer, {
+                        contentType: 'image/jpeg',
+                        upsert: true
+                    });
+    
+                if (uploadError) throw uploadError;
+    
+                const { data: { publicUrl } } = supabase.storage
+                    .from('products')
+                    .getPublicUrl(fileName);
+    
+                imageUrl = publicUrl;
             }
-            console.log(formData)
-
-            return fetch('https://sasyumeats.com/api/foods/add', data)
-                    .then(response => response.text()    )
-                    .then(json => 
-                        console.log('result', json),
-                        alert('Plat ajouté avec succès!'),
-                        resetForm()
-                        )
-                    .catch((err)=>{console.error("ERROR", err)})
+    
+            // 2. Insertion du produit dans la base de données
+            const { data, error } = await supabase
+                .from('products')
+                .insert([{
+                    name: productData.title,
+                    description: productData.description,
+                    price: parseFloat(productData.price),
+                    image_url: imageUrl,
+                    category_id: productData.category,
+                    restaurant_id: restaurantId,
+                    is_available: productData.is_available,
+                    is_deleted: productData.is_deleted
+                }])
+                .select();
+    
+            if (error) throw error;
+    
+            alert('Produit ajouté avec succès!');
+            resetForm();
         } catch (error) {
-            console.error(error);
-            alert('Une erreur est survenue lors de l\'ajout du plat.');
+            console.error("Erreur lors de l'ajout du produit:", error);
+            alert("Une erreur est survenue lors de l'ajout du produit.");
         }
     };
-
+    
 
     const resetForm = () => {
         setProductData({
@@ -114,10 +127,11 @@ function FormAddProduct() {
             price: "",
             imageURI: null,
             category: "",
+            is_available: true,
+            is_deleted: false,
         });
-        pickerKey.current += 1; // Incrémentation de la clé pour forcer le RNPickerSelect à se réinitialiser
+        pickerKey.current += 1;
     };
-
 
     const handlePriceChange = (inputValue) => {
         const convertedValue = inputValue.replace(',', '.');
@@ -129,54 +143,62 @@ function FormAddProduct() {
     };
     
     //Upload de l'image
-    const handleClickUpload = async() =>{
-
-        const {status} = await requestMediaLibraryPermissionsAsync()
+    const handleClickUpload = async() => {
+        const { status } = await requestMediaLibraryPermissionsAsync();
 
         if(status !== 'granted'){
-            alert("accès refusé")
-            return
+            alert("Accès refusé");
+            return;
         }
 
-        let options={
+        let options = {
             mediaType: 'photo',
             includeBase64: true
-        }
+        };
 
-        let result  = await launchImageLibraryAsync(options)
-        console.log('result',result);
+        let result = await launchImageLibraryAsync(options);
         
-        if(result.didCancel ==true){
-            console.log('user cancel');
-        }else if(result.errorCode && parseInt(result.errorCode)) {
-            console.log('upload error');
-        }else{
-            console.log('upload succès');
-            uploadImage(result)
+        if(!result.canceled) {
+            uploadImage(result);
         }
-    }
+    };
 
-
-    const uploadImage = async(imageData) =>{
+    const uploadImage = async(imageData) => {
         const { uri } = imageData.assets[0];
         try {
-        const base64Image = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-        });
-        imageData.assets[0].base64 = base64Image
-        // Utilisez base64Image comme nécessaire pour télécharger ou traiter l'image
+            const base64Image = await FileSystem.readAsStringAsync(uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+            imageData.assets[0].base64 = base64Image;
+            setProductData({...productData, imageURI: imageData.assets[0]});
         } catch (error) {
             console.error('Erreur lors de la lecture de l\'image:', error);
         }
-        setProductData({...productData, imageURI: imageData.assets[0]});
-        console.log(imageData);
-    }
-
-
+    };
     
     return (
         <ScrollView style={styles.containerScrollAddProduct}>
             <View style={styles.containerFormAddProduct}>
+                <View style={styles.imagePickerContainer}>
+                    <View style={styles.imageContainer}>
+                        {productData.imageURI ? (
+                            <Image
+                                source={{ uri: productData.imageURI.uri }}
+                                style={styles.previewImage}
+                            />
+                        ) : (
+                            <View style={styles.placeholderImage}>
+                                <Ionicons name="image-outline" size={40} color={colors.colorText} />
+                            </View>
+                        )}
+                        <TouchableOpacity 
+                            style={[styles.addImageButton, {backgroundColor: colors.colorAction}]}
+                            onPress={handleClickUpload}
+                        >
+                            <Ionicons name="add" size={24} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
 
                 <Text style={[styles.label, {color: colors.colorText}]}>{t('productName')}</Text>
                 <TextInput
@@ -203,14 +225,17 @@ function FormAddProduct() {
                             label: t('selectCategory'),
                             value: null,
                         }}
-                        items={Array.isArray(listCategorie) && listCategorie.map(category => ({ label: category.name, value: category.name, key: category.id }))}
+                        items={listCategorie.map(category => ({
+                            label: category.name,
+                            value: category.id,
+                            key: category.id
+                        }))}
                         onValueChange={(value) => setProductData({ ...productData, category: value })}
                         style={{
-                            inputIOS: [styles.picker, {color: colors.colorText, borderColor: colors.colorText,placeholder:{color: "#343434"}}],
-                            inputAndroid: [styles.picker, {color: colors.colorText, borderColor: colors.colorText,placeholder:{color: "#343434"}}],
-                            borderColor: colors.colorText,
+                            inputIOS: [styles.picker, {color: colors.colorText, borderColor: colors.colorText}],
+                            inputAndroid: [styles.picker, {color: colors.colorText, borderColor: colors.colorText}],
                             placeholder: {
-                                color: '#343434', // Couleur du placeholder
+                                color: '#343434',
                             }
                         }}
                         useNativeAndroidPickerStyle={false}
@@ -229,17 +254,21 @@ function FormAddProduct() {
                     onChangeText={handlePriceChange}
                     keyboardType="numeric"
                 />
-                <TouchableOpacity style={[styles.buttonImageAddProduct, {borderColor: colors.colorText}]} onPress={() => handleClickUpload() }><Text style={[styles.textAddImage, {color: colors.colorText}]}>{t('textImage')}</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.buttonAddProduct, {backgroundColor: colors.colorAction}]} onPress={handleSubmit}><Text style={[styles.textAddProduct, {color: colors.colorText}]}>{t('add')}</Text></TouchableOpacity>
-            
+
+                <TouchableOpacity 
+                    style={[styles.buttonAddProduct, {backgroundColor: colors.colorAction}]} 
+                    onPress={handleSubmit}
+                >
+                    <Text style={[styles.textAddProduct, {color: colors.colorText}]}>{t('add')}</Text>
+                </TouchableOpacity>
             </View>
-        
         </ScrollView>
-    )
+    );
 }
 
+// Les styles restent identiques à votre code original
 function useStyles(){
-    const {width, height} = useWindowDimensions();
+    const {width} = useWindowDimensions();
 
     return StyleSheet.create({
         containerScrollAddProduct:{
@@ -305,9 +334,53 @@ function useStyles(){
         },
         iconInput: {
             marginTop: (width > 375) ? 10 : 5,
-        }
-    })
-    
+        },
+        imagePickerContainer: {
+            alignItems: 'center',
+            marginVertical: 20,
+        },
+        imageContainer: {
+            position: 'relative',
+            width: 150,
+            height: 150,
+        },
+        previewImage: {
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            backgroundColor: '#f0f0f0',
+        },
+        placeholderImage: {
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            backgroundColor: '#f0f0f0',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#ccc',
+            borderStyle: 'dashed',
+        },
+        addImageButton: {
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: '#0066FF',
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 3,
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+        },
+    });
 }
 
 export default FormAddProduct;

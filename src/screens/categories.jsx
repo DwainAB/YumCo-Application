@@ -1,45 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { apiService } from "../components/API/ApiService";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
+import { supabase } from '../lib/supabase'; 
 
 function CategoriesScreen() {
-    const navigation = useNavigation();
+    const [restaurantId, setRestaurantId]= useState('')
     const { colors } = useColors();
     const { t } = useTranslation();
     const styles = useStyles();
-    const [nameRestaurant, setNameRestaurant] = useState('');
     const [listCategories, setListCategories] = useState([]);
     const [categories, setCategories] = useState({
         name: '',
-        ref_restaurant: ''
+        restaurant_id: restaurantId
     });
 
     useEffect(() => {
-        async function fetchRefRestaurant() {
-            try {
-                const user = await AsyncStorage.getItem("user");
-                const refRestaurant = JSON.parse(user).ref_restaurant;
-                setNameRestaurant(refRestaurant);
-                setCategories(prevState => ({ ...prevState, ref_restaurant: refRestaurant }));
-            } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
-            }
-        }
-        fetchRefRestaurant();
-    }, []);
+        fetchCategories();
+    }, [restaurantId]);
 
     useEffect(() => {
-        if (nameRestaurant) {
-            fetchCategorie();
-        }
-    }, [nameRestaurant]);
+        const fetchRestaurantId = async () => {
+            try {
+                const owner = await AsyncStorage.getItem("owner");
+                const ownerData = JSON.parse(owner);                
+                setRestaurantId(ownerData.restaurantId);
+                
+                
+            } catch (error) {
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
+            }
+        };
+        fetchRestaurantId();
+    }, []);
 
     const handleNewCategoriesInputChange = (name, value) => {
         setCategories(prevState => ({ ...prevState, [name]: value }));
@@ -47,44 +45,59 @@ function CategoriesScreen() {
 
     const handleAddNewCategories = async () => {
         try {
-            const formData = new FormData();
-            formData.append('name', categories.name);
-            formData.append('ref_restaurant', categories.ref_restaurant);
+            const { data, error } = await supabase
+                .from('categories')
+                .insert([
+                    {
+                        name: categories.name,
+                        restaurant_id: restaurantId
+                    }
+                ]);
 
-            const addCategories = await apiService.addCategory(formData, { timeout: 10000 });
-            if (addCategories.success) {
-                setCategories({ name: '', ref_restaurant: nameRestaurant });
-                fetchCategorie();
-            } else {
-                console.error('Erreur lors de l\'ajout de la catégorie', addCategories.message);
-            }
+            if (error) throw error;
+
+            setCategories({ name: '', restaurant_id: restaurantId });
+            fetchCategories();
         } catch (error) {
-            console.error('Erreur lors de l\'envoi à l\'API:', error.message);
+            console.error('Erreur lors de l\'ajout de la catégorie:', error.message);
         }
     };
 
-    const fetchCategorie = async () => {
+    const fetchCategories = async () => {
+        if(!restaurantId){
+            return
+        }
         try {
-            const fetchedCategories = await apiService.getAllCategories(nameRestaurant);
-            setListCategories(fetchedCategories);
+            const { data, error } = await supabase
+                .from('categories')
+                .select('*')
+                .eq('restaurant_id', restaurantId);
+
+            if (error) throw error;
+            setListCategories(data);
         } catch (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
+            console.error('Erreur lors de la récupération des catégories:', error.message);
         }
     };
 
     const handleDeleteCategorie = async (categorieId) => {
         try {
-            await apiService.deleteCategory(categorieId);
-            fetchCategorie();
+            const { error } = await supabase
+                .from('categories')
+                .delete()
+                .eq('id', categorieId);
+
+            if (error) throw error;
+            fetchCategories();
             alert('Catégorie supprimée');
         } catch (error) {
-            console.error('Erreur lors de la suppression', error.message);
+            console.error('Erreur lors de la suppression:', error.message);
         }
     };
 
     return (
         <View style={[styles.containerCardPage, { backgroundColor: colors.colorBackground }]}>
-            <HeaderSetting name="Catégories" navigateTo="CardOptionScreen" />
+            <HeaderSetting name={t('category')} navigateTo="CardOptionScreen" />
             <Text style={[styles.titleCard, { color: colors.colorDetail }]}>{t('addCategory')}</Text>
             <View style={styles.containerAddCategories}>
                 <TextInput

@@ -71,7 +71,6 @@ export const apiService = {
                 body: JSON.stringify(clientData),
             });
             const responseBody = await response.text();
-            console.log('Réponse brute:', responseBody);
         
             // Vérifiez que la réponse n'est pas vide avant de la convertir en JSON
             if (!responseBody || !responseBody.startsWith('{')) {
@@ -79,7 +78,6 @@ export const apiService = {
             }
         
             const responseJson = JSON.parse(responseBody);
-            console.log('Réponse JSON:', responseJson);
             return responseJson;
         } catch (error) {
             throw error;
@@ -110,7 +108,6 @@ export const apiService = {
 
     deleteClient: async (clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail,clientMethod, nameRestaurant) => {
         try {
-            console.log('reussi: ', clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail, nameRestaurant);
             const response = await fetch(`${BASE_URL}/foods/deleteClient/${clientId}`, {
                 method: 'DELETE',
                 headers: {
@@ -128,7 +125,6 @@ export const apiService = {
     
             return await response.json();
         } catch (error) {
-            console.log('error:', clientId, clientRefOrder, clientLastName, clientFirstName, clientEmail,clientMethod, nameRestaurant);
             throw error;
         }
     },
@@ -226,7 +222,6 @@ export const apiService = {
             const responseData = await response.json();
     
             if (response.ok) {
-                console.log('Utilisateur ajouté avec succès', responseData.message);
                 return responseData; // Retourner les données de la réponse
             } else {
                 console.error('Erreur lors de l\'ajout de l\'utilisateur:', responseData.message);
@@ -277,7 +272,6 @@ updateUser: async (id, userData) => {
                 throw new Error(`HTTP status code: ${response.status}`);
             }
             const responseData = await response.json();
-            console.log('Utilisateurs récupérés avec succès', responseData);
             return responseData;
         } catch (error) {
             console.error('Erreur lors de la récupération des utilisateurs:', error.message);

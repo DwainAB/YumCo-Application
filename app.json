@@ -2,9 +2,10 @@
   "expo": {
     "name": "YumEat",
     "slug": "yumeat",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "orientation": "portrait",
-    "icon": "./assets/logo.png", 
+    "icon": "./assets/logo.png",
+    "scheme": "yumeat",  
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/logo.png",
@@ -16,7 +17,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.YumEat.sendnotification"
+      "bundleIdentifier": "com.YumEat.sendnotification",
+      "associatedDomains": ["applinks:yumeat.app.link"]  
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -31,6 +33,13 @@
         "INTERNET",
         "RECEIVE_BOOT_COMPLETED",
         "FOREGROUND_SERVICE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [{"scheme": "yumeat"}],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

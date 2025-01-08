@@ -35,7 +35,6 @@ function Review() {
         .then(data => {
             if (data && data.result && data.result.reviews) {
                 setReviews(data.result.reviews);
-                console.log("Données récupérées de l'API Google Places :", data);
             } else {
                 console.error('Les données récupérées sont invalides :', data);
             }

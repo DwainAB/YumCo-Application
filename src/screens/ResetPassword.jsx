@@ -1,23 +1,45 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import HeaderSetting from '../components/HeaderSetting/HeaderSetting';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-
+import { supabase } from '../lib/supabase';
 
 const ResetPassword = () => {
     const { t } = useTranslation();
-    const { colors } = useColors()
+    const { colors } = useColors();
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showLastPassword, setShowLastPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [newPassword, setNewPassword] = useState('')
-    const [oldPassword, setOldPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('');
+    const [oldPassword, setOldPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const styles = useStyles()
+    const [userEmail, setUserEmail] = useState(null);
+    const styles = useStyles();
+
+    // Récupérer l'email de l'utilisateur connecté au chargement du composant
+    useEffect(() => {
+        getCurrentUser();
+    }, []);
+
+    const getCurrentUser = async () => {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) throw error;
+            if (user) {
+                setUserEmail(user.email);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'utilisateur:", error.message);
+            Alert.alert(
+                'Erreur',
+                'Impossible de récupérer les informations utilisateur',
+                [{ text: 'OK', style: 'cancel' }]
+            );
+        }
+    };
 
     const toggleNewPasswordVisibility = () => {
         setShowNewPassword(!showNewPassword);
@@ -30,114 +52,84 @@ const ResetPassword = () => {
     };
 
     const updatePassword = async () => {
-        try {
+        if (!userEmail) {
+            Alert.alert('Erreur', 'Utilisateur non connecté');
+            return;
+        }
 
-            if(confirmPassword  === newPassword) {
-                // Récupérer l'ID de l'utilisateur depuis le stockage
-                const user = await AsyncStorage.getItem("user");
-                const userId = JSON.parse(user).id;
-        
-                // Créer un objet FormData
-                const formData = new FormData();
-                formData.append('oldPassword', oldPassword);
-                formData.append('newPassword', newPassword);
-        
-                const apiUrl = `https://sasyumeats.com/api/users/update/${userId}`;
-        
-                // Envoyer la requête HTTP POST avec l'ancien et le nouveau mot de passe
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    body: formData, // Utilisation de FormData
-                });
-        
-                // Traiter la réponse de l'API
-                const data = await response.json();
-                if (response.ok) {
-                    // Succès
-                    showAlertSuccess()
-                    console.log("Mot de passe mis à jour avec succès :", data.message);
-                    setOldPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');                } else {
-                    // Échec
-                    showAlertMissed()
-                    console.error("Erreur lors de la mise à jour du mot de passe :", data.message);
-                    // Afficher un message d'erreur à l'utilisateur (par exemple, avec un toast)
-                }
-            }else{
-                showAlertNotMatchingPasswords()
+        try {
+            // Vérification des mots de passe
+            if (newPassword.length < 6) {
+                Alert.alert('Erreur', 'Le nouveau mot de passe doit contenir au moins 6 caractères');
+                return;
             }
+
+            if (confirmPassword !== newPassword) {
+                Alert.alert('Erreur', 'Les deux mots de passe doivent correspondre');
+                return;
+            }
+
+            // Connexion avec l'ancien mot de passe
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                email: userEmail,
+                password: oldPassword
+            });
+
+            if (signInError) {
+                console.error("Erreur lors de la connexion:", signInError.message);
+                Alert.alert('Erreur', "L'ancien mot de passe est incorrect");
+                return;
+            }
+
+            // Mise à jour du mot de passe
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+
+            if (updateError) {
+                console.error("Erreur lors de la mise à jour du mot de passe:", updateError.message);
+                Alert.alert('Erreur', 'Impossible de mettre à jour le mot de passe');
+                return;
+            }
+
+            // Succès
+            console.log('Changement de mot de passe réussi:');
+            console.log('Ancien mot de passe:', oldPassword);
+            console.log('Nouveau mot de passe:', newPassword);
+
+            Alert.alert(
+                'Succès',
+                'Votre mot de passe a été mis à jour avec succès !',
+                [{ text: 'OK', style: 'cancel' }]
+            );
+
+            // Réinitialisation des champs
+            setOldPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+
         } catch (error) {
             console.error("Erreur lors de la mise à jour du mot de passe :", error);
-            // Afficher un message d'erreur à l'utilisateur (par exemple, avec un toast)
+            Alert.alert('Erreur', 'Une erreur est survenue lors de la mise à jour du mot de passe');
         }
     };
-    
-    const showAlertSuccess = () => {
-        Alert.alert(
-          'Succès',
-          'Votre mot de passe a été mis à jours  avec succès !',
-          [
-            {
-              text: 'Fermer',
-              onPress: () => console.log('Alerte fermée'),
-              style: 'cancel',
-            },
-          ],
-          { cancelable: true } // Permet de fermer l'alerte en touchant à l'extérieur de celle-ci
-        );
-      };
-
-    const showAlertMissed = () => {
-        Alert.alert(
-          'Erreur',
-          "L'ancien mot de passe est incorrect",
-          [
-            {
-              text: 'Fermer',
-              onPress: () => console.log('Alerte fermée'),
-              style: 'cancel',
-            },
-          ],
-          { cancelable: true } // Permet de fermer l'alerte en touchant à l'extérieur de celle-ci
-        );
-      };
-
-    const showAlertNotMatchingPasswords = () => {
-        Alert.alert(
-          'Erreur',
-          "Les deux mots de passe doivent correspondre",
-          [
-            {
-              text: 'Fermer',
-              onPress: () => console.log('Alerte fermée'),
-              style: 'cancel',
-            },
-          ],
-          { cancelable: true } // Permet de fermer l'alerte en touchant à l'extérieur de celle-ci
-        );
-      };
 
     return (
         <View style={[styles.containerResetPassword, {backgroundColor: colors.colorBackground}]}>
-
             <HeaderSetting name={t('changePassword')} navigateTo="SettingPage"/>
-
             <ScrollView>
                 <View style={styles.containerGlobalUsers}>
                     <View style={styles.containerGlobalAddUser}>
                         <View style={styles.containerFormAddUser}>
                             <View style={styles.containerAddUserSectionTop}>
-
-                                
                                 <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('oldPassword')}</Text>
                                 <View style={styles.containerInputPassword}>
                                     <Ionicons marginRight={15} name='key-outline' size={20} color={colors.colorText}/>
                                     <TextInput
-                                        style={styles.passwordInput}
+                                        style={[styles.passwordInput, {color: colors.colorText}]}
                                         placeholder="******"
                                         placeholderTextColor={colors.colorDetail}
-                                        name='oldPassword'
+                                        value={oldPassword}
                                         secureTextEntry={!showNewPassword}
                                         onChangeText={setOldPassword}
                                     />
@@ -150,10 +142,10 @@ const ResetPassword = () => {
                                 <View style={styles.containerInputPassword}>
                                     <Ionicons marginRight={15} name='key-outline' size={20} color={colors.colorText}/>
                                     <TextInput
-                                        style={styles.passwordInput}
+                                        style={[styles.passwordInput, {color: colors.colorText}]}
                                         placeholder="******"
                                         placeholderTextColor={colors.colorDetail}
-                                        name="newPassword"
+                                        value={newPassword}
                                         secureTextEntry={!showLastPassword}
                                         onChangeText={setNewPassword}
                                     />
@@ -162,15 +154,14 @@ const ResetPassword = () => {
                                     </TouchableOpacity>                                
                                 </View>
 
-
                                 <Text style={[styles.labelUser, {color: colors.colorText}]}>{t('confirmPassword')}</Text>
                                 <View style={styles.containerInputPassword}>
                                     <Ionicons marginRight={15} name='key-outline' size={20} color={colors.colorText}/>
                                     <TextInput
-                                        style={styles.passwordInput}
+                                        style={[styles.passwordInput, {color: colors.colorText}]}
                                         placeholder="******"
                                         placeholderTextColor={colors.colorDetail}
-                                        name="newPassword"
+                                        value={confirmPassword}
                                         secureTextEntry={!showConfirmPassword}
                                         onChangeText={setConfirmPassword}
                                     />
@@ -179,8 +170,6 @@ const ResetPassword = () => {
                                     </TouchableOpacity> 
                                 </View>
                                 <Text style={[styles.infoPassWord, {color: colors.colorText}]}>{t('matchPassword')}</Text>
-
-
                             </View>
 
                             <View style={styles.containerAddUserSectionBottom}>
@@ -193,7 +182,6 @@ const ResetPassword = () => {
                 </View>
             </ScrollView>
         </View>
-
     );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { WebView } from 'react-native-webview';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import * as Updates from 'expo-updates';
@@ -17,6 +18,7 @@ function Dashboard (){
     const [language, setLanguage] = useState(null);
     const styles = useStyles()
     const { startLoading, stopLoading } = useLoading();
+    const [showWebView, setShowWebView] = useState(false);
 
 
     useEffect(() => {
@@ -54,8 +56,6 @@ function Dashboard (){
         startLoading();
         try {
           await AsyncStorage.removeItem('user');
-          console.log('Les informations de l\'utilisateur ont été effacées avec succès.');
-          // Relancer l'application après avoir effacé les informations de l'utilisateur
           Updates.reloadAsync();
         } catch (error) {
           console.error('Erreur lors de la suppression des informations de l\'utilisateur :', error);
@@ -66,6 +66,27 @@ function Dashboard (){
 
     return(
         <View style={styles.containerSetting}>
+            <Modal
+                visible={showWebView}
+                animationType="slide"
+                onRequestClose={() => setShowWebView(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity 
+                            style={styles.closeButton}
+                            onPress={() => setShowWebView(false)}
+                        >
+                            <Ionicons name="close" size={30} color={colors.colorText}/>
+                        </TouchableOpacity>
+                    </View>
+                    <WebView 
+                        source={{ uri: 'https://www.yumeats.fr' }}
+                        style={styles.webview}
+                    />
+                </View>
+            </Modal>
+
             <View style={styles.containerHeaderSetting}>
                 <View style={styles.containerEmpty}></View>
                 <Text style={[styles.textHeaderSetting, { color: colors.colorText }]}>{t('titleSetting')}</Text>
@@ -80,6 +101,7 @@ function Dashboard (){
                         <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('language')}</Text><View style={styles.langageSelect}><Text style={[styles.textLangageSelect, {color: colors.colorDetail}]}>{language ? language : "Français"}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
                         <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('Personalization')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('personalization')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
                         <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('SupportScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('support')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => setShowWebView(true)}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('website')}</Text><Ionicons name="globe-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
                     </View>
 
                     <View style={styles.containerCategorySetting}>
@@ -170,9 +192,27 @@ function useStyles(){
         },
         containerMenuSetting:{
             marginBottom: 100
+        },
+        modalContainer: {
+            flex: 1,
+            backgroundColor: '#1A1B26',
+        },
+        modalHeader: {
+            height: 100,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            paddingHorizontal: 15,
+            backgroundColor: '#1A1B26',
+            paddingTop: (width > 375) ? 20 : 10,
+        },
+        closeButton: {
+            padding: 10,
+        },
+        webview: {
+            flex: 1,
         }
     })
-    
 }
 
 export default Dashboard;

@@ -36,12 +36,8 @@ export async function registerForPushNotificationsAsync() {
         }
 
         try {
-            const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-            if (!projectId) {
-                throw new Error('Project ID not found');
-            }
+            const projectId = "8878c9cc-f299-47a6-9463-9077b856ed0c";
             token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-            console.log(token);
         } catch (e) {
             console.error(e);
             alert(`Failed to get push token: ${e.message}`);
@@ -55,7 +51,6 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export async function sendNotification(expoPushToken) {
-    console.log('Sending notification');
     const message = {
         to: expoPushToken,
         sound: "default",
@@ -76,7 +71,6 @@ export async function sendNotification(expoPushToken) {
         });
 
         const data = await response.json();
-        console.log('Notification response:', data);
     } catch (error) {
         console.error('Error sending notification:', error);
     }

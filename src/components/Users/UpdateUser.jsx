@@ -1,159 +1,521 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { apiService } from '../API/ApiService';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Modal, Alert, SafeAreaView, Platform } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import ConfirmDialog from "../ModalAction/ModalAction";
 import { useColors } from "../ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-
+import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 
 const Utilisateur = () => {
+    const { colors } = useColors();
+    const styles = useStyles();
     const [users, setUsers] = useState([]);
-    const { colors } = useColors()
-    const [selectedUserId, setSelectedUserId] = useState(null);
-    const [nameRestaurant, setNameRestaurant] = useState('')
-    const styles = useStyles()
+    const [isLoading, setIsLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [editedUser, setEditedUser] = useState(null);
+    const [isModified, setIsModified] = useState(false);
+    const [restaurantId, setRestaurantId]= useState('')
+    const { t } = useTranslation();
+    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
 
-    //Récupère le nom du restaurant et le stock dans nameRestaurant
+
     useEffect(() => {
-        const fetchRefRestaurant = async () => {
+        const fetchRestaurantId = async () => {
             try {
-                const user = await AsyncStorage.getItem("user");
-                const userObject = JSON.parse(user); // Convertir la chaîne JSON en objet JavaScript
-                const nameRestaurant = userObject.ref_restaurant; // Récupérer la valeur de ref_restaurant
-                setNameRestaurant(nameRestaurant);
+                const owner = await AsyncStorage.getItem("owner");
+                if (!owner) {
+                    throw new Error("Aucune donnée propriétaire trouvée");
+                }
+                const ownerData = JSON.parse(owner);
+                if (!ownerData.restaurantId) {
+                    throw new Error("Restaurant ID non trouvé dans les données propriétaire");
+                }
+                setRestaurantId(ownerData.restaurantId);
             } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
+                Alert.alert(
+                    "Erreur",
+                    "Impossible de récupérer les informations du restaurant"
+                );
             }
         };
-        fetchRefRestaurant();
-    }, []);
+        fetchRestaurantId();
+    }, []); // Exécuté une seule fois au montage
 
-    //Récupère les utilisateurs qui ont  pour ref_restaurant la même valeur que nameRestaurant
+    // useEffect séparé pour fetchUsers qui ne s'exécute que lorsque restaurantId change
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const fetchedUsers = await apiService.getAllUsers(nameRestaurant);
-                setUsers(fetchedUsers); 
-            } catch (error) {
-                console.error('Erreur lors de la récupération des utilisateurs:', error.message);
-            }
-        };
-
-        //Appel de la fonction qui récupère les utilisateurs seulement une fois que nameRestaurant soit remplis par le nom du restaurant
-        if (nameRestaurant) {
+        if (restaurantId) {
             fetchUsers();
         }
-    }, [nameRestaurant]);
+    }, [restaurantId]);
 
-
-      
-
-    const handleDeleteUser = async (userId) => {
+    const fetchUsers = async () => {
+        if (!restaurantId) {
+            return;
+        }
+        
+        setIsLoading(true);
         try {
-
-            ConfirmDialog({
-                title: 'Confirmation de suppression',
-                message: 'Voulez-vous vraiment supprimer cette utilisateur ?',
-                onConfirm: async () => {
-    
-    
-                    await apiService.deleteUser(userId);
-                    console.log('Suppression réussie');
-                    const updatedUsers = await apiService.getAllUsers(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
-                    setUsers(updatedUsers);
-                    alert('Utilisateur supprimé avec succès !')
-    
-                  
+            if(!restaurantId){
+                return
+            }
+            const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantUsers", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "apikey": SUPABASE_ANON_KEY
                 },
-                onCancel: () => {
-                  console.log('Suppression annulée');
-                }
-              });
-
-
+                body: JSON.stringify({ 
+                    restaurant_id: restaurantId
+                })
+            });
+            
+            // Log de la réponse brute
+            const rawResponse = await response.text();
+            
+            if (!response.ok) {
+                throw new Error(`Erreur serveur: ${response.status} - ${rawResponse}`);
+            }
+            
+            const data = JSON.parse(rawResponse);
+            
+            if (data && Array.isArray(data.users)) {
+                setUsers(data.users);
+            } else {
+                console.error('Format de données invalide:', data);
+                setUsers([]);
+            }
         } catch (error) {
-            const updatedUsers = await apiService.getAllUsers(nameRestaurant); // Ajout de cette ligne pour récupérer la liste mise à jour
-            setUsers(updatedUsers);
-            console.error('Erreur lors de la suppression', error.message);
+            console.error('Erreur complète:', error);
+            Alert.alert(
+                "Erreur",
+                error.message || "Impossible de récupérer les utilisateurs. Veuillez réessayer."
+            );
+            setUsers([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUserPress = (user) => {
+        setSelectedUser(user);
+        setEditedUser({...user});
+        setModalVisible(true);
+        setIsModified(false);
+    };
+
+    const handleInputChange = (field, value) => {
+        const newUser = { ...editedUser, [field]: value };
+        setEditedUser(newUser);
+        setIsModified(!isEqual(selectedUser, newUser));
+    };
+
+    const handleAddressChange = (field, value) => {
+        const newAddress = { ...editedUser.address, [field]: value };
+        const newUser = { ...editedUser, address: newAddress };
+        setEditedUser(newUser);
+        setIsModified(!isEqual(selectedUser, newUser));
+    };
+
+    const handleUpdate = async () => {
+        try {
+            const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateUser", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "apikey": SUPABASE_ANON_KEY
+                 },
+                body: JSON.stringify({
+                    user_id: editedUser.id,
+                    first_name: editedUser.first_name,
+                    last_name: editedUser.last_name,
+                    email: editedUser.email,
+                    phone: editedUser.phone,
+                    street: editedUser.address.street,
+                    city: editedUser.address.city,
+                    postal_code: editedUser.address.postal_code,
+                    country: editedUser.address.country,
+                    type: editedUser.type,
+                    restaurant_id: restaurantId
+                })
+            });
+            
+            if (response.ok) {
+                Alert.alert("Succès", "Utilisateur mis à jour avec succès");
+                setModalVisible(false);
+                fetchUsers();
+            } else {
+                throw new Error('Erreur lors de la mise à jour');
+            }
+        } catch (error) {
+            console.error('Erreur mise à jour:', error);
+            Alert.alert("Erreur", "Erreur lors de la mise à jour");
+        }
+    };
+
+    const handleDelete = async (userId) => {
+        try {
+            Alert.alert(
+                "Confirmation",
+                "Voulez-vous vraiment supprimer cet utilisateur ?",
+                [
+                    {
+                        text: "Annuler",
+                        style: "cancel"
+                    },
+                    {
+                        text: "OK",
+                        onPress: async () => {
+                            const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/deleteUser", {
+                                method: "POST",
+                                headers: { 
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                                    "apikey": SUPABASE_ANON_KEY
+                                 },
+                                body: JSON.stringify({ user_id: userId })
+                            });
+
+                            if (response.ok) {
+                                Alert.alert("Succès", "Utilisateur supprimé avec succès");
+                                setModalVisible(false);
+                                fetchUsers();
+                            } else {
+                                throw new Error('Erreur lors de la suppression');
+                            }
+                        }
+                    }
+                ]
+            );
+        } catch (error) {
+            console.error('Erreur suppression:', error);
+            Alert.alert("Erreur", "Erreur lors de la suppression");
+        }
+    };
+
+    const getDisplayType = (type) => {
+        switch(type.toLowerCase()) {
+            case 'user':
+                return 'UTILISATEUR';
+            case 'chef':
+                return 'RESPONSABLE';
+            default:
+                return type;
         }
     };
 
     return (
-        <View>
+        <View style={styles.container}>
             <ScrollView>
-                <View style={styles.containerGlobalUsers}>
-                    <View style={styles.containerListUsers}>
-                        <ScrollView style={styles.listUsers}>
-                            {users.map((user) => {
-                                return(
-                                <View style={[styles.userInfo, {borderColor: colors.colorText}]} key={user.id}>
-                                    <View style={styles.containerNameUser}>
-                                        <Text style={[styles.nameUser, {color: colors.colorText}]}>{user.lastname}</Text>
-                                        <Text style={[styles.nameUser, {color: colors.colorText}]}>{user.firstname}</Text>
+                {isLoading ? (
+                    <Text style={[styles.message, { color: colors.colorText }]}>Chargement...</Text>
+                ) : users.length === 0 ? (
+                    <Text style={[styles.message, { color: colors.colorText }]}>Aucun utilisateur trouvé</Text>
+                ) : (
+                    <View style={styles.cardsContainer}>
+                        {users.map((user) => (
+                            <TouchableOpacity 
+                                key={user.id}
+                                style={[styles.card, { 
+                                    backgroundColor: colors.colorBorderAndBlock,
+                                    shadowColor: colors.colorText
+                                }]}
+                                onPress={() => handleUserPress(user)}
+                            >
+                                <View style={styles.cardHeader}>
+                                    <Text style={[styles.cardName, { color: colors.colorText }]}>
+                                        {user.first_name} {user.last_name}
+                                    </Text>
+                                    <View style={[styles.typeTag, { backgroundColor: colors.colorAction }]}>
+                                        <Text style={styles.typeText}>{getDisplayType(user.type)}</Text>
                                     </View>
-                                    <TouchableOpacity style={[styles.ContainerDeleteUser, {backgroundColor: colors.colorRed}]} onPress={() => {handleDeleteUser(user.id)}}>
-                                        <Text style={[styles.btnDeleteUser, {color: colors.colorText}]}>X</Text>
-                                    </TouchableOpacity>
-                                </View>)
-                            })}
-                        </ScrollView>
+                                </View>
+                                <View style={styles.cardInfo}>
+                                    <Text style={[styles.cardText, { color: colors.colorDetail }]}>
+                                        📱 {user.phone}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                </View>
+                )}
             </ScrollView>
-        </View>
 
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent={true}
+            >
+                <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.colorBackground }]}>
+                    <View style={styles.modalHeader}>
+                        <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                            {t('modifyUser')}
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={[styles.closeButtonText, { color: colors.colorText }]}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.modalScroll}>
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('firstname')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.first_name}
+                                onChangeText={(value) => handleInputChange('first_name', value)}
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('lastname')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.last_name}
+                                onChangeText={(value) => handleInputChange('last_name', value)}
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('email')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.email}
+                                onChangeText={(value) => handleInputChange('email', value)}
+                                keyboardType="email-address"
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('phone')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.phone}
+                                onChangeText={(value) => handleInputChange('phone', value)}
+                                keyboardType="phone-pad"
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('street')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.address?.street}
+                                onChangeText={(value) => handleAddressChange('street', value)}
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('city')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.address?.city}
+                                onChangeText={(value) => handleAddressChange('city', value)}
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('postalCode')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.address?.postal_code}
+                                onChangeText={(value) => handleAddressChange('postal_code', value)}
+                                keyboardType="numeric"
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.colorText }]}>{t('country')}</Text>
+                            <TextInput
+                                style={[styles.input, { color: colors.colorText, borderColor: colors.colorDetail }]}
+                                value={editedUser?.address?.country}
+                                onChangeText={(value) => handleAddressChange('country', value)}
+                                placeholderTextColor={colors.colorDetail}
+                            />
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.button,
+                                    styles.updateButton,
+                                    { backgroundColor: isModified ? colors.colorAction : colors.colorDetail }
+                                ]}
+                                onPress={handleUpdate}
+                                disabled={!isModified}
+                            >
+                                <Text style={styles.buttonText}>{t('editItems')}</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.deleteButton, { backgroundColor: colors.colorRed }]}
+                                onPress={() => handleDelete(editedUser.id)}
+                            >
+                                <Text style={styles.buttonText}>{t('delete')}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                </SafeAreaView>
+            </Modal>
+        </View>
     );
 };
 
-function useStyles(){
-    const {width, height} = useWindowDimensions();
+function useStyles() {
+    const { width } = useWindowDimensions();
+    const {colors} = useColors();
 
     return StyleSheet.create({
-        containerGlobalUsers:{
-            height: 1800,
+        container: {
+            flex: 1,
         },
-        containerListUsers:{
-            height: 500,
+        cardsContainer: {
+            padding: 16,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            gap: 12,
         },
-        listUsers:{
-            width: "100%",
-            height:"auto",
+        card: {
+            width: '48%',
+            padding: 16,
+            marginBottom: 8,
+            borderRadius: 16,
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 4,
         },
-        userInfo:{
-            gap: 10,
-            marginLeft: 30,
-            marginRight:20,
-            flexDirection:"row",
-            justifyContent: "space-between",
-            marginBottom: 30,
-            alignItems: "center",
-            borderLeftWidth: 2,
-            paddingLeft: 20
+        cardHeader: {
+            marginBottom: 12,
         },
-        containerNameUser:{
-            flexDirection: "row",
-            gap: 20
+        cardName: {
+            fontSize: width > 375 ? 18 : 16,
+            fontWeight: '600',
+            marginBottom: 8,
         },
-        nameUser:{
-            fontSize: (width > 375) ? 18 : 15,
+        typeTag: {
+            alignSelf: 'flex-start',
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 12,
+            marginBottom: 8,
         },
-        ContainerDeleteUser:{
-            backgroundColor: "red",
-            display: "flex",
-            justifyContent:"center",
+        typeText: {
+            color: 'white',
+            fontSize: 12,
+            fontWeight: '500',
+        },
+        cardInfo: {
+            gap: 6,
+        },
+        cardText: {
+            fontSize: width > 375 ? 14 : 13,
+        },
+        modalContainer: {
+            flex: 1,
+            width: '100%',
+            height: '100%',
+        },
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            height: (width > 375) ? 50 : 40,
-            borderRadius: 10,
-            width: (width > 375) ? 50 : 40,
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: 'rgba(0, 0, 0, 0.1)',
         },
-        containerListUsers:{
-            display: "flex",
-            justifyContent:'center',
-            alignItems:"center"
+        modalTitle: {
+            fontSize: 20,
+            fontWeight: '600',
         },
-    })
-    
+        closeButton: {
+            padding: 8,
+        },
+        closeButtonText: {
+            fontSize: 24,
+            fontWeight: '500',
+        },
+        modalScroll: {
+            flex: 1,
+            padding: 20,
+        },
+        inputGroup: {
+            marginBottom: 20,
+        },
+        label: {
+            marginBottom: 8,
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '500',
+        },
+        input: {
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 12,
+            fontSize: width > 375 ? 16 : 14,
+            backgroundColor: 'transparent',
+        },
+        buttonContainer: {
+            flexDirection: 'column',
+            gap: 12,
+            marginTop: 24,
+            marginBottom: Platform.OS === 'ios' ? 40 : 24,
+        },
+        button: {
+            padding: 16,
+            borderRadius: 12,
+            alignItems: 'center',
+        },
+        updateButton: {
+            width: '100%',
+        },
+        deleteButton: {
+            width: '100%',
+        },
+        buttonText: {
+            color: 'white',
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '600',
+        },
+        message: {
+            textAlign: 'center',
+            padding: 20,
+            fontSize: 16,
+        }
+    });
 }
+
+
+const isEqual = (obj1, obj2) => {
+    if (!obj1 || !obj2) return false;
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    if (keys1.length !== keys2.length) return false;
+    
+    for (const key of keys1) {
+        if (key === 'address') {
+            if (!isEqual(obj1[key], obj2[key])) return false;
+        } else if (obj1[key] !== obj2[key]) {
+            return false;
+        }
+    }
+    return true;
+};
 
 export default Utilisateur;

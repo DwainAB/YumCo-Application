@@ -1,330 +1,375 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Pressable } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiService } from "../API/ApiService";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../ColorContext/ColorContext";
-import RNPickerSelect from 'react-native-picker-select';
 import { useWindowDimensions } from "react-native";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from 'expo-constants';
 
 function AllOrders({ refreshCounter, onRefresh }) {
-    const [nameRestaurant, setNameRestaurant] = useState('');
-    const [ordersAndClients, setOrdersAndClients] = useState([]);
-    const navigation = useNavigation(); // Obtenez l'objet de navigation
+    const [orders, setOrders] = useState([]);
+    const [groupedOrders, setGroupedOrders] = useState({});
+    const [selectedMonthOrders, setSelectedMonthOrders] = useState([]);
+    const [restaurantId, setRestaurantId] = useState(null)
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedMonthLabel, setSelectedMonthLabel] = useState('');
+    const navigation = useNavigation();
     const { t } = useTranslation();
-    const { colors } = useColors()
-    const [selectedMonth, setSelectedMonth] = useState('');
-    const [orderFiltred, setOrderFiltred] = useState([]);
-    const styles = useStyles()
-
-
+    const { colors } = useColors();
+    const styles = useStyles();
+    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
 
 
     useEffect(() => {
-        const fetchRefRestaurant = async () => {
+        const fetchRestaurantId = async () => {
             try {
-                const user = await AsyncStorage.getItem("user");
-                const userObject = JSON.parse(user);
-                const nameRestaurant = userObject.ref_restaurant;
-                setNameRestaurant(nameRestaurant);
+                const owner = await AsyncStorage.getItem("owner");
+                const ownerData = JSON.parse(owner);                
+                setRestaurantId(ownerData.restaurantId);
+                
             } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
         };
-        fetchRefRestaurant();
+        fetchRestaurantId();
     }, []);
 
 
-    useEffect(() => {
-        if (nameRestaurant) {
-            fetchOrdersAndClients();
-        }
-    }, [nameRestaurant]);
-
-
-    const fetchOrdersAndClients = async () => {
+    const fetchOrders = async () => {
         try {
-            const fetchedUsers = await apiService.getAllOrdersAndClientsData(nameRestaurant);
-            setOrdersAndClients(fetchedUsers); 
+            if (!restaurantId) {
+                return;
+            }
+            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                setOrders(data.data);
+                groupOrdersByMonth(data.data);
+            }
         } catch (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
+            console.error('Erreur lors de la récupération des commandes:', error);
         }
     };
 
+    useEffect(() => {
+        fetchOrders();
+    }, [restaurantId]);
 
     useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            // Rechargez les commandes chaque fois que l'écran est mis au premier plan
-            fetchOrdersAndClients();
-        });
-        // Retournez une fonction de nettoyage pour annuler l'écouteur
-        return unsubscribe;
-    }, [nameRestaurant, navigation]); // Écouter les changements de navigation
-
-
-    const refreshOrder = () => {
-        fetchOrdersAndClients();
-        alert('Commandes mis à jour')
-    }
-
-    useEffect(() => {
-
-        if(refreshCounter > 0){
-            refreshOrder();
+        if (refreshCounter > 0) {
+            fetchOrders();
+            alert('Commandes mises à jour');
         }
-        console.log(ordersAndClients);
     }, [refreshCounter]);
 
-
-    // Fonction pour calculer le prix total d'une commande
-    const calculateAndFormatTotalPrice = (order) => {
-        let totalPrice = 0;
-        order.orders.forEach((product) => {
-            totalPrice += product.product_price * product.order_quantity;
-        });
-    
-        // Vérifier si le prix est un nombre
-        if (typeof totalPrice !== 'number' || isNaN(totalPrice)) {
-            return 'Prix invalide';
-        }
-    
-        // Arrondir le prix à deux décimales
-        const roundedPrice = Math.round(totalPrice * 100) / 100;
-    
-        // Formater le prix avec deux décimales et le signe euro
-        return roundedPrice.toFixed(2);
-    };
-
-
-    // Grouper les commandes par mois
-    const groupOrdersByMonth = () => {
-        const groupedOrders = {};
-        ordersAndClients.forEach(order => {
-            const date = new Date(order.client_date);
-            const month = date.getMonth();
-            const year = date.getFullYear();
-            const monthAndYear = `${month}-${year}`;
-            if (!groupedOrders[monthAndYear]) {
-                groupedOrders[monthAndYear] = [];
-            }
-            groupedOrders[monthAndYear].push(order);
-        });
-        return groupedOrders;
-    };
-
-    const groupOrdersByDay = () => {
-        const groupedOrders = {};
-        const filteredOrders = orderFiltred; // Utilisez orderFiltred au lieu de filteredOrders
-
-        filteredOrders.forEach(order => {
-            const date = new Date(order.client_date);
-            const day = t(date.toLocaleDateString('en', { weekday: 'long' }).toLowerCase());
-            const month = t(date.toLocaleDateString('en', { month: 'long' }).toLowerCase());
-            const dayOfMonth = date.getDate(); // Numéro du jour du mois
-            const year = date.getFullYear(); // Année
-            const dayAndMonth = `${day} ${dayOfMonth} ${month} ${year}`; // Combine le nom du jour, du mois, du numéro du jour et de l'année
-    
-            if (!groupedOrders[dayAndMonth]) {
-                groupedOrders[dayAndMonth] = [];
-            }
-            groupedOrders[dayAndMonth].push(order);
-        });
-        return groupedOrders;
-    };
-    
-
-
-    // Obtenir les commandes groupées par mois et trier les mois
-    const ordersGroupedByMonth = groupOrdersByMonth();
-    const sortedMonths = Object.keys(ordersGroupedByMonth).sort((a, b) => new Date(b) - new Date(a));
-
-    const getMonthAndYear = (monthAndYear) => {
-        const [month, year] = monthAndYear.split('-');
-        const months = [
-            "january", "february", "march", "april", "may", "june",
-            "july", "august", "september", "october", "november", "december"
-        ];
-        const monthName = months[parseInt(month)];
-        return `${t(monthName)} ${year}`;
-    };
-
-
-    useEffect(() => {
-        if (selectedMonth !== '') {
-            const selectedMonthParts = selectedMonth.split('-');
-            const selectedMonthNumber = parseInt(selectedMonthParts[0]);
-            const selectedYear = parseInt(selectedMonthParts[1]);
+    const groupOrdersByMonth = (ordersData) => {
+        const grouped = ordersData.reduce((acc, order) => {
+            const date = new Date(order.created_at);
+            const monthKey = `${date.getMonth()}-${date.getFullYear()}`;
             
-            const filteredOrders = ordersAndClients.filter(order => {
-                const date = new Date(order.client_date);
-                const month = date.getMonth(); // Obtenez le mois (0-11)
-                const year = date.getFullYear(); // Obtenez l'année
-                
-                return month === selectedMonthNumber && year === selectedYear;
-            });
+            // Obtenir le nom du mois en anglais pour la traduction
+            const monthNames = [
+                'january', 'february', 'march', 'april', 'may', 'june',
+                'july', 'august', 'september', 'october', 'november', 'december'
+            ];
+            const monthLabel = `${t(monthNames[date.getMonth()])} ${date.getFullYear()}`;
+            
+            if (!acc[monthKey]) {
+                acc[monthKey] = {
+                    label: monthLabel,
+                    orders: []
+                };
+            }
+            acc[monthKey].orders.push(order);
+            return acc;
+        }, {});
     
-            // Mettre à jour orderFiltred avec les commandes filtrées
-            setOrderFiltred(filteredOrders);
-        } else {
-            // Retournez toutes les commandes si aucun mois n'est sélectionné
-            setOrderFiltred(ordersAndClients);
-        }
-    }, [selectedMonth, ordersAndClients]);
-
+        // Trier les mois par date décroissante
+        const sortedGrouped = Object.fromEntries(
+            Object.entries(grouped).sort(([keyA], [keyB]) => {
+                const [monthA, yearA] = keyA.split('-');
+                const [monthB, yearB] = keyB.split('-');
+                return yearB - yearA || monthB - monthA;
+            })
+        );
     
-    
-   
-
-    
-    const currentYear = new Date().getFullYear();
-    const ordersGroupedByDayFiltered = groupOrdersByDay();
+        setGroupedOrders(sortedGrouped);
+    };
 
 
-    return(
-        <View style={styles.containerScreenBasket}>
-        <View style={styles.pickerContainer}>
-            <RNPickerSelect
-                onValueChange={(value) => setSelectedMonth(value)}
-                items={sortedMonths.map(month => ({ label: getMonthAndYear(month, currentYear), value: month }))}
-                placeholder={{ label: t('all'), value: "" }}
-                style={{
-                    inputIOS: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
-                    inputAndroid: [styles.input, {color: colors.colorText, borderColor: colors.colorText}],
-                    borderColor: colors.colorText,
-                    iconContainer: {
-                        left: 200,
-                    },
-                }}
-                useNativeAndroidPickerStyle={false}
-                Icon={() => {
-                    return <Ionicons name="chevron-down" style={[styles.iconInput, {fontSize:30, color: colors.colorText}]} />;
-                }}
-            />
-        </View>
-        <ScrollView>
-        <View style={styles.listOrder}>
-            {Object.entries(ordersGroupedByDayFiltered).map(([dayAndMonth, orders]) => (
-                <View key={dayAndMonth}>
-                    <Text style={[styles.dayHeader, {color: colors.colorText}]}>{t(dayAndMonth)}</Text>
-                    {orders
-                        .filter(order => orderFiltred.some(filteredOrder => filteredOrder.client_id === order.client_id))
-                        .map(order => (
-                            <TouchableOpacity onPress={() => navigation.navigate('OrderSelectData', { order })} key={order.client_id} style={styles.containerOrderItem}>
-                                <View style={[styles.containerIconOrderItem , {backgroundColor: colors.colorText}]}>
-                                    <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
-                                </View >
-                                <View style={styles.containerTextOrderItem}>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.client_ref_order}</Text>
-                                        <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>{order.client_lastname} {order.client_firstname}</Text>
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{calculateAndFormatTotalPrice(order)} €</Text>
-                                    </View>
-                                </View>
+
+    const handleMonthSelect = (monthKey, monthLabel) => {
+        setSelectedMonthOrders(groupedOrders[monthKey].orders);
+        setSelectedMonthLabel(monthLabel);
+        setModalVisible(true);
+    };
+
+    const calculateTotalPrice = (order) => {
+        return order.amount_total.toFixed(2);
+    };
+
+    const formatOrderForDetails = (order) => {
+        
+        return {
+            client_ref_order: order.order_number,
+            payment_status: order.payment_status,
+            order_id: order.id,
+            client_method: order.type === "PICKUP" ? "A emporter" : "Livraison",
+            client_payment: order.payment_method,
+            client_lastname: order.customers.last_name,
+            client_firstname: order.customers.first_name,
+            client_phone: order.customers.phone,
+            client_email: order.customers.email,
+            order_comment: order.comment,
+            client_address: `${order.addresses.street}, ${order.addresses.city} ${order.addresses.postal_code}`,
+            client_id: order.id,
+            amount_total: order.amount_total,
+            orders: order.order_items.map(item => ({
+                id: item.id,
+                comment: item.comment,
+                order_quantity: item.quantity,
+                product_title: item.name,
+                product_price: item.unit_price,
+                subtotal: item.subtotal
+            }))
+        };
+    };
+
+    return (
+        <View style={styles.container}>
+            <ScrollView>
+                {Object.entries(groupedOrders).map(([monthKey, { label, orders }]) => (
+                    <TouchableOpacity 
+                        key={monthKey}
+                        style={[styles.monthItem, { backgroundColor: colors.colorBackground }]}
+                        onPress={() => handleMonthSelect(monthKey, label)}
+                    >
+                        <Text style={[styles.monthText, { color: colors.colorText }]}>
+                            {t(label.toLowerCase())}
+                        </Text>
+                        <View style={[styles.orderCount, { backgroundColor: colors.colorBackground }]}>
+                            <View>
+                                <Text style={[styles.orderCountText, { color: colors.colorDetail }]}>
+                                    {orders.length} {orders.length > 1 ? t('orders') : t('order')}
+                                </Text>
+                                <Text style={[styles.totalPrice, { color: colors.colorDetail }]}>
+                                    {orders.reduce((total, order) => total + order.amount_total, 0).toFixed(2)} €
+                                </Text>
+                            </View>
+                            <Ionicons 
+                                name="chevron-forward" 
+                                size={24} 
+                                color={colors.colorText}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <Pressable 
+                        style={styles.modalOverlay}
+                        onPress={() => setModalVisible(false)}
+                    />
+                    <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {selectedMonthLabel}
+                            </Text>
+                            <TouchableOpacity 
+                                onPress={() => setModalVisible(false)}
+                                style={styles.closeButton}
+                            >
+                                <Ionicons 
+                                    name="close" 
+                                    size={24} 
+                                    color={colors.colorText}
+                                />
                             </TouchableOpacity>
-                        ))}
-                    <View style={[styles.line, {backgroundColor: colors.colorText}]}></View>
+                        </View>
+                        <ScrollView style={styles.modalScroll}>
+                            {selectedMonthOrders.map(order => (
+                                <TouchableOpacity 
+                                    key={order.id}
+                                    onPress={() => {
+                                        setModalVisible(false);
+                                        navigation.navigate('OrderSelectData', { order: formatOrderForDetails(order)});
+                                    }}
+                                    style={styles.orderItem}
+                                >
+                                    <View style={[styles.orderIcon, { backgroundColor: colors.colorText }]}>
+                                        <Ionicons 
+                                            size={28} 
+                                            color={colors.colorAction} 
+                                            name="bag-handle-outline"
+                                        />
+                                    </View>
+                                    <View style={styles.orderDetails}>
+                                        <View>
+                                            <Text style={[styles.orderNumber, { color: colors.colorText }]}>
+                                                {order.order_number}
+                                            </Text>
+                                            <Text style={[styles.customerName, { color: colors.colorDetail }]}>
+                                                {order.customers.last_name} {order.customers.first_name}
+                                            </Text>
+                                        </View>
+                                        <Text style={[styles.orderPrice, { color: colors.colorText }]}>
+                                            {calculateTotalPrice(order)} €
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
                 </View>
-            ))}
+            </Modal>
         </View>
-        </ScrollView>
-    </View>
-
-    )
+    );
 }
 
-
-function useStyles(){
-    const {width, height} = useWindowDimensions();
+function useStyles() {
+    const { width, height } = useWindowDimensions();
+    const { colors } = useColors();
 
     return StyleSheet.create({
-        containerHeaderSetting:{
-            justifyContent: "space-between", 
-            flexDirection:"row",
-            marginTop : (height > 800) ? 60: 40,
-            paddingRight: 35,
-            paddingLeft : 35,
-            alignItems:'center',
+        container: {
+            flex: 1,
+            paddingTop: 15,
+            backgroundColor: colors.colorBackground,
         },
-        textHeaderSetting:{
-            fontSize: 22,
-            color: "white",
+        monthItem: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 15,
+            paddingHorizontal: 20,
+            marginHorizontal: 20,
+            marginVertical: 10,
+            borderRadius: 15,
+            shadowColor: "#505050",
+            shadowOffset: {
+                width: 0,
+                height: 4,
+            },
+            shadowOpacity: 0.35,
+            shadowRadius: 5.84,
+            elevation: 8,
         },
-        containerEmpty:{
-            width: "10%",
+        monthText: {
+            fontSize: 18,
+            fontWeight: '600',
+            textTransform: 'capitalize',
         },
-        line:{
-            borderWidth:1,
-            marginLeft: 30,
-            marginRight:30,
-            marginTop: (height > 800) ? 60: 40,
-            marginBottom: 40
-        },
-        containerOrderItem:{
-            flexDirection: "row",
-            marginRight: 30,
-            marginLeft: 30,
-            marginBottom:22
-        },
-        containerTextOrderItem:{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center" ,
-            width: "80%"
-        },
-        containerIconOrderItem:{
-            backgroundColor: "white",
-            width: (width > 375) ? 50: 40,
-            height: (width > 375) ? 50: 40,
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 25,
-            marginRight: 20
-        },
-        textOrderItem:{
-            fontSize: (width > 375) ? 18: 15,
-            color:"white"
-        },
-        textOrderItemName:{
-            color:"#A2A2A7",
-            fontSize: (width > 375) ? 14: 12,
-        },
-        input:{
-            marginLeft: 30,
-            width: 220,
-            borderWidth: 1,
-            paddingLeft: 15,
-            fontSize: (width > 375) ? 18: 15, 
-            height: (width > 375) ? 45: 35,
-            marginBottom: 30,
+        orderCount: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 12,
             borderRadius: 20,
+            shadowColor: "#808080",
+            shadowOffset: {
+                width: 0,
+                height: 1,
+            },
+            shadowOpacity: 0.2,
+            shadowRadius: 1.41,
+            elevation: 2,
         },
-        dayHeader:{
-            fontSize: (width > 375) ? 18: 15,
-            marginLeft: 30,
-            marginBottom: 20
+        orderCountText: {
+            fontSize: 14,
+            fontWeight: '500',
+            textAlign: 'right',
         },
-        line:{
-            marginLeft: 30,
-            marginRight: 30, 
-            height: 1,
-            marginBottom: 20
+        totalPrice: {
+            fontSize: 16,
+            fontWeight: '600',
+            marginTop: 2,
+            textAlign: 'right',
         },
-        listOrder: {
-            height: "auto", 
-            marginBottom: 300
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'flex-end',
         },
-        iconInput:{
-            top : (width>375) ? 10 : 3
-        }
-    
-        
-    })
-    
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+        modalContent: {
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            minHeight: height * 0.7,
+            paddingBottom: 30,
+        },
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: '#333',
+        },
+        modalTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            textTransform: 'capitalize',
+        },
+        closeButton: {
+            padding: 5,
+        },
+        modalScroll: {
+            padding: 20,
+        },
+        orderItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        orderIcon: {
+            width: width > 375 ? 50 : 40,
+            height: width > 375 ? 50 : 40,
+            borderRadius: 25,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 15,
+        },
+        orderDetails: {
+            flex: 1,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        orderNumber: {
+            fontSize: width > 375 ? 18 : 15,
+        },
+        customerName: {
+            fontSize: width > 375 ? 14 : 12,
+        },
+        orderPrice: {
+            fontSize: width > 375 ? 18 : 15,
+        },
+    });
 }
 
-export default AllOrders
+export default AllOrders;

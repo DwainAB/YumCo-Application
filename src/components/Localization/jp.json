@@ -47,6 +47,7 @@
     "language": "言語",
     "personalization": "パーソナライズ",
     "support": "サポート",
+    "website" : "ウェブサイト",
     "myRestaurant": "私のレストラン",
     "cards": "カード",
     "users": "ユーザー",
@@ -65,11 +66,23 @@
     "turquoiseBlue": "ターコイズブルー",
 
     "textSupport": "すべての質問に対して、当社のチームは月曜日から金曜日の10:00から18:00まで対応しています",
+    "chatSupport": "チャットサポート",
+
+
+    "unpaid": "未払い",
+    "paid": "支払い済み",
+    "productComment": "製品のコメント",
+    "comment": "コメント",
+    "order": "注文",
+    "orders": "注文一覧",
+
 
     "menuManagement": "メニュー管理",
     "addProduct": "商品を追加",
     "editProduct": "商品を編集",
+    "displayAvailableProducts": "利用可能な製品を表示",
     "categories": "カテゴリー",
+    "productAvailable": "利用可能な製品",
 
     "userManagement": "ユーザー管理",
     "addUser": "ユーザーを追加",
@@ -91,9 +104,11 @@
     "changeImage": "画像を変更",
     "delete": "削除",
     "editItems": "アイテムを編集",
+    "viewAll": "すべてを見る",
 
     "addCategory": "カテゴリーを追加",
     "listCategory": "カテゴリーリスト",
+
 
     "firstname": "名",
     "lastname": "姓",
@@ -102,6 +117,15 @@
     "address": "住所",
     "phoneNumber": "電話番号",
     "finish": "完了",
+    "phone": "電話番号",
+    "street": "通り",
+    "city": "都市",
+    "postalCode": "郵便番号",
+    "country": "国",
+    "type": "タイプ",
+    "modifyUser": "ユーザーを変更する",
+    "noProductInCategory": "このカテゴリーには製品がありません",
+
 
     "textPrivacyPolicy1": "[会社名]のプライバシーポリシー",
     "textPrivacyPolicy2": "最終更新日：[日付]",

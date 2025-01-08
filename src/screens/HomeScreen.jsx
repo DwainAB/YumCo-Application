@@ -5,148 +5,163 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
-import { apiService } from "../components/API/ApiService";
 import { useWindowDimensions } from "react-native";
+import Constants from 'expo-constants';
 
 function HomeScreen(){
-    const { colors } = useColors()
-    const [nameUser, setNameUser] = useState('')
-    const navigation = useNavigation(); // Obtenez l'objet de navigation
+    const { colors } = useColors();
+    const [nameUser, setNameUser] = useState('');
+    const navigation = useNavigation();
     const { t } = useTranslation();
-    const [nameRestaurant, setNameRestaurant] = useState('');
-    const [ordersAndClients, setOrdersAndClients] = useState([]);
+    const [restaurantId, setRestaurantId] = useState('');
+    const [orders, setOrders] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
-    const styles = useStyles()
+    const [lastOrderPerson, setLastOrderPerson] = useState({ firstName: '', lastName: '' });
+    const styles = useStyles();
+    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
 
-    //Récupère le nom du restaurant et le stock dans nameRestaurant
+    // Récupère les infos utilisateur
     useEffect(() => {
-        const fetchNameUser = async () => {
+        const fetchUserInfo = async () => {
             try {
                 const user = await AsyncStorage.getItem("user");
-                const userObject = JSON.parse(user); // Convertir la chaîne JSON en objet JavaScript
-                const nameUser = userObject.firstname; // Récupérer la valeur de ref_restaurant
-                const nameRestaurant = userObject.ref_restaurant;
-                setNameRestaurant(nameRestaurant);
-                setNameUser(nameUser);
+                const owner = await AsyncStorage.getItem("owner");
+                const ownerData = JSON.parse(owner);                
+                const userObject = JSON.parse(user);
+                setNameUser(userObject.firstname);
+                setRestaurantId(ownerData.restaurantId);
+                
             } catch (error) {
-                console.error('Erreur lors de la récupération de ref_restaurant depuis le stockage:', error);
+                console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
         };
-        fetchNameUser();
+        fetchUserInfo();
     }, []);
 
-    useEffect(() => {
-        if (nameRestaurant) {
-            fetchOrdersAndClients();
+    // Récupère les commandes
+    const fetchOrders = async () => {
+        try {
+            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId
+                })
+            });
 
-            // Démarrez un intervalle pour rappeler fetchOrdersAndClients toutes les minutes
-            const interval = setInterval(fetchOrdersAndClients, 60000); // 60000 millisecondes = 1 minute
-            // Nettoyer l'intervalle lors du démontage du composant
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                // Filtrer les commandes du mois en cours
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+
+                const currentMonthOrders = data.data.filter(order => {
+                    const orderDate = new Date(order.created_at);
+                    return orderDate.getMonth() === currentMonth && 
+                           orderDate.getFullYear() === currentYear;
+                });
+
+                setOrders(currentMonthOrders);
+                calculateTotalPrice(currentMonthOrders);
+                findLastOrderedPerson(data.data);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération des commandes:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (restaurantId) {
+            fetchOrders();
+            const interval = setInterval(fetchOrders, 60000);
             return () => clearInterval(interval);
         }
-    }, [nameRestaurant]);
+    }, [restaurantId]);
 
-    useEffect(() => {
-        if (ordersAndClients.length > 0) {
-            calculateTotalPrice();
-        }
-    }, [ordersAndClients]);
-
-    const fetchOrdersAndClients = async () => {
-        try {
-            const fetchedUsers = await apiService.getAllOrdersAndClientsData(nameRestaurant);
-            setOrdersAndClients(fetchedUsers); 
-        } catch (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error.message);
-        }
-    };
-
-    const calculateTotalPrice = () => {
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1; // Les mois commencent à partir de 0 dans JavaScript
-        const currentYear = currentDate.getFullYear();
-    
-        const total = ordersAndClients.reduce((acc, orderAndClient) => {
-            orderAndClient.orders.forEach(order => {
-                const orderDate = new Date(order.order_date);
-                const orderMonth = orderDate.getMonth() + 1;
-                const orderYear = orderDate.getFullYear();
-    
-                if (orderMonth === currentMonth && orderYear === currentYear) {
-                    acc += order.product_price * order.order_quantity;
-                }
-            });
-            return acc;
+    const calculateTotalPrice = (monthOrders) => {
+        const total = monthOrders.reduce((acc, order) => {
+            return acc + order.amount_total;
         }, 0);
         
-        setTotalPrice(total.toFixed(2)); // Arrondi à 2 décimales
+        setTotalPrice(total.toFixed(2));
     };
     
-    const findLastOrderedPerson = () => {
-        let maxClientId = -1;
-        let lastOrderedPerson = null;
-    
-        ordersAndClients.forEach(orderAndClient => {
-            if (orderAndClient.client_id > maxClientId) {
-                maxClientId = orderAndClient.client_id;
-                lastOrderedPerson = {
-                    firstName: orderAndClient.client_firstname,
-                    lastName: orderAndClient.client_lastname
-                };
-            }
-        });
-    
-        return lastOrderedPerson;
+    const findLastOrderedPerson = (allOrders) => {
+        if (allOrders && allOrders.length > 0) {
+            // Trier les commandes par date de création (la plus récente en premier)
+            const sortedOrders = [...allOrders].sort((a, b) => 
+                new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            const lastOrder = sortedOrders[0];
+            setLastOrderPerson({
+                firstName: lastOrder.customers.first_name,
+                lastName: lastOrder.customers.last_name
+            });
+        }
     };
-    
-    // Appeler la fonction pour obtenir les données du dernier client ayant commandé
-    const lastOrderedPerson = findLastOrderedPerson();
-    const lastOrderedPersonName = lastOrderedPerson ? `${lastOrderedPerson.firstName} ${lastOrderedPerson.lastName}` : '';
+
     return(
         <View style={[styles.containerHome, {backgroundColor: colors.colorBackground }]}>
             <ScrollView>
-                    <Text style={[styles.titleScreen, { color: colors.colorText }]}>{t('titleScreen')}</Text>
-                    <View style={styles.line}></View>
+                <Text style={[styles.titleScreen, { color: colors.colorText }]}>{t('titleScreen')}</Text>
+                <View style={styles.line}></View>
 
+                <Text style={[styles.textHello, {color: colors.colorText}]}>{t('greeting')} {nameUser} !</Text>
 
-                    <Text style={[styles.textHello, {color: colors.colorText}]}>{t('greeting')} {nameUser} !</Text>
-
-                    <View style={[styles.containerStats, {backgroundColor: colors.colorBorderAndBlock}]}>
-
-                        <View style={styles.containerTopStats}>
-                            <Text style={[styles.titleStats, {color: colors.colorText}]}>{t('homeStat')}</Text>
-                            <View style={[styles.containerPriceStats, {backgroundColor: colors.colorBackground}]}><Text style={[styles.titleStats, {color: colors.colorText}]}>{totalPrice} €</Text></View>
+                <View style={[styles.containerStats, {backgroundColor: colors.colorBorderAndBlock}]}>
+                    <View style={styles.containerTopStats}>
+                        <Text style={[styles.titleStats, {color: colors.colorText}]}>{t('homeStat')}</Text>
+                        <View style={[styles.containerPriceStats, {backgroundColor: colors.colorBackground}]}>
+                            <Text style={[styles.titleStats, {color: colors.colorText}]}>{totalPrice} €</Text>
                         </View>
-
-                        <TouchableOpacity onPress={()=> navigation.navigate('StatOptionScreen')} style={[styles.containerBtnStats, {backgroundColor: colors.colorAction}]}><Text style={[styles.textBtnStats, {color: colors.colorText}]}>{t('seeMore')}</Text></TouchableOpacity>
-                        <View style={styles.containerLastOrder}>
-                            <Text style={[styles.textLastOrder, {color: colors.colorText}]}>{t('lastOrder')}</Text>
-                            <Text style={[styles.textLastOrder, {color: colors.colorDetail}]}>{lastOrderedPersonName}</Text>
-                        </View>
-                    </View> 
-
-
-
-                    <View style={styles.containerHomeBottom}>
-
-                        <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
-                            <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('titleReview')}</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Review')}><Ionicons name="chatbox-outline" style={[styles.iconStat, {color: colors.colorAction}]}/></TouchableOpacity>
-                        </View>
-                        <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
-                            <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('updateApp')}</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('LanguagePage')}><Ionicons name="alert-circle-outline" style={[styles.iconStat, {color: colors.colorAction}]}/></TouchableOpacity>
-                        </View>
-
                     </View>
 
+                    <TouchableOpacity 
+                        onPress={() => navigation.navigate('StatOptionScreen')} 
+                        style={[styles.containerBtnStats, {backgroundColor: colors.colorAction}]}
+                    >
+                        <Text style={[styles.textBtnStats, {color: colors.colorText}]}>{t('seeMore')}</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.containerLastOrder}>
+                        <Text style={[styles.textLastOrder, {color: colors.colorText}]}>{t('lastOrder')}</Text>
+                        <Text style={[styles.textLastOrder, {color: colors.colorDetail}]}>
+                            {lastOrderPerson.firstName} {lastOrderPerson.lastName}
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={styles.containerHomeBottom}>
+                    <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
+                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('titleReview')}</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Review')}>
+                            <Ionicons name="chatbox-outline" style={[styles.iconStat, {color: colors.colorAction}]}/>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
+                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('updateApp')}</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('LanguagePage')}>
+                            <Ionicons name="alert-circle-outline" style={[styles.iconStat, {color: colors.colorAction}]}/>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </ScrollView>
         </View>
-    )
+    );
 }
 
 function useStyles(){
-
+    // Styles restent inchangés...
     const {width, height} = useWindowDimensions();
 
     return StyleSheet.create({
@@ -241,8 +256,7 @@ function useStyles(){
         iconStat:{
             fontSize: (width > 375) ? 70 : 50,
         }
-    
-    })    
+    });
 }
 
-export default HomeScreen
+export default HomeScreen;

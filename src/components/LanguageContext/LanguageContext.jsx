@@ -16,12 +16,10 @@ export const LanguageProvider = ({ children }) => {
       try {
         const storedLanguage = await AsyncStorage.getItem('selectedLanguage');
         const storedCodeLanguage = await AsyncStorage.getItem('codeLanguage');
-        console.log("tetetetet",storedLanguage, storedCodeLanguage);
         if (storedLanguage && storedCodeLanguage) {
           setLanguage(storedLanguage);
           i18n.changeLanguage(storedCodeLanguage);
         } else {
-          console.log('dddddd');
           setLanguage('Français');
           i18n.changeLanguage('fr');
         }

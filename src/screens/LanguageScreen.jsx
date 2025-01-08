@@ -19,7 +19,6 @@ function LanguagePage(){
     const changeLanguage = (lng, languageSelect) => {
         setLanguage(languageSelect);
         i18n.changeLanguage(lng);
-        console.log(languageSelect, lng);
         AsyncStorage.setItem('selectedLanguage', languageSelect);
         AsyncStorage.setItem('codeLanguage', lng);
       };

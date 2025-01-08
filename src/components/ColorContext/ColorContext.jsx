@@ -87,7 +87,6 @@ export const ColorProvider = ({ children }) => {
       try {
         const storedTheme = await AsyncStorage.getItem('selectedTheme');
         if (storedTheme && colorThemes[storedTheme]) {
-          console.log("Stored theme:", storedTheme);
           setThemeSelected(storedTheme);
         } else {
           console.log("No theme stored or invalid theme.");
