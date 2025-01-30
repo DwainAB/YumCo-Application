@@ -1,3 +1,4 @@
+import React from "react";
 import { View, StyleSheet} from "react-native";
 import ContentOrder from "../components/ContentOrder/ContentOrder"
 import { useColors } from "../components/ColorContext/ColorContext";

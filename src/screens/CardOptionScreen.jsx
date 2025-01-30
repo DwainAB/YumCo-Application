@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
@@ -38,7 +38,7 @@ function CardOptionScreen(){
 }
 
 function useStyles(){
-    const {width, height} = useWindowDimensions();
+    const {width} = useWindowDimensions();
 
     return StyleSheet.create({
         containerCardPage:{

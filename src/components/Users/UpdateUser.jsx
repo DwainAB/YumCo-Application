@@ -4,7 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "../ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
-import Constants from 'expo-constants';
 
 const Utilisateur = () => {
     const { colors } = useColors();
@@ -17,7 +16,7 @@ const Utilisateur = () => {
     const [isModified, setIsModified] = useState(false);
     const [restaurantId, setRestaurantId]= useState('')
     const { t } = useTranslation();
-    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
 
     useEffect(() => {

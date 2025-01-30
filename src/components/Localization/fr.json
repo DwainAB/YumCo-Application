@@ -7,6 +7,8 @@
   "titleReview": "Avis",
   "updateApp": "MAJ",
   "seeMore": "Voir plus",
+  "SinceLastMonth": "Depuis le mois dernier",
+  "revenue":"Revenue",
 
   "listOfStatistics": "Liste des statistiques",
   "allCommands": "Toutes les commandes",
@@ -127,11 +129,11 @@
   "noProductInCategory": "Aucun produit dans cette catégorie",
 
 
-  "textPrivacyPolicy1": "Politique de confidentialité de [Nom de l'entreprise]",
-  "textPrivacyPolicy2": "Dernière mise à jour : [Date]",
-  "textPrivacyPolicy3": "La protection de votre vie privée est importante pour nous. Cette politique de confidentialité explique les types d'informations personnelles collectées dans le cadre de l'utilisation de notre application mobile 'BonApp', ainsi que leur utilisation, stockage et protection.",
+  "textPrivacyPolicy1": "Politique de confidentialité de YumEats",
+  "textPrivacyPolicy2": "Dernière mise à jour : 01/01/2025",
+  "textPrivacyPolicy3": "La protection de votre vie privée est importante pour nous. Cette politique de confidentialité explique les types d'informations personnelles collectées dans le cadre de l'utilisation de notre application mobile 'YumEats', ainsi que leur utilisation, stockage et protection.",
   "textPrivacyPolicy4": "Collecte et utilisation des informations",
-  "textPrivacyPolicy5": "En utilisant l'application mobile 'BonApp', les informations suivantes sont collectées : prénom, nom, adresse, e-mail, numéro de téléphone. Ces informations sont collectées dans le but d'améliorer l'expérience utilisateur et de fournir des services personnalisés. Elles sont traitées de manière confidentielle et ne sont pas partagées avec des tiers, sauf en cas d'autorisation légale ou avec votre consentement explicite.",
+  "textPrivacyPolicy5": "En utilisant l'application mobile 'YumEats', les informations suivantes sont collectées : prénom, nom, adresse, e-mail, numéro de téléphone. Ces informations sont collectées dans le but d'améliorer l'expérience utilisateur et de fournir des services personnalisés. Elles sont traitées de manière confidentielle et ne sont pas partagées avec des tiers, sauf en cas d'autorisation légale ou avec votre consentement explicite.",
   "textPrivacyPolicy6": "Protection des informations",
   "textPrivacyPolicy7": "Des mesures de sécurité appropriées sont mises en place pour protéger les informations personnelles contre l'accès, la modification, la divulgation ou la destruction non autorisés. Cela inclut la sécurité des systèmes informatiques et la restriction de l'accès aux informations personnelles aux employés ayant besoin de ces informations pour leurs fonctions.",
   "textPrivacyPolicy8": "Stockage des informations",
@@ -139,7 +141,6 @@
   "textPrivacyPolicy10": "Modifications de la politique de confidentialité",
   "textPrivacyPolicy11": "Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. Si des modifications sont apportées, elles seront publiées sur cette page avec la date de mise à jour.",
   "textPrivacyPolicy12": "Contact",
-  "textPrivacyPolicy13": "Pour toute question ou préoccupation concernant notre politique de confidentialité, veuillez nous contacter à l'adresse suivante : [Adresse e-mail de contact].",
-  "textPrivacyPolicy14": "En utilisant notre application mobile 'BonApp', vous acceptez les termes de cette politique de confidentialité.",
-  "textPrivacyPolicy15": "N'oubliez pas de remplacer [Nom de l'entreprise], [Date], et [Adresse e-mail de contact] par les informations appropriées."
+  "textPrivacyPolicy13": "Pour toute question ou préoccupation concernant notre politique de confidentialité, veuillez nous contacter à l'adresse suivante : contact@yumeats.fr.",
+  "textPrivacyPolicy14": "En utilisant notre application mobile 'YumEats', vous acceptez les termes de cette politique de confidentialité."
 }

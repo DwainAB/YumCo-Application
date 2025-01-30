@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useRoute } from '@react-navigation/native';
-import {apiService} from "../components/API/ApiService"
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWindowDimensions } from "react-native";
-import Constants from 'expo-constants';
 
 
 function OrderSelect() {
@@ -20,7 +18,7 @@ const { t } = useTranslation();
 const [nameRestaurant, setNameRestaurant] = useState('')
 const styles = useStyles()
 const [selectedComment, setSelectedComment] = useState(null);
-const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
 
 const formatPrice = (price) => {
   if (!price && price !== 0) return '0.00 €';

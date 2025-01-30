@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AllOrders from "../components/AllOrders/AllOrders";
-import { refreshOrder } from "../components/AllOrders/AllOrders";
 import { useWindowDimensions } from "react-native";
 
 function AllOrdersScreen(){

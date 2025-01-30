@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity} from "react-native";
+import { View, StyleSheet} from "react-native";
 import Review from "../components/Review/Review"
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 

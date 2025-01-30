@@ -7,6 +7,8 @@
   "titleReview": "Reviews",
   "updateApp": "Update",
   "seeMore": "See more...",
+  "SinceLastMonth": "Since last month",
+  "revenue":"Revenue",
 
   "listOfStatistics": "List of statistics",
   "allCommands": "All orders",
@@ -123,11 +125,11 @@
   "modifyUser": "Modify user",
   "noProductInCategory": "No products in this category",
 
-  "textPrivacyPolicy1": "[Company Name]'s Privacy Policy",
-  "textPrivacyPolicy2": "Last updated: [Date]",
-  "textPrivacyPolicy3": "Protecting your privacy is important to us. This privacy policy explains the types of personal information collected in connection with the use of our 'BonApp' mobile app, as well as how it is used, stored, and protected.",
+  "textPrivacyPolicy1": "YumEats's Privacy Policy",
+  "textPrivacyPolicy2": "Last updated: 01/01/2025",
+  "textPrivacyPolicy3": "Protecting your privacy is important to us. This privacy policy explains the types of personal information collected in connection with the use of our 'YumEats' mobile app, as well as how it is used, stored, and protected.",
   "textPrivacyPolicy4": "Collection and use of information",
-  "textPrivacyPolicy5": "By using the 'BonApp' mobile app, the following information is collected: first name, last name, address, email, phone number. This information is collected to improve the user experience and provide personalized services. It is treated confidentially and is not shared with third parties, except where required by law or with your explicit consent.",
+  "textPrivacyPolicy5": "By using the 'YumEats' mobile app, the following information is collected: first name, last name, address, email, phone number. This information is collected to improve the user experience and provide personalized services. It is treated confidentially and is not shared with third parties, except where required by law or with your explicit consent.",
   "textPrivacyPolicy6": "Protection of information",
   "textPrivacyPolicy7": "Appropriate security measures are in place to protect personal information from unauthorized access, alteration, disclosure, or destruction. This includes securing computer systems and restricting access to personal information to employees who need it for their functions.",
   "textPrivacyPolicy8": "Storage of information",
@@ -135,7 +137,6 @@
   "textPrivacyPolicy10": "Changes to the privacy policy",
   "textPrivacyPolicy11": "We reserve the right to modify this privacy policy at any time. If changes are made, they will be posted on this page with the date of the update.",
   "textPrivacyPolicy12": "Contact",
-  "textPrivacyPolicy13": "For any questions or concerns regarding our privacy policy, please contact us at: [Contact email address].",
-  "textPrivacyPolicy14": "By using our 'BonApp' mobile app, you agree to the terms of this privacy policy.",
-  "textPrivacyPolicy15": "Don't forget to replace [Company Name], [Date], and [Contact email address] with the appropriate information."
+  "textPrivacyPolicy13": "For any questions or concerns regarding our privacy policy, please contact us at: contact@yumeats.fr.",
+  "textPrivacyPolicy14": "By using our 'YumEats' mobile app, you agree to the terms of this privacy policy."
 }

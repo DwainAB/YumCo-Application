@@ -7,6 +7,8 @@
     "titleReview": "评论",
     "updateApp": "更新",
     "seeMore": "查看更多...",
+    "SinceLastMonth": "自上个月以来",
+    "revenue":"收入",
   
     "listOfStatistics": "统计列表",
     "allCommands": "所有订单",
@@ -123,11 +125,11 @@
     "modifyUser": "修改用户",
     "noProductInCategory": "此类别中没有产品",
 
-    "textPrivacyPolicy1": "[公司名称]的隐私政策",
-    "textPrivacyPolicy2": "最后更新： [日期]",
-    "textPrivacyPolicy3": "保护您的隐私对我们非常重要。本隐私政策解释了与使用我们'BonApp'移动应用程序相关的个人信息类型，以及如何使用、存储和保护这些信息。",
+    "textPrivacyPolicy1": "YumEats的隐私政策",
+    "textPrivacyPolicy2": "最后更新： 01/01/2025",
+    "textPrivacyPolicy3": "保护您的隐私对我们非常重要。本隐私政策解释了与使用我们'YumEats'移动应用程序相关的个人信息类型，以及如何使用、存储和保护这些信息。",
     "textPrivacyPolicy4": "信息的收集和使用",
-    "textPrivacyPolicy5": "通过使用'BonApp'移动应用程序，收集以下信息：名字、姓氏、地址、电子邮件、电话号码。收集这些信息是为了改善用户体验并提供个性化服务。它会被保密处理，并且除非法律要求或获得您的明确同意，否则不会与第三方共享。",
+    "textPrivacyPolicy5": "通过使用'YumEats'移动应用程序，收集以下信息：名字、姓氏、地址、电子邮件、电话号码。收集这些信息是为了改善用户体验并提供个性化服务。它会被保密处理，并且除非法律要求或获得您的明确同意，否则不会与第三方共享。",
     "textPrivacyPolicy6": "信息的保护",
     "textPrivacyPolicy7": "采取适当的安全措施以防止个人信息遭到未经授权的访问、修改、披露或销毁。这包括保护计算机系统，并限制访问个人信息的权限，仅限需要这些信息的员工。",
     "textPrivacyPolicy8": "信息的存储",
@@ -135,8 +137,7 @@
     "textPrivacyPolicy10": "隐私政策的变更",
     "textPrivacyPolicy11": "我们保留随时修改本隐私政策的权利。如果做出更改，更新的隐私政策将发布在本页面上，并注明更新日期。",
     "textPrivacyPolicy12": "联系方式",
-    "textPrivacyPolicy13": "如果您对我们的隐私政策有任何问题或疑虑，请通过以下方式与我们联系：[联系电子邮件地址]。",
-    "textPrivacyPolicy14": "通过使用我们的'BonApp'移动应用程序，您同意本隐私政策的条款。",
-    "textPrivacyPolicy15": "不要忘记用适当的信息替换[公司名称]、[日期]和[联系电子邮件地址]。"
+    "textPrivacyPolicy13": "如果您对我们的隐私政策有任何问题或疑虑，请通过以下方式与我们联系：contact@yumeats.fr。",
+    "textPrivacyPolicy14": "通过使用我们的'YumEats'移动应用程序，您同意本隐私政策的条款。"
   }
   

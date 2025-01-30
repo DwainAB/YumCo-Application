@@ -1,13 +1,11 @@
 import React from "react";
 import { View, StyleSheet} from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import FormAddProduct from "../components/FormAddProduct/FormAddProduct";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 
 function AddProductScreen(){
-    const navigation = useNavigation();
     const { t } = useTranslation();
     const { colors } = useColors()
 

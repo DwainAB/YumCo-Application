@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from "react-native";
+import { GestureHandlerRootView, FlatList, Swipeable } from 'react-native-gesture-handler';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -8,372 +9,456 @@ import { useColors } from "../ColorContext/ColorContext";
 import { registerForPushNotificationsAsync } from '../Notifications/NotificationsOrder';
 import { useWindowDimensions } from "react-native";
 import { useLoading } from "../Hooks/useLoading";
-import Constants from 'expo-constants';
+import * as Haptics from 'expo-haptics';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
 
+const AnimatedListItem = ({ children, index }) => {
+    const translateX = useRef(new Animated.Value(-50)).current;
+    const opacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(translateX, {
+            toValue: 0,
+            duration: 500,
+            delay: index * 100,
+            useNativeDriver: true,
+        }).start();
+
+        Animated.timing(opacity, {
+            toValue: 1,
+            duration: 500,
+            delay: index * 100,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
+    return (
+        <Animated.View
+            style={{
+                opacity,
+                transform: [{ translateX }],
+            }}
+        >
+            {children}
+        </Animated.View>
+    );
+};
 
 function ContentOrder() {
-    const [expoPushToken, setExpoPushToken] = useState('');
-    const [orders, setOrders] = useState([]);
-    const [orderMethod, setOrderMethod] = useState('PICKUP');
-    const [filteredOrders, setFilteredOrders] = useState([]);
-    const navigation = useNavigation(); 
-    const { t } = useTranslation();
-    const { colors } = useColors();
-    const styles = useStyles();
-    const [remove, setRemove] = useState(false);
-    const { startLoading, stopLoading } = useLoading();
-    const [restaurantId, setRestaurantId] = useState('');
-    const [userId, setUserId] = useState('')
-    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
+   const [expoPushToken, setExpoPushToken] = useState('');
+   const [orders, setOrders] = useState([]);
+   const [orderMethod, setOrderMethod] = useState('PICKUP');
+   const [filteredOrders, setFilteredOrders] = useState([]);
+   const [refreshing, setRefreshing] = useState(false);
+   const navigation = useNavigation(); 
+   const { t } = useTranslation();
+   const { colors } = useColors();
+   const styles = useStyles();
+   const [remove, setRemove] = useState(false);
+   const { startLoading, stopLoading } = useLoading();
+   const [restaurantId, setRestaurantId] = useState('');
+   const [userId, setUserId] = useState('');
+   const [lastFetchTime, setLastFetchTime] = useState(0);
+   
+   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
 
+   useEffect(() => {
+       if (expoPushToken) {
+           updateNotificationToken(expoPushToken);
+       }
+   }, [expoPushToken]);
 
-    useEffect(() => {
-        if (expoPushToken) {
-            updateNotificationToken(expoPushToken);
-        }
-    }, [expoPushToken]);
+   useEffect(() => {
+       const fetchRestaurantId = async () => {
+           try {
+               const owner = await AsyncStorage.getItem("owner");
+               const ownerData = JSON.parse(owner);                
+               setRestaurantId(ownerData.restaurantId);
+               setUserId(ownerData.id);
+           } catch (error) {
+               console.error('Erreur lors de la récupération des informations utilisateur:', error);
+           }
+       };
+       fetchRestaurantId();
+   }, []);
 
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                setUserId(ownerData.id)
-                
-                
-            } catch (error) {
-                console.error('Erreur lors de la récupération des informations utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
+   const updateNotificationToken = async (token) => {
+       try {
+           const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateUser", {
+               method: "POST",
+               headers: { 
+                   "Content-Type": "application/json",
+                   "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                   "apikey": SUPABASE_ANON_KEY
+               },
+               body: JSON.stringify({
+                   user_id: userId,
+                   expo_push_token: token,
+               })
+           });
+           
+           if (!response.ok) {
+               throw new Error('Erreur lors de la mise à jour');
+           }
+       } catch (error) {
+           console.error('Erreur mise à jour:', error);
+       }
+   };
 
+   const filterOrdersByMethod = (method) => {
+       const filtered = orders.filter(order => 
+           order.type === method && 
+           order.status !== "COMPLETED" && 
+           order.status !== "CANCELLED" && 
+           order.status !== "DELETED"
+       );
+       setFilteredOrders(filtered);
+   };
 
-    const updateNotificationToken = async (token) => {
-        try {
-            const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateUser", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    "apikey": SUPABASE_ANON_KEY
-                 },
-                body: JSON.stringify({
-                    user_id: userId,
-                    expo_push_token: token,
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erreur lors de la mise à jour');
-            }
-        } catch (error) {
-            console.error('Erreur mise à jour:', error);
-        }
-    };
+   useEffect(() => {
+       registerForPushNotificationsAsync()
+           .then(token => {
+               setExpoPushToken(token);
+           })
+           .catch((err) => console.log(err));
+   }, []);
 
-    const filterOrdersByMethod = (method) => {
-        const filtered = orders.filter(order => 
-            order.type === method && order.status !== "COMPLETED"
-        );
-        setFilteredOrders(filtered);
-    };
+   useEffect(() => {
+       filterOrdersByMethod(orderMethod);
+   }, [orders, orderMethod]);
 
-    useEffect(() => {
-        registerForPushNotificationsAsync()
-            .then(token => {
-                setExpoPushToken(token);
-            })
-            .catch((err) => console.log(err));
-    }, []);
+   const onRefresh = React.useCallback(async () => {
+       setRefreshing(true);
+       await fetchOrders();
+       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+       setRefreshing(false);
+   }, [restaurantId]);
 
-    useEffect(() => {
-        filterOrdersByMethod(orderMethod);
-    }, [orders, orderMethod]);
+   const refreshOrders = async () => {
+       const now = Date.now();
+       if (now - lastFetchTime < 5000) {
+           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+           return;
+       }
+       
+       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+       await fetchOrders();
+       setLastFetchTime(now);
+   };
 
-    const refreshOrders = () => {
-        fetchOrders();
-        alert('Commandes mises à jour');
-    };
+   const fetchOrders = async () => {
+       try {
+           const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+                   "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+               },
+               body: JSON.stringify({
+                   restaurant_id: restaurantId
+               })
+           });
+           const result = await response.json();
+           
+           if (result.success) {
+               setOrders(result.data);
+           }
+       } catch (error) {
+           console.error('Erreur lors de la récupération des commandes:', error.message);
+           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+       }
+   };
 
-    const fetchOrders = async () => {
-        try {
-            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+   useEffect(() => {
+       if (restaurantId) {
+           fetchOrders();
+       }
+   }, [restaurantId]);
 
-                },
-                body: JSON.stringify({
-                    restaurant_id: restaurantId
-                })
-            });
-            const result = await response.json();
-            
-            
-            if (result.success) {
-                setOrders(result.data);
-            }
-        } catch (error) {
-            console.error('Erreur lors de la récupération des commandes:', error.message);
-        }
-    };
+   useEffect(() => {
+       const unsubscribe = navigation.addListener('focus', fetchOrders);
+       return unsubscribe;
+   }, [navigation, restaurantId]);
 
-    useEffect(() => {
-        fetchOrders();
-    }, [restaurantId]);
+   const calculateAndFormatTotalPrice = (order) => {
+       return `${order.amount_total.toFixed(2)} €`;
+   };
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            fetchOrders();
-        });
-        return unsubscribe;
-    }, [navigation]);
+   const formatOrderForDetails = (order) => {
+       return {
+           client_ref_order: order.order_number,
+           payment_status: order.payment_status,
+           order_id: order.id,
+           client_method: order.type === "PICKUP" ? "A emporter" : "Livraison",
+           client_payment: order.payment_method,
+           client_lastname: order.customers.last_name,
+           client_firstname: order.customers.first_name,
+           client_phone: order.customers.phone,
+           client_email: order.customers.email,
+           order_comment: order.comment,
+           client_address: `${order.addresses.street}, ${order.addresses.city} ${order.addresses.postal_code}`,
+           client_id: order.id,
+           amount_total: order.amount_total,
+           orders: order.order_items.map(item => ({
+               id: item.id,
+               comment: item.comment,
+               order_quantity: item.quantity,
+               product_title: item.name,
+               product_price: item.unit_price,
+               subtotal: item.subtotal
+           }))
+       };
+   };
 
-    const calculateAndFormatTotalPrice = (order) => {
-        return `${order.amount_total.toFixed(2)} €`;
-    };
+   const renderRightActions = (progress, dragX, order) => {
+       const scale = dragX.interpolate({
+           inputRange: [-100, 0],
+           outputRange: [1, 0],
+           extrapolate: 'clamp',
+       });
 
-    const [selectedOrders, setSelectedOrders] = useState([]);
+       return (
+           <View style={styles.rightActionsContainer}>
+               <Animated.View style={[styles.rightAction, { transform: [{ scale }] }]}>
+                   <TouchableOpacity 
+                       onPress={() => {
+                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                           navigation.navigate('OrderSelect', {
+                               order: formatOrderForDetails(order)
+                           });
+                       }}
+                       style={[styles.actionButton, {backgroundColor: colors.colorAction}]}
+                   >
+                       <Ionicons name="eye-outline" size={24} color="white" />
+                   </TouchableOpacity>
+               </Animated.View>
+               <Animated.View style={[styles.rightAction, { transform: [{ scale }] }]}>
+                   <TouchableOpacity 
+                       onPress={async () => {
+                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                           startLoading();
+                           try {
+                               const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder', {
+                                   method: 'POST',
+                                   headers: {
+                                       'Content-Type': 'application/json',
+                                       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                   },
+                                   body: JSON.stringify({
+                                       order_id: order.id,
+                                       new_status: 'COMPLETED'
+                                   })
+                               });
+                               if (response.ok) {
+                                   await fetchOrders();
+                               }
+                           } catch (error) {
+                               console.error(error);
+                           } finally {
+                               stopLoading();
+                           }
+                       }}
+                       style={[styles.actionButton, {backgroundColor: colors.colorRed}]}
+                   >
+                       <Ionicons name="trash-outline" size={24} color="white" />
+                   </TouchableOpacity>
+               </Animated.View>
+           </View>
+       );
+   };
 
-    const updateSelectedOrders = (id) => {
-        setSelectedOrders((prevSelectedOrders) => {
-            if (prevSelectedOrders.includes(id)) {
-                return prevSelectedOrders.filter(orderId => orderId !== id);
-            } else {
-                return [...prevSelectedOrders, id];
-            }
-        });
-    };
+   const renderOrderItem = ({ item: order, index }) => (
+       <Swipeable 
+           renderRightActions={(progress, dragX) => 
+               renderRightActions(progress, dragX, order)
+           }
+           overshootRight={false}
+           onSwipeableOpen={() => Haptics.impactAsync()}
+       >
+           <AnimatedListItem index={index}>
+               <TouchableOpacity
+                   style={[styles.containerOrderItem]}
+                   onPress={() => {
+                       Haptics.selectionAsync();
+                       navigation.navigate('OrderSelect', {
+                           order: formatOrderForDetails(order)
+                       });
+                   }}
+               >
+                   <View style={[styles.containerIconOrderItem, {
+                       backgroundColor: colors.colorText
+                   }]}>
+                       <Ionicons 
+                           size={28} 
+                           color={colors.colorAction} 
+                           name={order.type === "PICKUP" ? 
+                               "bag-handle-outline" : "bicycle-outline"
+                           }
+                       />
+                   </View>
+                   <View style={styles.containerTextOrderItem}>
+                       <View>
+                           <Text style={[styles.textOrderItem, {
+                               color: colors.colorText
+                           }]}>{order.order_number}</Text>
+                           <Text style={[styles.textOrderItemName, {
+                               color: colors.colorDetail
+                           }]}>
+                               {order.customers.last_name} {order.customers.first_name}
+                           </Text>
+                       </View>
+                       <View>
+                           <Text style={[styles.textOrderItem, {
+                               color: colors.colorText
+                           }]}>
+                               {calculateAndFormatTotalPrice(order)}
+                           </Text>
+                       </View>
+                   </View>
+               </TouchableOpacity>
+           </AnimatedListItem>
+       </Swipeable>
+   );
 
-    const ModeremoveOrder = () => {
-        setRemove(!remove);
-    };
+   return(
+       <GestureHandlerRootView style={styles.container}>
+           <View style={styles.containerScreenBasket}>
+               <View style={styles.containerHeaderSetting}>
+                   <View style={styles.containerBtnLogout} />
+                   <Text style={[styles.textHeaderSetting, {
+                       color: colors.colorText
+                   }]}>{t('titleOrder')}</Text>
+                   <TouchableOpacity 
+                       onPress={refreshOrders} 
+                       style={[styles.containerBtnLogout, {
+                           backgroundColor: colors.colorBorderAndBlock
+                       }]}
+                   >
+                       <Ionicons 
+                           name="reload-outline" 
+                           size={25} 
+                           color={colors.colorText}
+                       />
+                   </TouchableOpacity>
+               </View>
 
-    const removeItems = async () => {
-        for (let orderId of selectedOrders) {
-            startLoading();
-            try {
-                // Implement your delete logic here for the new API
-                console.log('Deleted order:', orderId);
-            } catch (error) {
-                console.error('Failed to delete order:', orderId, error);
-            } finally {
-                stopLoading();
-            }
-        }
-        setRemove(false);
-        fetchOrders();
-        setSelectedOrders([]);
-    };
+               <View style={[styles.line, {
+                   borderColor: colors.colorDetail
+               }]} />
 
-    const formatOrderForDetails = (order) => {
-        console.log(order.payment_method);
-        
-        return {
-            client_ref_order: order.order_number,
-            payment_status: order.payment_status,
-            order_id: order.id,
-            client_method: order.type === "PICKUP" ? "A emporter" : "Livraison",
-            client_payment: order.payment_method,
-            client_lastname: order.customers.last_name,
-            client_firstname: order.customers.first_name,
-            client_phone: order.customers.phone,
-            client_email: order.customers.email,
-            order_comment: order.comment,
-            client_address: `${order.addresses.street}, ${order.addresses.city} ${order.addresses.postal_code}`,
-            client_id: order.id,
-            amount_total: order.amount_total,
-            orders: order.order_items.map(item => ({
-                id: item.id,
-                comment: item.comment,
-                order_quantity: item.quantity,
-                product_title: item.name,
-                product_price: item.unit_price,
-                subtotal: item.subtotal
-            }))
-        };
-    };
+               <SegmentedControl
+                   values={[t('takeaway'), t('delivery')]}
+                   selectedIndex={orderMethod === 'PICKUP' ? 0 : 1}
+                   onChange={(event) => {
+                       Haptics.selectionAsync();
+                       setOrderMethod(
+                           event.nativeEvent.selectedSegmentIndex === 0 
+                               ? 'PICKUP' 
+                               : 'DELIVERY'
+                       );
+                   }}
+                   style={styles.segmentedControl}
+                   tintColor={colors.colorAction}
+                   fontStyle={{color: colors.colorText}}
+                   activeFontStyle={{color: colors.colorText}}
+               />
 
-    return(
-        <View style={styles.containerScreenBasket}>
-            <View style={styles.containerHeaderSetting}>
-                {remove === false ? (
-                    <TouchableOpacity onPress={()=> ModeremoveOrder()} style={styles.containerBtnRemove}>
-                        <Text>
-                            <Ionicons size={30} color={colors.colorText} name="trash-outline"/>
-                        </Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={()=> ModeremoveOrder()} style={styles.containerBtnRemove}>
-                        <Text>
-                            <Ionicons size={30} color={colors.colorRed} name="trash-outline"/>
-                        </Text>
-                    </TouchableOpacity>
-                )}
-
-                <Text style={[styles.textHeaderSetting, {color: colors.colorText}]}>{t('titleOrder')}</Text>
-                <TouchableOpacity onPress={() => refreshOrders()} style={[styles.containerBtnLogout, {backgroundColor: colors.colorBorderAndBlock}]}>
-                    <Ionicons name="reload-outline" size={25} color={colors.colorText}/>
-                </TouchableOpacity>
-            </View>
-            <View style={[styles.line, {borderColor: colors.colorDetail}]}></View>
-
-            {remove === true ? (
-                <View>
-                    <TouchableOpacity onPress={removeItems} style={{backgroundColor: colors.colorRed, marginHorizontal: 30, height: 40, borderRadius: 10, justifyContent: "center", alignItems:"center", marginBottom: 30}}>
-                        <Text style={{color: colors.colorText, fontSize: 18}}>Supprimer</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : null}
-
-            <View style={[styles.containerBtnStyle, {borderColor: colors.colorText}]}>
-                <View style={[orderMethod === "PICKUP" ? styles.borderBlueLeft : styles.borderBlueRight, {borderColor: colors.colorAction}]}></View>
-                <TouchableOpacity style={styles.containerTextClear} onPress={() => setOrderMethod("PICKUP")}>
-                    <Ionicons style={{fontSize:20, color: orderMethod === "PICKUP" ? colors.colorAction : colors.colorText}} name="bag-handle-outline"/>
-                    <Text style={[styles.TextClear, {color: orderMethod === "PICKUP" ? colors.colorAction : colors.colorText}]}>{t('takeaway')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.containerTextDark} onPress={() => setOrderMethod("DELIVERY")}>
-                    <Ionicons style={{fontSize:20, color: orderMethod === "DELIVERY" ? colors.colorAction : colors.colorText}} name="bicycle-outline"/>
-                    <Text style={[styles.textDark, { color: orderMethod === "DELIVERY" ? colors.colorAction : colors.colorText }]}>{t('delivery')}</Text>
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-                <View style={styles.listOrder}>
-                    {remove === false ? (
-                        Array.isArray(filteredOrders) && filteredOrders.map((order) => (
-                            <TouchableOpacity     onPress={() => navigation.navigate('OrderSelect', { order: formatOrderForDetails(order)})}  key={order.id} style={styles.containerOrderItem}>
-                                <View style={[styles.containerIconOrderItem, {backgroundColor: colors.colorText}]}>
-                                    {order.type === "PICKUP" ? (
-                                        <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
-                                    ) : (
-                                        <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>
-                                    )}
-                                </View>
-                                <View style={styles.containerTextOrderItem}>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.order_number}</Text>
-                                        <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>
-                                            {order.customers.last_name} {order.customers.first_name}
-                                        </Text>
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>
-                                            {calculateAndFormatTotalPrice(order)}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))
-                    ) : (
-                        Array.isArray(filteredOrders) && filteredOrders.map((order) => (
-                            <TouchableOpacity onPress={() => updateSelectedOrders(order.id)} key={order.id} 
-                                style={[styles.containerOrderItem, {
-                                    backgroundColor: selectedOrders.includes(order.id) ? colors.colorAction : 'transparent',
-                                    borderRadius: 30
-                                }]}>
-                                <View style={[styles.containerIconOrderItem, {backgroundColor: colors.colorText}]}>
-                                    {order.type === "PICKUP" ? (
-                                        <Ionicons size={28} color={colors.colorAction} name="bag-handle-outline"/>
-                                    ) : (
-                                        <Ionicons size={28} color={colors.colorAction} name="bicycle-outline"/>
-                                    )}
-                                </View>
-                                <View style={styles.containerTextOrderItem}>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>{order.order_number}</Text>
-                                        <Text style={[styles.textOrderItemName, {color: colors.colorDetail}]}>
-                                            {order.customers.last_name} {order.customers.first_name}
-                                        </Text>
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.textOrderItem, {color: colors.colorText}]}>
-                                            {calculateAndFormatTotalPrice(order)}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))
-                    )}
-                </View>
-            </ScrollView>
-        </View>
-    );
+               <FlatList
+                   data={filteredOrders}
+                   renderItem={renderOrderItem}
+                   keyExtractor={item => item.id}
+                   refreshing={refreshing}
+                   onRefresh={onRefresh}
+                   contentContainerStyle={styles.listContainer}
+                   showsVerticalScrollIndicator={false}
+               />
+           </View>
+       </GestureHandlerRootView>
+   );
 }
 
+function useStyles() {
+   const {width} = useWindowDimensions();
 
-function useStyles(){
-    const {width, height} = useWindowDimensions();
-
-    return StyleSheet.create({
-        containerHeaderSetting:{
-            justifyContent: "space-between", 
-            flexDirection:"row",
-            marginTop : (width > 375) ? 60 : 40,
-            paddingRight: 35,
-            paddingLeft : 35,
-            alignItems:'center',
-        },
-        containerBtnRemove:{
-
-            height:(width > 375) ? 55 : 35,
-            width: (width > 375) ? 55 : 35,
-            alignItems: "center",
-            borderRadius: 50,
-            backgroundColor: "#1E1E2D",
-            justifyContent: "center",
-        },
-        textHeaderSetting:{
-            fontSize: (width > 375) ? 22 : 18,
-            color: "white",
-        },
-        containerBtnLogout:{
-            height:(width > 375) ? 45 : 35,
-            width: (width > 375) ? 45 : 35,
-            alignItems: "center",
-            borderRadius: 50,
-            backgroundColor: "#1E1E2D",
-            justifyContent: "center",
-            paddingLeft: 5
-        },
-        containerEmpty:{
-            width: "10%",
-        },
-        line:{
-            borderWidth:1,
-            marginLeft: 30,
-            marginRight:30,
-            marginTop: (width > 375) ? 40 : 20,
-            marginBottom: 40
-        },
-        containerOrderItem:{
-            flexDirection: "row",
-            marginRight: 30,
-            marginLeft: 30,
-            marginBottom:22
-        },
-        containerTextOrderItem:{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center" ,
-            width: "80%"
-        },
-        containerIconOrderItem:{
-            backgroundColor: "white",
-            width: (width > 375) ? 50 : 40,
-            height: (width > 375) ? 50 : 40,
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 25,
-            marginRight: 20
-        },
-        textOrderItem:{
-            fontSize: (width > 375) ? 18 : 16,
-            color:"white"
-        },
+   return StyleSheet.create({
+       container: {
+           flex: 1,
+       },
+       containerScreenBasket: {
+           flex: 1,
+       },
+       containerHeaderSetting: {
+           justifyContent: "space-between", 
+           flexDirection: "row",
+           marginTop: (width > 375) ? 60 : 40,
+           paddingHorizontal: 35,
+           alignItems: 'center',
+           width: '100%',
+       },
+       textHeaderSetting: {
+           fontSize: (width > 375) ? 22 : 18,
+           flex: 1,
+           textAlign: 'center',
+       },
+       containerBtnLogout: {
+           height: (width > 375) ? 45 : 35,
+           width: (width > 375) ? 45 : 35,
+           alignItems: "center",
+           borderRadius: 50,
+           justifyContent: "center",
+       },
+       line: {
+           borderWidth: 1,
+           marginHorizontal: 30,
+           marginTop: (width > 375) ? 40 : 20,
+           marginBottom: 40,
+       },
+       segmentedControl: {
+           marginHorizontal: 30,
+           marginBottom: 30,
+           height: 40,
+       },
+       listContainer: {
+           paddingBottom: 150,
+       },
+       containerOrderItem: {
+           flexDirection: "row",
+           marginHorizontal: 30,
+           marginBottom: 22,
+           backgroundColor: 'transparent',
+           ...Platform.select({
+               ios: {
+                   shadowColor: '#000',
+                   shadowOffset: { width: 0, height: 2 },
+                   shadowOpacity: 0.1,
+                   shadowRadius: 4,
+               },
+               android: {
+                   elevation: 3,
+               }
+           }),
+       },
+       containerIconOrderItem: {
+           width: (width > 375) ? 50 : 40,
+           height: (width > 375) ? 50 : 40,
+           alignItems: "center",
+           justifyContent: "center",
+           borderRadius: 25,
+           marginRight: 20,
+       },
+       containerTextOrderItem: {
+           flexDirection: "row",
+           justifyContent: "space-between",
+           alignItems: "center",
+           flex: 1,
+       },
+       textOrderItem: {
+           fontSize: (width > 375) ? 18 : 16,
+           fontWeight: '500',
+       },
+       textOrderItemName: {
+           fontSize: (width > 375) ? 14 : 12,
+       },
         textOrderItemName:{
             color:"#A2A2A7",
             fontSize: (width > 375) ? 14 : 12,
@@ -436,7 +521,20 @@ function useStyles(){
             top: -2,
             borderRadius: 50
         },
-    
+        rightActionsContainer: {
+            flexDirection: 'row',
+            marginRight: 30,
+        },
+        rightAction: {
+            marginLeft: 10,
+        },
+        actionButton: {
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            justifyContent: 'center',
+            alignItems: 'center',
+        }
         
     })
 }

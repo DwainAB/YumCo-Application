@@ -1,17 +1,14 @@
-import React, {useState,  useEffect} from "react";
-import {View, Text, StyleSheet, TouchableOpacity, Image, TextInput, Alert } from "react-native"
+import React, {useState, useEffect} from "react";
+import {StyleSheet, Alert, View, Image, Text, TouchableOpacity, TextInput } from "react-native"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { EventEmitter } from "../EventEmitter/EventEmitter";
 import imgStat from "../../assets/imgStat.png"
 import imgOrder from "../../assets/imgOrder.png"
 import imgCard from "../../assets/imgCard.png"
 import { useWindowDimensions } from "react-native";
-import { apiService } from "../API/ApiService";
 import { useLoading } from "../Hooks/useLoading";
 import { supabase } from "../../lib/supabase";
-import Constants from 'expo-constants';
 
 export  function InfoStat({nextPage}){
   const styles = useStyles()
@@ -91,11 +88,10 @@ export function FormLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [storageData, setStorageData] = useState(null);
   const styles = useStyles();
   const { startLoading, stopLoading } = useLoading();
-  const NEXT_PUBLIC_SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;
+  const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
 
   useEffect(() => {
       const getStorageData = async () => {

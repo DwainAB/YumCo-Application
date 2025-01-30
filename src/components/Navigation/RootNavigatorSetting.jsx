@@ -20,8 +20,6 @@ const Stack = createStackNavigator();
 
 const RootNavigatorSetting = () => {
 
-    const [defaultScreen, setDefaultScreen] = useState('SettingPage');
-
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="SettingPage" component={SettingPage} />

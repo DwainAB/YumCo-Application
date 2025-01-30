@@ -2,11 +2,9 @@ import React, {useEffect, useState} from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
-import Constants from 'expo-constants';
 
 function HomeScreen(){
     const { colors } = useColors();
@@ -18,18 +16,20 @@ function HomeScreen(){
     const [totalPrice, setTotalPrice] = useState(0);
     const [lastOrderPerson, setLastOrderPerson] = useState({ firstName: '', lastName: '' });
     const styles = useStyles();
-    const SUPABASE_ANON_KEY = Constants.expoConfig.extra.supabaseAnonKey;;
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
+    const [orderStats, setOrderStats] = useState({
+        currentMonth: { orderCount: 0, totalRevenue: 0 },
+        previousMonth: { orderCount: 0, totalRevenue: 0 },
+        changes: { orderPercentage: 0, revenuePercentage: 0 }
+    });
 
-    // Récupère les infos utilisateur
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const user = await AsyncStorage.getItem("user");
                 const owner = await AsyncStorage.getItem("owner");
                 const ownerData = JSON.parse(owner);                
-                const userObject = JSON.parse(user);
-                setNameUser(userObject.firstname);
                 setRestaurantId(ownerData.restaurantId);
+                setNameUser(ownerData.first_name);
                 
             } catch (error) {
                 console.error('Erreur lors de la récupération des informations utilisateur:', error);
@@ -58,6 +58,7 @@ function HomeScreen(){
 
             const data = await response.json();
             if (data.success && data.data) {
+                
                 // Filtrer les commandes du mois en cours
                 const currentDate = new Date();
                 const currentMonth = currentDate.getMonth();
@@ -78,10 +79,42 @@ function HomeScreen(){
         }
     };
 
+    const fetchOrderStats = async () => {
+        try {
+            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getOrdersStats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                setOrderStats(data.data);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération des statistiques:', error);
+        }
+    };
+
+
+
     useEffect(() => {
         if (restaurantId) {
             fetchOrders();
-            const interval = setInterval(fetchOrders, 60000);
+            fetchOrderStats(); // Ajoutez cet appel
+            const interval = setInterval(() => {
+                fetchOrders();
+                fetchOrderStats(); // Ajoutez cet appel
+            }, 60000);
             return () => clearInterval(interval);
         }
     }, [restaurantId]);
@@ -142,26 +175,35 @@ function HomeScreen(){
 
                 <View style={styles.containerHomeBottom}>
                     <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
-                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('titleReview')}</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Review')}>
-                            <Ionicons name="chatbox-outline" style={[styles.iconStat, {color: colors.colorAction}]}/>
-                        </TouchableOpacity>
+                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('orders')}</Text>
+                        <Text style={[styles.statValue, {color: colors.colorAction}]}>
+                            {orderStats.changes.orderPercentage > 0 ? '+' : ''}
+                            {orderStats.changes.orderPercentage}%
+                        </Text>
+                        <Text style={[styles.statDetail, {color: colors.colorText}]}>
+                            {t('SinceLastMonth')}
+                        </Text>
                     </View>
                     
                     <View style={[styles.containerReview, {backgroundColor: colors.colorBorderAndBlock}]}>
-                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('updateApp')}</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('LanguagePage')}>
-                            <Ionicons name="alert-circle-outline" style={[styles.iconStat, {color: colors.colorAction}]}/>
-                        </TouchableOpacity>
+                        <Text style={[styles.titleReview, {color: colors.colorText}]}>{t('revenue')}</Text>
+                        <Text style={[styles.statValue, {color: colors.colorAction}]}>
+                            {orderStats.changes.revenuePercentage > 0 ? '+' : ''}
+                            {orderStats.changes.revenuePercentage}%
+                        </Text>
+                        <Text style={[styles.statDetail, {color: colors.colorText}]}>
+                            {t('SinceLastMonth')}
+                        </Text>
                     </View>
                 </View>
+
             </ScrollView>
         </View>
     );
 }
 
 function useStyles(){
-    // Styles restent inchangés...
+
     const {width, height} = useWindowDimensions();
 
     return StyleSheet.create({
@@ -255,6 +297,29 @@ function useStyles(){
         },
         iconStat:{
             fontSize: (width > 375) ? 70 : 50,
+        },
+        containerReview:{
+            height: (width > 375) ? 150 : 120, 
+            width: (width > 375) ? 150 : 120,
+            borderRadius: 15,
+            padding: 10,
+            position: "relative",
+            justifyContent: 'space-between', 
+            alignItems: "center",
+            paddingVertical: 20 
+        },
+        titleReview:{
+            fontSize: (width > 375) ? 18 : 14,
+            fontWeight: "500",
+        },
+        statValue:{
+            fontSize: (width > 375) ? 28 : 22,
+            fontWeight: "bold",
+            marginVertical: 10 
+        },
+        statDetail:{
+            fontSize: (width > 375) ? 14 : 12,
+            textAlign: 'center'
         }
     });
 }

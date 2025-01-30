@@ -15,6 +15,7 @@ function OrderSelectData() {
   const { t } = useTranslation();
   const [selectedComment, setSelectedComment] = useState(null);
   const styles = useStyles();
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
 
   const calculateAndFormatTotalPrice = (order) => {
     let totalPrice = 0;
@@ -37,13 +38,33 @@ function OrderSelectData() {
 
   const handleDelete = async () => {
     try {
-      await apiService.deleteClient(order.client_id);
+      const updateResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          order_id: order.order_id,
+          new_status: "DELETED"
+        })
+      });
+  
+      if (!updateResponse.ok) {
+        throw new Error('Erreur lors de la mise à jour du statut');
+      }
+  
       alert(t('alertDeleteOrder'));
-      navigation.navigate("AllOrdersScreen");
-    } catch (error) {
-      console.error('Erreur lors de la suppression du client:', error);
+      navigation.navigate("AllOrdersScreen", { 
+        triggerRefresh: Date.now() 
+      });
+      
+      } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      alert('Erreur lors de la mise à jour de la commande');
     }
   };
+  
 
   return (
     <View style={[styles.containerOrderSelect, {backgroundColor: colors.colorBackground}]}>

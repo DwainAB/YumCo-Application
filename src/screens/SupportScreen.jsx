@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Linking, Modal } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons"; 
 import imgSupport from '../assets/imgSupport.png';
@@ -6,7 +6,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-import { Crisp } from 'react-native-crisp-chat-sdk';
 import {WebView} from 'react-native-webview';
 import { Dimensions } from 'react-native';
 
@@ -93,12 +92,21 @@ function SupportScreen() {
 
                         {/* Composant WebView */}
                         <View style={styles.webViewContainer}>
-                            <WebView
-                                style={styles.crispChat}
-                                source={{
-                                    uri: "https://go.crisp.chat/chat/embed/?website_id=19a1e5ae-66ac-4dba-b611-06ede8e27e20",
-                                }}
-                            />
+                        <WebView
+                            style={styles.crispChat}
+                            source={{
+                                uri: "https://go.crisp.chat/chat/embed/?website_id=19a1e5ae-66ac-4dba-b611-06ede8e27e20",
+                            }}
+                            injectedJavaScript={`
+                                window.$crisp = [];
+                                window.CRISP_RUNTIME_CONFIG = {
+                                    do_not_track: true,
+                                    disable_geolocation: true
+                                };
+                                true;  
+                            `}
+                            geolocationEnabled={false}
+                        />
                         </View>
                     </View>
                 </View>

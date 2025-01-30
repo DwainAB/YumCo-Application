@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView } from "react-native";
-import { apiService } from "../API/ApiService";
 import {launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -11,7 +10,6 @@ import ConfirmDialog from "../ModalAction/ModalAction";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 import { supabase } from '../../lib/supabase';
-import { useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 import { decode } from "base64-arraybuffer";
 
@@ -28,7 +26,6 @@ function FormUpdate() {
     const [restaurantId, setRestaurantId]= useState('')
     const { t } = useTranslation();
     const styles = useStyles()
-    const navigation = useNavigation();
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
     const [visibleCategories, setVisibleCategories] = useState([]);

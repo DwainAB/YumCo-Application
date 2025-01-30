@@ -1,3 +1,4 @@
+import React from "react";
 import { View, StyleSheet } from "react-native";
 import Dashboard from "../components/Dashboard/Dashboard";
 import { useColors } from "../components/ColorContext/ColorContext";

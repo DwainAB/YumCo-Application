@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
@@ -11,7 +10,6 @@ import { useWindowDimensions } from "react-native";
 
 
 function Personalization(){
-    const navigation = useNavigation(); 
     const { setColors } = useColors();
     const { colors } = useColors()
     const [theme, setTheme] = useState("light"); 

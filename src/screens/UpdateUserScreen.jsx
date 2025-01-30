@@ -1,13 +1,11 @@
 import React from "react";
 import { View, StyleSheet} from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import Utilisateur from "../components/Users/UpdateUser";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 
 function UpdateUserScreen(){
-    const navigation = useNavigation();
     const { t } = useTranslation();
     const { colors } = useColors()
 

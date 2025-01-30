@@ -2,11 +2,16 @@
   "expo": {
     "name": "YumEat",
     "slug": "yumeat",
-    "version": "1.0.4",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
-    "scheme": "yumeat",  
+    "scheme": "yumeat",
     "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
@@ -18,7 +23,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.YumEat.sendnotification",
-      "associatedDomains": ["applinks:yumeat.app.link"]  
+      "deploymentTarget": "15.1",
+      "buildNumber": "1"  
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -37,8 +43,15 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "data": [{"scheme": "yumeat"}],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "yumeat"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -46,13 +59,19 @@
       "favicon": "./assets/logo.png"
     },
     "plugins": [
-      "expo-font"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "8878c9cc-f299-47a6-9463-9077b856ed0c"
-      },
-      "oneSignalAppId": "Y9fca395b-abc8-47ce-86e6-e342656ab582"
+      }
     },
     "owner": "dwain"
   }

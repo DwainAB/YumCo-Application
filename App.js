@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { registerRootComponent } from 'expo';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import InfoLoginScreen from './src/screens/InfoLoginScreen';
-import HomeScreen from "./src/screens/HomeScreen";
 import RootNavigatorSetting from './src/components/Navigation/RootNavigatorSetting';
 import RootNavigatorOrder from './src/components/Navigation/RootNavigatorOrder';
 import RootNavigatorHome from './src/components/Navigation/RootNavigatorHome';
@@ -14,8 +13,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from './src/components/i18n/i18n';
 import { useTranslation } from 'react-i18next';
 import { LanguageProvider } from './src/components/LanguageContext/LanguageContext';
-import { useWindowDimensions } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useWindowDimensions, View } from "react-native";
 import LoadingScreen from './src/screens/LoadingScreen';
 import { LoadingProvider, useLoading } from './src/components/Hooks/useLoading';
 
@@ -89,6 +87,6 @@ const MainApp = () => {
   );
 };
 
-const styles = StyleSheet.create({});
 
 export default App;
+registerRootComponent(App);
