@@ -30,81 +30,81 @@ function LanguagePage(){
             <HeaderSetting name={t('language')} navigateTo="SettingPage"/>
             <ScrollView>
                 <View style={styles.listLanguage}>
-                    <TouchableOpacity  onPress={() => changeLanguage('en', 'English')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity  onPress={() => changeLanguage('en', 'English')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/england-flag-round-icon.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>English</Text>
-                        {language === 'English' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'English' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('pt', 'Português')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('pt', 'Português')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/portugal-flag-round-icon.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>Português</Text>
-                        {language === 'Português' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'Português' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('fr', 'Français')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('fr', 'Français')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/france-flag-round-icon.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>Français</Text>
-                        {language === 'Français' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'Français' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('es', "Español")} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('es', "Español")} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/spain-flag-round-icon.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>Español</Text>
-                        {language === 'Español' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'Español' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('it', 'Italiano')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('it', 'Italiano')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/italy-flag-round-icon.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>Italiano</Text>
-                        {language === 'Italiano' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'Italiano' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('jp', 'おはよう')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('jp', 'おはよう')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/japan-flag-round-medium.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>おはよう</Text>
-                        {language === 'おはよう' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === 'おはよう' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => changeLanguage('ch', '中文')} style={styles.containerCountry}>
-                        <View style={styles.containerImageCountry}>
+                    <TouchableOpacity onPress={() => changeLanguage('ch', '中文')} style={[styles.containerCountry, {borderColor: colors.colorDetaillight}]}>
+                        <View style={[styles.containerImageCountry, {borderColor: colors.colorDetail}]}>
                             <Image
                                 source={require('../assets/china-flag-round-medium.png')} 
                                 style={styles.image}
                             />
                         </View>
                         <Text style={[styles.titleCountry, {color: colors.colorText}]}>中文</Text>
-                        {language === '中文' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorText, fontSize: 20}}/></View>) : null}
+                        {language === '中文' ? (<View style={[styles.containerCheck, {backgroundColor: colors.colorAction}]}><Ionicons name='checkmark-outline' style={{color: colors.colorBorderAndBlock, fontSize: 20}}/></View>) : null}
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -152,7 +152,9 @@ function useStyles(){
             marginBottom: 40
         },
         containerImageCountry:{
-            marginRight: 20
+            marginRight: 20,
+            borderWidth:1,
+            borderRadius: 50
         },
         containerCountry:{
             marginLeft: 30,
@@ -160,7 +162,6 @@ function useStyles(){
             flexDirection: "row",
             alignItems: "center",
             borderBottomWidth: 1,
-            borderColor : "#F4F4F4",
             paddingBottom: 15,
             marginBottom: 22,
             position: "relative"

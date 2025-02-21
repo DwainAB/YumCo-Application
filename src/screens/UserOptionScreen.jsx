@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity} from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
@@ -8,62 +8,85 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 
 function UserOptionScreen(){
-    const navigation = useNavigation();
-    const { t } = useTranslation();
-    const { colors } = useColors()
-    const styles = useStyles()
+   const navigation = useNavigation();
+   const { t } = useTranslation();
+   const { colors } = useColors()
+   const styles = useStyles()
 
-    return(
-        <View style={[styles.containerUserPage, {backgroundColor: colors.colorBackground}]}>
-            
-            <HeaderSetting name={t('users')} navigateTo="SettingPage"/>
+   return(
+       <View style={[styles.container, {backgroundColor: colors.colorBackground}]}>
+           <HeaderSetting name={t('users')} navigateTo="SettingPage"/>
 
-            <Text style={[styles.titleUser, {color: colors.colorDetail}]}>{t('userManagement')}</Text>
+           <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
+               {t('userManagement')}
+           </Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('AddUserScreen')} style={styles.containerOptionUser}>
-                <Text style={[styles.textOptionUser, {color: colors.colorText}]}>{t('addUser')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('UpdateUserScreen')} style={styles.containerOptionUser}>
-                <Text style={[styles.textOptionUser, {color: colors.colorText}]}>{t('userList')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
+           <View style={styles.menuOptions}>
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('AddUserScreen')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                       <Icon name="account-plus" size={24} color="#4ECDC4" />
+                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                           {t('addUser')}
+                       </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
 
-        </View>
-    )
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('UpdateUserScreen')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                       <Icon name="account-group" size={24} color="#6C5CE7" />
+                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                           {t('userList')}
+                       </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
+           </View>
+       </View>
+   )
 }
 
 function useStyles(){
-    const {width, height} = useWindowDimensions();
+   const {width, height} = useWindowDimensions();
 
-    return StyleSheet.create({
-        containerUserPage:{
-            height: "100%",
-        },
-        titleUser:{
-            marginLeft: 30,
-            color: "#A2A2A7",
-            fontSize: (width > 375) ? 18 : 15,
-            marginBottom: 30
-        },
-        containerOptionUser:{
-            marginLeft: 30,
-            marginRight: 30,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            borderBottomWidth: 1,
-            borderColor: "#232533",
-            paddingBottom: 10,
-            marginBottom: 22
-        },
-        textOptionUser:{
-            color: "white",
-            fontSize: (width > 375) ? 18 : 15,
-        }
-     
-    })
+   return StyleSheet.create({
+       container: {
+           flex: 1,
+       },
+       sectionTitle: {
+           fontSize: width > 375 ? 18 : 16,
+           fontWeight: '600',
+           marginHorizontal: 20,
+           marginBottom: 20,
+           marginTop: 10
+       },
+       menuOptions: {
+           paddingHorizontal: 20,
+           gap: 12
+       },
+       menuItem: {
+           flexDirection: 'row',
+           justifyContent: 'space-between',
+           alignItems: 'center',
+           padding: 16,
+           borderRadius: 12,
+       },
+       menuItemLeft: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           gap: 12
+       },
+       menuItemText: {
+           fontSize: width > 375 ? 16 : 14,
+           fontWeight: '500'
+       }
+   })
 }
 
-
-export default UserOptionScreen
+export default UserOptionScreen;

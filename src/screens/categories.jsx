@@ -249,12 +249,12 @@ function CategoriesScreen() {
                        <TouchableOpacity 
                            onPress={handleAddNewCategories}
                            style={[styles.containerBtnAddCategories, { 
-                               backgroundColor: colors.colorAction 
+                               backgroundColor: colors.colorAction
                            }]}
                        >
                            <Ionicons 
                                name="checkmark-outline" 
-                               style={{ fontSize: 30, color: colors.colorText }} 
+                               style={{ fontSize: 30, color: "#fff" }} 
                            />
                        </TouchableOpacity>
                    </View>

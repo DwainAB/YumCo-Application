@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
@@ -8,67 +8,98 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 
 function CardOptionScreen(){
-    const navigation = useNavigation();
-    const { t } = useTranslation();
-    const { colors } = useColors()
-    const styles = useStyles()
+   const navigation = useNavigation();
+   const { t } = useTranslation();
+   const { colors } = useColors()
+   const styles = useStyles()
 
-    return(
-        <View style={[styles.containerCardPage, {backgroundColor:colors.colorBackground}]}>
-            
-            <HeaderSetting name={t('cards')} navigateTo="SettingPage"/>
+   return(
+       <View style={[styles.container, {backgroundColor:colors.colorBackground}]}>
+           <HeaderSetting name={t('cards')} navigateTo="SettingPage"/>
 
-            <Text style={[styles.titleCard, {color: colors.colorDetail}]}>{t('menuManagement')}</Text>
+           <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
+               {t('menuManagement')}
+           </Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('AddProductScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('addProduct')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={()=> navigation.navigate('UpdateProductScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('editProduct')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={()=> navigation.navigate('CategoriesScreen')} style={styles.containerOptionCard}>
-                <Text style={[styles.textOptionCard, {color: colors.colorText}]}>{t('categories')}</Text>
-                <Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/>
-            </TouchableOpacity>
+           <View style={styles.menuOptions}>
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('AddProductScreen')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                       <Icon name="plus-circle" size={24} color="#4ECDC4" />
+                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                           {t('addProduct')}
+                       </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
 
-        </View>
-    )
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('UpdateProductScreen')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                       <Icon name="pencil" size={24} color="#FF6B6B" />
+                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                           {t('editProduct')}
+                       </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
+
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('CategoriesScreen')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                       <Icon name="shape" size={24} color="#6C5CE7" />
+                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                           {t('categories')}
+                       </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
+           </View>
+       </View>
+   )
 }
 
 function useStyles(){
-    const {width} = useWindowDimensions();
+   const {width, height} = useWindowDimensions();
 
-    return StyleSheet.create({
-        containerCardPage:{
-            height: "100%",
-            backgroundColor: "#161622"
-        },
-        titleCard:{
-            marginLeft: 30,
-            color: "#A2A2A7",
-            fontSize: (width > 375) ? 18 : 15,
-            marginBottom: 30
-        },
-        containerOptionCard:{
-            marginLeft: 30,
-            marginRight: 30,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            borderBottomWidth: 1,
-            borderColor: "#232533",
-            paddingBottom: 10,
-            marginBottom: 22
-        },
-        textOptionCard:{
-            color: "white",
-            fontSize: (width > 375) ? 18 : 15
-        }
-     
-    })
+   return StyleSheet.create({
+       container: {
+           flex: 1,
+       },
+       sectionTitle: {
+           fontSize: width > 375 ? 18 : 16,
+           fontWeight: '600',
+           marginHorizontal: 20,
+           marginBottom: 20,
+           marginTop: 10
+       },
+       menuOptions: {
+           paddingHorizontal: 20,
+           gap: 12
+       },
+       menuItem: {
+           flexDirection: 'row',
+           justifyContent: 'space-between',
+           alignItems: 'center',
+           padding: 16,
+           borderRadius: 12,
+       },
+       menuItemLeft: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           gap: 12
+       },
+       menuItemText: {
+           fontSize: width > 375 ? 16 : 14,
+           fontWeight: '500'
+       }
+   })
 }
 
-
-export default CardOptionScreen
+export default CardOptionScreen;

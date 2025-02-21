@@ -35,7 +35,7 @@ export async function registerForPushNotificationsAsync() {
         }
 
         try {
-            const projectId = "8878c9cc-f299-47a6-9463-9077b856ed0c";
+            const projectId = "c3231076-739a-4599-a861-9539f5cdabc6";
             token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         } catch (e) {
             console.error(e);

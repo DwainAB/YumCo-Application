@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import Review from "../../screens/ReviewScreen"
 import HomeScreen from '../../screens/HomeScreen';
 import StatOptionScreen from '../../screens/StatOptionScreen';
-import AllOrdersScreen from '../../screens/AllOrdersScreen';
-import OrderSelectData from '../../screens/OrderSelectData';
+import OrdersAnalysisScreen from "../../screens/StatOrder"
+import RevenueAnalysisScreen from '../../screens/StatTurnover';
+import CustomerAnalysisScreen from '../../screens/statCustomer';
+import PerformanceAnalysisScreen from '../../screens/StatPerformance';
 
 const Stack = createStackNavigator();
 
@@ -15,10 +16,11 @@ const RootNavigatorHome = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="Review" component={Review} />
+      <Stack.Screen name="statCustomer" component={CustomerAnalysisScreen} />
       <Stack.Screen name="StatOptionScreen" component={StatOptionScreen} />
-      <Stack.Screen name="AllOrdersScreen" component={AllOrdersScreen} />
-      <Stack.Screen name="OrderSelectData" component={OrderSelectData} />
+      <Stack.Screen name="OrdersAnalysisScreen" component={OrdersAnalysisScreen} />
+      <Stack.Screen name="StatTurnover" component={RevenueAnalysisScreen} />
+      <Stack.Screen name="StatPerformance" component={PerformanceAnalysisScreen} />
     </Stack.Navigator>
   );
 };

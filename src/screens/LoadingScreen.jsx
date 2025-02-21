@@ -12,7 +12,7 @@ const LoadingScreen = ({ visible, message }) => {
             <View style={styles.container}>
                 <View style={styles.innerContainer}>
                     <Image 
-                        source={require('../assets/logo.png')} // Assurez-vous que le chemin est correct
+                        source={require('../assets/logo-loading.png')} // Assurez-vous que le chemin est correct
                         style={styles.logo}
                     />
                     {message && <Text style={styles.message}>{message}</Text>}
@@ -28,12 +28,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+        backgroundColor: '#fff', // semi-transparent background
         width: '100%', // Prend toute la largeur de l'écran
         height: '100%', // Prend toute la hauteur de l'écran
     },
     innerContainer: {
-        backgroundColor: "#161622",
+        backgroundColor: "#fff",
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
         alignItems:"center"
     },
     logo: {
-        width: 300,
-        height: 300,
-        marginLeft: 30, 
-        marginRight: 30,
+        width: '80%', // Utilise un pourcentage de la largeur du conteneur
+        height: undefined, // Hauteur non définie pour maintenir le ratio
+        aspectRatio: 1, // Ajustez cette valeur selon le ratio de votre image (1 pour une image carrée)
+        resizeMode: 'contain', // Assure que l'image entière est visible
         marginBottom: 20,
     },
     text: {

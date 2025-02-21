@@ -210,13 +210,13 @@ const AddUser = () => {
                >
                    <AnimatedForm style={styles.containerFormAddUser}>
                        {Object.entries({
-                           firstname: t('firstname'),
-                           lastname: t('lastname'),
+                           firstname: t('first_name'),
+                           lastname: t('last_name'),
                            email: t('email'),
                            phone: t('phone'),
                            street: t('street'),
                            city: t('city'),
-                           postal_code: t('postalCode'),
+                           postal_code: t('postal_code'),
                            country: t('country'),
                        }).map(([field, label]) => (
                            <View key={field}>
@@ -282,7 +282,7 @@ const AddUser = () => {
                            }}
                            useNativeAndroidPickerStyle={false}
                            placeholder={{
-                               label: t("Type d'utilisateur"),
+                               label: t("user_type"),
                                value: '',
                                color: colors.colorDetail
                            }}

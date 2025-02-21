@@ -106,10 +106,15 @@ function FormUpdate() {
     };
 
     const fetchCategories = async () => {
+        if (!restaurantId) {
+            console.log('Restaurant ID not available yet');
+            return;
+        }    
         try {
             const { data: categoriesData, error } = await supabase
                 .from('categories')
-                .select('id, name');
+                .select('id, name')
+                .eq('restaurant_id', restaurantId);
 
             if (error) throw error;
 
@@ -124,37 +129,90 @@ function FormUpdate() {
     };
 
     const handleInputChange = (foodId, newValue, name) => {
-        setEditableFoods((prev) => ({
-            ...prev,
-            [foodId]: {
-                ...prev[foodId],
-                [name]: name === 'category_id' ? Number(newValue) : newValue,
-            },
-        }));
+        if (name === 'price') {
+            // Remplacer la virgule par un point
+            let formattedValue = newValue.replace(',', '.');
+            
+            // Vérifier si c'est un nombre valide avec maximum 2 décimales
+            if (formattedValue !== '' && formattedValue !== '.') {
+                // Extraire les parties entière et décimale
+                const parts = formattedValue.split('.');
+                if (parts[1]?.length > 2) {
+                    // Limiter à 2 décimales
+                    parts[1] = parts[1].slice(0, 2);
+                    formattedValue = parts.join('.');
+                }
+                
+                // Vérifier si c'est un nombre valide
+                if (isNaN(parseFloat(formattedValue))) {
+                    return; // Ne pas mettre à jour si ce n'est pas un nombre valide
+                }
+            }
+            
+            setEditableFoods((prev) => ({
+                ...prev,
+                [foodId]: {
+                    ...prev[foodId],
+                    [name]: formattedValue,
+                },
+            }));
+        } else if (name === 'category_id') {
+            setEditableFoods((prev) => ({
+                ...prev,
+                [foodId]: {
+                    ...prev[foodId],
+                    [name]: Number(newValue),
+                },
+            }));
+        } else {
+            setEditableFoods((prev) => ({
+                ...prev,
+                [foodId]: {
+                    ...prev[foodId],
+                    [name]: newValue,
+                },
+            }));
+        }
     };
     
-      const handleUpdateAllFoods = async (event) => {
+    
+    const handleUpdateAllFoods = async (event) => {
         event.preventDefault();
         
-        if (!selectedFood) return; // Assurez-vous qu'un produit est sélectionné
-
-        const foodData = editableFoods[selectedFood.id]; // Récupérer les données du produit sélectionné
-        const baseFoodData = listProduct.find(product => product.id === selectedFood.id); // Récupérer les données de base
+        if (!selectedFood) return;
+    
+        const foodData = editableFoods[selectedFood.id];
+        const baseFoodData = listProduct.find(product => product.id === selectedFood.id);
+    
+        if (foodData?.title?.trim() === '') {
+            alert("Le nom du produit est requis");
+            return;
+        }
+    
+        if (!foodData?.price || foodData.price.trim() === '') {
+            alert("Le prix est requis");
+            return;
+        }
+    
+        if (!foodData?.category_id) {
+            alert("La catégorie est requise");
+            return;
+        }
 
         try {
             const { error } = await supabase
                 .from('products')
                 .update({
-                    name: foodData.title || baseFoodData.name,
-                    price: foodData.price !== undefined ? parseFloat(foodData.price) : baseFoodData.price,
-                    image_url: foodData.imageURI ? foodData.imageURI.uri : baseFoodData.image_url,
-                    is_available: foodData.is_available !== undefined ? foodData.is_available : baseFoodData.is_available,
-                    category_id: foodData.category_id !== undefined ? Number(foodData.category_id) : Number(baseFoodData.category_id),
+                    name: foodData?.title !== undefined ? foodData.title : baseFoodData.name,
+                    price: foodData?.price !== undefined ? parseFloat(foodData.price) : baseFoodData.price,
+                    image_url: foodData?.imageURI ? foodData.imageURI.uri : baseFoodData.image_url,
+                    is_available: foodData?.is_available !== undefined ? foodData.is_available : baseFoodData.is_available,
+                    category_id: foodData?.category_id !== undefined ? Number(foodData.category_id) : Number(baseFoodData.category_id),
                 })
-                .eq('id', selectedFood.id); // Mettre à jour uniquement le produit sélectionné
-
+                .eq('id', selectedFood.id);
+    
             if (error) throw error;
-
+    
             alert("Modifications ajoutées avec succès");
             await fetchProducts();
             setEditableFoods({});
@@ -163,6 +221,7 @@ function FormUpdate() {
             console.error('Erreur lors de la mise à jour:', error.message);
         }
     };
+    
     
     
 
@@ -267,17 +326,17 @@ function FormUpdate() {
         setIsBottomSheetVisible(true);
         setInitialFoodImage(food.image_url || null);
         
-        // Sauvegarder l'état d'origine du produit
         setEditableFoods({
             [food.id]: {
                 title: food.name,
-                price: food.price,
+                price: food.price.toString(),
                 imageURI: food.image_url ? { uri: food.image_url } : null,
                 is_available: food.is_available,
                 category_id: food.category_id,
             }
         });
     };
+    
 
 
     const measureCategories = () => {
@@ -495,7 +554,7 @@ function FormUpdate() {
                                 <Text style={[styles.productPrice, { color: colors.colorText }]}>
                                     {food.price.toFixed(2)} €
                                 </Text>
-                                <View style={[styles.categoryBadge, { alignSelf: 'flex-start', marginLeft: 0 }]}>
+                                <View style={[styles.categoryBadge, { alignSelf: 'flex-start', marginLeft: 0, padding: 10 }]}>
                                     <Text style={[styles.categoryText, { color: colors.colorText }]}>
                                         {categories[food.category_id] || 'Sans catégorie'}
                                     </Text>
@@ -508,7 +567,7 @@ function FormUpdate() {
                         ))
                     ) : (
                         <Text style={[styles.noProductsText, { color: colors.colorText }]}>
-                            {t('noProductInCategory')}
+                            {t('Aucun produit')}
                         </Text>
                     )}
                 </View>
@@ -583,7 +642,7 @@ function FormUpdate() {
 
                             <TextInput
                                 style={[styles.input, { color: colors.colorText }]}
-                                value={editableFoods[selectedFood.id]?.title || selectedFood.name}
+                                value={editableFoods[selectedFood.id]?.title ?? ""}
                                 onChangeText={(text) => handleInputChange(selectedFood.id, text, 'title')}
                                 placeholder="Nom du produit"
                             />
@@ -591,7 +650,7 @@ function FormUpdate() {
                             <View style={styles.priceInputContainer}>
                                 <TextInput
                                     style={[styles.input, { color: colors.colorText, paddingRight: 30 }]}
-                                    value={editableFoods[selectedFood.id]?.price?.toString() || selectedFood.price.toString()}
+                                    value={editableFoods[selectedFood.id]?.price?.toString() ?? selectedFood.price.toString()}
                                     onChangeText={(text) => handleInputChange(selectedFood.id, text, 'price')}
                                     keyboardType="numeric"
                                     placeholder="Prix"
@@ -601,7 +660,7 @@ function FormUpdate() {
 
                             <TextInput
                                 style={[styles.input, { color: colors.colorText, height: 100 }]}
-                                value={editableFoods[selectedFood.id]?.description || selectedFood.description}
+                                value={editableFoods[selectedFood.id]?.description ?? selectedFood.description}
                                 onChangeText={(text) => handleInputChange(selectedFood.id, text, 'description')}
                                 placeholder="Description du produit"
                                 multiline
@@ -808,6 +867,9 @@ function useStyles(){
         },
         deleteButton: {
             backgroundColor: '#FF4444',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
         },
         saveButton: {
             backgroundColor: '#4CAF50',
@@ -815,6 +877,7 @@ function useStyles(){
         actionButtonText: {
             color: 'white',
             fontWeight: '600',
+            textAlign: "center"
         },
         imageContainer: {
             alignItems: 'center',
@@ -883,7 +946,7 @@ function useStyles(){
             backgroundColor: colors.colorAction,
         },
         selectedCategoryChipText: {
-            color: colors.colorText,
+            color: "#fff",
         },
         categoryModal: {
             justifyContent: 'flex-end',

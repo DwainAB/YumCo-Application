@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import SettingPage from '../../screens/SettingPage';
 import LanguagePage from '../../screens/LanguageScreen';
-import Personalization from '../../screens/personalizationScreen';
 import CardOptionScreen from '../../screens/CardOptionScreen';
 import AddProductScreen from '../../screens/AddProductScreen';
 import UserOptionScreen from '../../screens/UserOptionScreen';
@@ -11,7 +10,6 @@ import ResetPassword from '../../screens/ResetPassword';
 import InfoLoginScreen from '../../screens/InfoLoginScreen';
 import SupportScreen from '../../screens/SupportScreen';
 import UpdateUserScreen from '../../screens/UpdateUserScreen';
-import ReviewScreen from '../../screens/ReviewScreen';
 import CategoriesScreen from '../../screens/categories';
 import UpdateProductScreen from '../../screens/UpdateProductScreen';
 import PolityPrivacy from '../../screens/PolityPrivacy';
@@ -24,7 +22,6 @@ const RootNavigatorSetting = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="SettingPage" component={SettingPage} />
       <Stack.Screen name="LanguagePage" component={LanguagePage} />
-      <Stack.Screen name="Personalization" component={Personalization} />
       <Stack.Screen name="CardOptionScreen" component={CardOptionScreen} />
       <Stack.Screen name="AddProductScreen" component={AddProductScreen} />
       <Stack.Screen name="UserOptionScreen" component={UserOptionScreen} />
@@ -33,7 +30,6 @@ const RootNavigatorSetting = () => {
       <Stack.Screen name="SupportScreen" component={SupportScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="InfoLoginScreen" component={InfoLoginScreen} />
-      <Stack.Screen name="ReviewScreen" component={ReviewScreen} />
       <Stack.Screen name="CategoriesScreen" component={CategoriesScreen} />
       <Stack.Screen name="UpdateProductScreen" component={UpdateProductScreen} />
       <Stack.Screen name="PolityPrivacy" component={PolityPrivacy} />

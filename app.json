@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "YumEat",
-    "slug": "yumeat",
-    "version": "1.0.8",
+    "name": "YumCo",
+    "slug": "eatopia",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
-    "scheme": "yumeat",
-    "userInterfaceStyle": "light",
+    "scheme": "yumco",
+    "userInterfaceStyle": "automatic",
     "platforms": [
       "ios",
       "android",
@@ -15,24 +15,27 @@
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#161622"
+      "backgroundColor": "#fff"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.YumEat.sendnotification",
+      "bundleIdentifier": "com.eatopia.app",
       "deploymentTarget": "15.1",
-      "buildNumber": "1"  
+      "buildNumber": "2",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Cette application nécessite l'accès à votre photothèque pour vous permettre de sélectionner et partager vos photos de plats et expériences culinaires"
+      }
     },
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-adaptative.png",
-        "backgroundColor": "#161622"
+        "backgroundColor": "#fff"
       },
-      "package": "com.YumEat.sendnotification",
+      "package": "com.eatopia.app",
       "permissions": [
         "WAKE_LOCK",
         "ACCESS_NETWORK_STATE",
@@ -45,7 +48,7 @@
           "action": "VIEW",
           "data": [
             {
-              "scheme": "yumeat"
+              "scheme": "yumco"
             }
           ],
           "category": [
@@ -55,22 +58,9 @@
         }
       ]
     },
-    "web": {
-      "favicon": "./assets/logo.png"
-    },
-    "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "15.1"
-          }
-        }
-      ]
-    ],
     "extra": {
       "eas": {
-        "projectId": "8878c9cc-f299-47a6-9463-9077b856ed0c"
+        "projectId": "c3231076-739a-4599-a861-9539f5cdabc6"
       }
     },
     "owner": "dwain"

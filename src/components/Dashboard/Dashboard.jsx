@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 import * as Updates from 'expo-updates';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,183 +9,452 @@ import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 import { useLoading } from "../Hooks/useLoading";
 import { Linking } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
+function Dashboard() {
+   const navigation = useNavigation();
+   const [language, setLanguage] = useState(null);
+   const [currentTheme, setCurrentTheme] = useState('light');
+   const { t } = useTranslation();
+   const styles = useStyles();
+   const { startLoading, stopLoading } = useLoading();
+   const [isThemeModalVisible, setIsThemeModalVisible] = useState(false);
+   const { colors, setThemeSelected } = useColors();
+   const [restaurantId, setRestaurantId] = useState('');
+   const [userId, setUserId] = useState('');
+   const [userCount, setUserCount] = useState(0);
+   const [productCount, setProductCount] = useState(0);
+   const colorScheme = useColorScheme();
 
-function Dashboard (){
-    const navigation = useNavigation(); // Obtenez l'objet de navigation
-    const [storageData, setStorageData] = useState(null);
-    const { colors } = useColors()
-    const { t } = useTranslation();
-    const [language, setLanguage] = useState(null);
-    const styles = useStyles()
-    const { startLoading, stopLoading } = useLoading();
-
-
-    function test(){
-        return null
-    }
-
-    useEffect(() => {
-        const getLanguageFromStorage = async () => {
-            try {
-                const storedLanguage = await AsyncStorage.getItem('selectedLanguage');
-                if (storedLanguage !== null) {
-                    setLanguage(storedLanguage);
-                }
-            } catch (error) {
-                console.error("Erreur lors de la récupération de la langue depuis AsyncStorage :", error);
+   useEffect(() => {
+    const getLanguageFromStorage = async () => {
+        try {
+            const storedLanguage = await AsyncStorage.getItem('selectedLanguage');
+            const savedTheme = await AsyncStorage.getItem('selectedTheme');
+            if (storedLanguage !== null) {
+                setLanguage(storedLanguage);
             }
-        };
-    
-        getLanguageFromStorage();
-    }, []);
-
-
-    useEffect(() => {
-        const getStorageData = async () => {
-          try {
-            const keys = await AsyncStorage.getAllKeys();
-            const data = await AsyncStorage.multiGet(keys);
-            setStorageData(data);
-          } catch (error) {
-            console.error("Erreur lors de la récupération des données AsyncStorage :", error);
-          }
-        };
-    
-        getStorageData();
-      }, []);
-
-
-    const handleRelaunchApp = async () => {      
-        startLoading();
-        try {
-          await AsyncStorage.removeItem('user');
-          Updates.reloadAsync();
+            if (savedTheme) {
+                setCurrentTheme(savedTheme);
+                setThemeSelected(savedTheme === 'system' ? Appearance.getColorScheme() : savedTheme);
+            }
         } catch (error) {
-          console.error('Erreur lors de la suppression des informations de l\'utilisateur :', error);
-        } finally {
-          stopLoading();
+            console.error("Erreur:", error);
         }
-      };
+    };
+    getLanguageFromStorage();
+  }, []);
 
-      const openWebsite = async () => {
+  useEffect(() => {
+    if (colorScheme === 'dark') {
+        console.log("test");
+    } else {
+        console.log("test2");
+    }
+  }, [colorScheme]);
+  
+  useEffect(() => {
+    const fetchRestaurantId = async () => {
         try {
-            await Linking.openURL('https://www.yumeats.fr');
+            const owner = await AsyncStorage.getItem("owner");
+            const ownerData = JSON.parse(owner);                
+            setRestaurantId(ownerData.restaurantId);
+            setUserId(ownerData.id);
+            console.log(ownerData.restaurantId);
         } catch (error) {
-            console.error("Erreur lors de l'ouverture du site web:", error);
+            console.error('Erreur lors de la récupération des informations utilisateur:', error);
+        }
+    };
+    fetchRestaurantId();
+}, []);
+
+useEffect(() => {
+    const fetchUserCount = async () => {
+        if (restaurantId) {
+            const { data, error } = await supabase
+                .from('roles')
+                .select('*', { count: 'exact' })
+                .eq('restaurant_id', restaurantId);
+
+            if (error) {
+                console.error('Erreur lors de la récupération du nombre d\'utilisateurs:', error);
+            } else {
+                setUserCount(data.length);
+            }
         }
     };
 
-    return(
-        <View style={styles.containerSetting}>
+    fetchUserCount();
+}, [restaurantId]);
 
-            <View style={styles.containerHeaderSetting}>
-                <View style={styles.containerEmpty}></View>
-                <Text style={[styles.textHeaderSetting, { color: colors.colorText }]}>{t('titleSetting')}</Text>
-                <TouchableOpacity style={[styles.containerBtnLogout, {backgroundColor: colors.colorBorderAndBlock}]} onPress={handleRelaunchApp}><Ionicons name="log-out-outline" size={30} color={colors.colorText}/></TouchableOpacity>
-            </View>
-            <ScrollView style={styles.containerSettingScroll}>
+useEffect(() => {
+    const fetchProductCount = async () => {
+        if (restaurantId) {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*', { count: 'exact' })
+                .eq('restaurant_id', restaurantId)
+                .eq('is_deleted', false);
 
-                <View style={styles.containerMenuSetting}>
+            if (error) {
+                console.error('Erreur lors de la récupération du nombre de produits:', error);
+            } else {
+                setProductCount(data.length);
+            }
+        }
+    };
 
-                    <View style={styles.containerCategorySetting}>
-                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('general')}</Text>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('LanguagePage')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('language')}</Text><View style={styles.langageSelect}><Text style={[styles.textLangageSelect, {color: colors.colorDetail}]}>{language ? language : "Français"}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></View></TouchableOpacity>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('Personalization')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('personalization')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('SupportScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('support')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={openWebsite}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('website')}</Text><Ionicons name="globe-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
+    fetchProductCount();
+}, [restaurantId]);
+
+const handleRelaunchApp = async () => {
+    startLoading();
+    try {
+        // Déconnexion de Supabase
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+
+        // Suppression des données locales
+        await AsyncStorage.multiRemove([
+            'user',
+            'owner',
+            'role',
+            'session'
+        ]);
+
+        // Relance de l'application pour revenir à l'état initial
+        Updates.reloadAsync();
+    } catch (error) {
+        console.error('Erreur déconnexion:', error);
+        Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion');
+    } finally {
+        stopLoading();
+    }
+};
+
+   const openWebsite = async () => {
+       try {
+           await Linking.openURL('https://yumco.fr/');
+       } catch (error) {
+           console.error("Erreur ouverture site web:", error);
+       }
+   };
+
+   useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      if (currentTheme === 'system') {
+        setThemeSelected(colorScheme);
+      }
+    });
+  
+    return () => subscription.remove();
+  }, [currentTheme]);
+
+  const handleThemeChange = async (theme) => {
+    try {
+        await AsyncStorage.setItem('selectedTheme', theme);
+        setCurrentTheme(theme);
+        if (theme === 'system') {
+            setThemeSelected(Appearance.getColorScheme());
+        } else {
+            setThemeSelected(theme);
+        }
+        setIsThemeModalVisible(false);
+    } catch (error) {
+        console.error("Erreur sauvegarde thème:", error);
+    }
+  };
+
+   const ThemeModal = () => (
+       <Modal
+           visible={isThemeModalVisible}
+           transparent={true}
+           animationType="fade"
+           onRequestClose={() => setIsThemeModalVisible(false)}
+       >
+           <TouchableOpacity
+               style={styles.modalOverlay}
+               activeOpacity={1}
+               onPress={() => setIsThemeModalVisible(false)}
+           >
+               <View style={[styles.modalContent, {backgroundColor: colors.colorBackground}]}>
+                   <TouchableOpacity 
+                       style={[styles.modalOption, {borderBottomColor: colors.colorBorderAndBlock}]}
+                       onPress={() => handleThemeChange('dark')}
+                   >
+                       <Text style={[styles.modalOptionText, {color: colors.colorText}]}>{t('dark')}</Text>
+                   </TouchableOpacity>
+                   
+                   <TouchableOpacity 
+                       style={[styles.modalOption, {borderBottomColor: colors.colorBorderAndBlock}]}
+                       onPress={() => handleThemeChange('light')}
+                   >
+                       <Text style={[styles.modalOptionText, {color: colors.colorText}]}>{t('light')}</Text>
+                   </TouchableOpacity>
+                   
+                   <TouchableOpacity 
+                       style={styles.modalOption}
+                       onPress={() => handleThemeChange('system')}
+                   >
+                       <Text style={[styles.modalOptionText, {color: colors.colorText}]}>{t('system')}</Text>
+                   </TouchableOpacity>
+               </View>
+           </TouchableOpacity>
+       </Modal>
+   );
+
+   return (
+       <View style={[styles.container, { backgroundColor: colors.colorBackground }]}>
+           {ThemeModal()}
+           <View style={styles.header}>
+               <View style={styles.headerTitle}>
+                   <Text style={[styles.title, { color: colors.colorText }]}>{t('settings')}</Text>
+               </View>
+               <TouchableOpacity 
+                   onPress={handleRelaunchApp}
+                   style={[styles.logoutButton, { backgroundColor: colors.colorBorderAndBlock }]}
+               >
+                   <Icon name="logout" size={24} color={colors.colorText} />
+               </TouchableOpacity>
+           </View>
+
+           <ScrollView style={styles.content}>
+               {/* Section Général */}
+               <View style={styles.section}>
+                   <Text style={[styles.sectionTitle, { color: colors.colorDetail }]}>
+                       <Icon name="cog" size={20} color="#4ECDC4" /> {t('general')}
+                   </Text>
+                   
+                    <View style={{backgroundColor: colors.colorBorderAndBlock, padding: 10, borderRadius: 10}}>
+                        <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                        onPress={() => navigation.navigate('LanguagePage')}
+                        >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="web" size={20} color="#6C5CE7" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('language')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>
+                                {language || "Français"}
+                            </Text>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                        onPress={() => setIsThemeModalVisible(true)}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="palette" size={20} color="#FF6B6B" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('theme')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>
+                                {currentTheme === 'light' ? 'Clair' : 
+                                currentTheme === 'dark' ? 'Sombre' : 'Système'}
+                            </Text>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                        onPress={() => navigation.navigate('SupportScreen')}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="help-circle" size={20} color="#FFD93D" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('support')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                        onPress={openWebsite}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="earth" size={20} color="#4ECDC4" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('website')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>www.yumco.fr</Text>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
                     </View>
+               </View>
 
-                    <View style={styles.containerCategorySetting}>
-                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('myRestaurant')}</Text>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('CardOptionScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('cards')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={() => navigation.navigate('UserOptionScreen')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('users')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    </View>
+               {/* Section Restaurant */}
+               <View style={styles.section}>
+                   <Text style={[styles.sectionTitle, { color: colors.colorDetail }]}>
+                       <Icon name="store" size={20} color="#FF6B6B" /> {t('my_restaurant')}
+                   </Text>
 
-                    <View style={styles.containerCategorySetting}>
-                        <Text style={[styles.titleCategorySetting, {color: colors.colorDetail}]}>{t('security')}</Text>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('ResetPassword')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('changePassword')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                        <TouchableOpacity style={styles.containerBtnSetting} onPress={()=> navigation.navigate('PolityPrivacy')}><Text style={[styles.textBtnSetting, {color: colors.colorText}]}>{t('privacyPolicy')}</Text><Ionicons name="chevron-forward-outline" color={colors.colorDetail} size={24} marginTop={22} marginBottom={10}/></TouchableOpacity>
-                    </View>
+                   <View style={{backgroundColor: colors.colorBorderAndBlock, padding: 10, borderRadius: 10}}>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                            onPress={() => navigation.navigate('CardOptionScreen')}
+                        >
+                            <View style={styles.menuItemLeft}>
+                                <Icon name="food" size={20} color="#4ECDC4" />
+                                <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('menu')}</Text>
+                            </View>
+                            <View style={styles.menuItemRight}>
+                                <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>{productCount} {t('products')}</Text>
+                                <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                            </View>
+                        </TouchableOpacity>
 
-                </View>
+                        <TouchableOpacity 
+                            style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                            onPress={() => navigation.navigate('UserOptionScreen')}
+                        >
+                            <View style={styles.menuItemLeft}>
+                                <Icon name="account-group" size={20} color="#6C5CE7" />
+                                <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('users')}</Text>
+                            </View>
+                            <View style={styles.menuItemRight}>
+                                <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>{userCount} {t('active')}</Text>
+                                <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                            </View>
+                        </TouchableOpacity>
+                   </View>
+                   
+               </View>
 
-            </ScrollView>
-        </View>
-    )
+               {/* Section Sécurité */}
+               <View style={styles.section}>
+                   <Text style={[styles.sectionTitle, { color: colors.colorDetail }]}>
+                       <Icon name="shield-check" size={20} color="#FFD93D" /> {t('security')}
+                   </Text>
+
+                   <View style={{backgroundColor: colors.colorBorderAndBlock, padding:10, borderRadius:10}}>
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                        onPress={() => navigation.navigate('ResetPassword')}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="key" size={20} color="#FF6B6B" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('password')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomWidth: 0, paddingBottom: 10 }]}
+                        onPress={() => navigation.navigate('PolityPrivacy')}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <Icon name="shield-lock" size={20} color="#4ECDC4" />
+                            <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('privacy')}</Text>
+                        </View>
+                        <View style={styles.menuItemRight}>
+                            <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                        </View>
+                    </TouchableOpacity>
+                   </View>
+
+               </View>
+           </ScrollView>
+       </View>
+   );
 }
 
+function useStyles() {
+   const { width, height } = useWindowDimensions();
 
-function useStyles(){
-    const {width, height} = useWindowDimensions();
-
-    return StyleSheet.create({
-        containerSetting:{
-            flex:1,
-        },
-        containerHeaderSetting:{
-            justifyContent: "space-between", 
-            flexDirection:"row",
-            marginTop : (width > 375) ? 60 : 40,
-            paddingRight: 35,
-            paddingLeft : 35,
-            alignItems:'center',
-        },
-        textHeaderSetting:{
-            fontSize:(width > 375) ? 22 : 18,
-            color: "white",
-        },
-        containerBtnLogout:{
-            height:(width > 375) ? 45 : 35,
-            width: (width > 375) ? 45 : 35,
-            alignItems: "center",
-            borderRadius: 50,
-            backgroundColor: "#1E1E2D",
-            justifyContent: "center",
-            paddingLeft: 5
-        },
-        containerEmpty:{
-            width: "10%",
-        },
-        containerCategorySetting:{
-            marginLeft: 20,
-            marginRight: 20,
-            marginTop: 30
-        },
-        titleCategorySetting:{
-            color: "#A2A2A7",
-            fontSize: (width > 375) ? 18 : 16,
-            marginBottom: 0
-        },
-        containerBtnSetting:{
-            borderBottomWidth: 1,
-            borderColor: "#232533",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            width: "100%",
-            alignItems: "center",
-        },
-        textBtnSetting:{
-            color: "white",
-            fontSize: (width > 375) ? 18 : 16,
-            marginBottom: 10,
-            marginTop: 20
-        },
-        langageSelect:{
-            flexDirection: "row",
-            alignItems: "center",
-        },
-        textLangageSelect:{
-            color: "#A2A2A7",
-            fontSize: (width > 375) ? 18 : 16,
-            marginBottom: 10,
-            marginTop: 20,
-            marginRight: 10
-        },
-        containerMenuSetting:{
-            marginBottom: 100
-        }
-    })
+   return StyleSheet.create({
+       container: {
+           flex: 1,
+       },
+       header: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           justifyContent: 'space-between',
+           paddingHorizontal: 20,
+           marginTop: height > 750 ? 60 : 40,
+           marginBottom: 20,
+       },
+       headerTitle: {
+           flex: 1,
+           alignItems: 'center',
+       },
+       title: {
+           fontSize: width > 375 ? 24 : 20,
+           fontWeight: '600',
+       },
+       logoutButton: {
+           width: 40,
+           height: 40,
+           borderRadius: 20,
+           alignItems: 'center',
+           justifyContent: 'center',
+       },
+       content: {
+           flex: 1,
+           paddingHorizontal: 20,
+       },
+       section: {
+           marginBottom: 30,
+       },
+       sectionTitle: {
+           fontSize: width > 375 ? 18 : 16,
+           fontWeight: '600',
+           marginBottom: 16,
+       },
+       menuItem: {
+           flexDirection: 'row',
+           justifyContent: 'space-between',
+           alignItems: 'center',
+           paddingVertical: 16,
+           borderBottomWidth: 1,
+       },
+       menuItemLeft: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           gap: 12,
+       },
+       menuItemText: {
+           fontSize: width > 375 ? 16 : 14,
+           fontWeight: '500',
+       },
+       menuItemRight: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           gap: 8,
+       },
+       menuItemDetail: {
+           fontSize: width > 375 ? 14 : 12,
+       },
+       modalOverlay: {
+           flex: 1,
+           backgroundColor: 'rgba(0, 0, 0, 0.5)',
+           justifyContent: 'center',
+           alignItems: 'center',
+       },
+       modalContent: {
+           width: '80%',
+           borderRadius: 12,
+           overflow: 'hidden',
+       },
+       modalOption: {
+           paddingVertical: 16,
+           paddingHorizontal: 20,
+           borderBottomWidth: 1,
+       },
+       modalOptionText: {
+           fontSize: 16,
+           textAlign: 'center',
+           fontWeight: '500',
+       }
+   });
 }
 
 export default Dashboard;

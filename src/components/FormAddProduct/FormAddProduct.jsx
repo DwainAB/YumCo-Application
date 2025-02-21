@@ -202,7 +202,7 @@ function FormAddProduct() {
 
                 <Text style={[styles.label, {color: colors.colorText}]}>{t('productName')}</Text>
                 <TextInput
-                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    style={[styles.inputAddProduct, {color: colors.colorText, borderColor: colors.colorText}]}
                     placeholder={t('productName')}
                     placeholderTextColor="#343434"
                     value={productData.title}
@@ -211,7 +211,7 @@ function FormAddProduct() {
 
                 <Text style={[styles.label, {color: colors.colorText}]}>{t('description')}</Text>
                 <TextInput
-                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    style={[styles.inputAddProduct, {color: colors.colorText, borderColor: colors.colorText}]}
                     placeholder={t('description')}
                     placeholderTextColor="#343434"
                     value={productData.description}
@@ -247,7 +247,7 @@ function FormAddProduct() {
 
                 <Text style={[styles.label, {color: colors.colorText}]}>{t('price')}</Text>
                 <TextInput
-                    style={[styles.inputAddProduct, {color: colors.colorDetail, borderColor: colors.colorText}]}
+                    style={[styles.inputAddProduct, {color: colors.colorText, borderColor: colors.colorText}]}
                     placeholder={t('price')}
                     placeholderTextColor="#343434"
                     value={productData.price}
@@ -259,7 +259,7 @@ function FormAddProduct() {
                     style={[styles.buttonAddProduct, {backgroundColor: colors.colorAction}]} 
                     onPress={handleSubmit}
                 >
-                    <Text style={[styles.textAddProduct, {color: colors.colorText}]}>{t('add')}</Text>
+                    <Text style={[styles.textAddProduct, {color: "#fff"}]}>{t('add')}</Text>
                 </TouchableOpacity>
             </View>
         </ScrollView>

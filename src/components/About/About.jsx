@@ -8,7 +8,7 @@ import imgOrder from "../../assets/imgOrder.png"
 import imgCard from "../../assets/imgCard.png"
 import { useWindowDimensions } from "react-native";
 import { useLoading } from "../Hooks/useLoading";
-import { supabase } from "../../lib/supabase";
+import { supabase, checkSession } from "../../lib/supabase";
 
 export  function InfoStat({nextPage}){
   const styles = useStyles()
@@ -88,25 +88,20 @@ export function FormLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [storageData, setStorageData] = useState(null);
   const styles = useStyles();
   const { startLoading, stopLoading } = useLoading();
-  const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
+  const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
+  // Vérifier la session au chargement
   useEffect(() => {
-      const getStorageData = async () => {
-          try {
-              const keys = await AsyncStorage.getAllKeys();
-              const data = await AsyncStorage.multiGet(keys);
-              setStorageData(keys);
-          } catch (error) {
-              console.error("Erreur lors de la récupération des données AsyncStorage :", error);
-          }
-      };
-
-      getStorageData();
+    const initSession = async () => {
+      const session = await checkSession();
+      if (session) {
+        navigation.navigate("MainApp");
+      }
+    };
+    initSession();
   }, []);
-
 
   const showAlert = (message) => {
     Alert.alert(
@@ -126,78 +121,38 @@ export function FormLogin() {
         return;
       }
 
-      // 1. Authentification de base
-      const authResponse = await supabase.auth.signInWithPassword({
+      const { data: { user, session }, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
-      if (authResponse.error) {
-        console.error('Erreur auth détaillée:', authResponse.error);
-        throw authResponse.error;
-      }
+      if (error) throw error;
+      if (!user) throw new Error('Pas de données utilisateur reçues');
 
-      if (!authResponse.data?.user) {
-        throw new Error('Pas de données utilisateur reçues');
-      }
+      // Récupération données owner
+      const { data: owner, error: ownerError } = await supabase
+        .from('owners')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      // 2. Stockage session
-      const session = await supabase.auth.getSession();
-      await AsyncStorage.setItem('session', JSON.stringify(session));
+      if (ownerError) throw ownerError;
 
-      // 3. Récupération données owner
-      let ownerData = null;
-      let roleData = null;
-      let retryCount = 0;
-      
-      while (retryCount < 3) {
-        // Récupérer les données owner
-        const { data: owner, error: ownerError } = await supabase
-          .from('owners')
-          .select('*')
-          .eq('id', authResponse.data.user.id)
-          .single();
-          
-        if (ownerError) {
-          console.error(`Tentative ${retryCount + 1} échouée pour owner:`, ownerError);
-          retryCount++;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
+      // Récupération données role
+      const { data: role, error: roleError } = await supabase
+        .from('roles')
+        .select('*')
+        .eq('owner_id', owner.id)
+        .single();
 
-        if (owner) {
-          ownerData = owner;
+      if (roleError) throw roleError;
 
-          // 4. Récupérer les données de rôle
-          const { data: role, error: roleError } = await supabase
-            .from('roles')
-            .select('*')
-            .eq('owner_id', owner.id)
-            .single();
-
-          if (roleError) {
-            console.error(`Tentative ${retryCount + 1} échouée pour role:`, roleError);
-          } else if (role) {
-            roleData = role;
-            break;
-          }
-        }
-
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      if (!ownerData || !roleData) {
-        throw new Error("Impossible de récupérer toutes les données nécessaires");
-      }
-
-      // 5. Stockage de toutes les données
-      await AsyncStorage.setItem('user', JSON.stringify(authResponse.data.user));
+      // Stockage des données supplémentaires
       await AsyncStorage.setItem('owner', JSON.stringify({
-        ...ownerData,
-        restaurantId: roleData.restaurant_id // Ajouter le restaurant_id aux données owner
+        ...owner,
+        restaurantId: role.restaurant_id
       }));
-      await AsyncStorage.setItem('role', JSON.stringify(roleData));
+      await AsyncStorage.setItem('role', JSON.stringify(role));
 
       navigation.navigate("MainApp");
     } catch (error) {
@@ -213,7 +168,7 @@ export function FormLogin() {
   };
 
   const togglePasswordVisibility = () => {
-      setShowPassword(!showPassword);
+    setShowPassword(!showPassword);
   };
 
   const resetPassword = async () => {
@@ -229,11 +184,12 @@ export function FormLogin() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Utilisation de la même clé anon que pour le client Supabase
           'Authorization': `Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({ email: email.trim() })
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
       });
+
+      console.log("Email envoyé :", email.trim());
   
       const data = await response.json();
   
@@ -260,42 +216,45 @@ export function FormLogin() {
   };
 
   return (
-      <View style={styles.containerLogin}>
-          <Text style={styles.titleLogin}>Connexion</Text>
+    <View style={styles.containerLogin}>
+      <Text style={styles.titleLogin}>Connexion</Text>
 
-          <Text style={styles.titleInput}>Email</Text>
-          <View style={styles.containerInputLogin}>
-              <Ionicons color={"#707070"} marginRight={15} size={20} name="mail-outline"/>
-              <TextInput
-                  style={styles.inputLogin}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Entrez votre email"
-                  name="email"
-                  placeholderTextColor="#343434"
-              />
-          </View>
-
-          <Text style={styles.titleInput}>Mot de passe</Text>
-          <View style={styles.containerInputLogin}>
-              <Ionicons marginRight={15} name='key-outline' size={20} color={'#707070'}/>
-              <TextInput
-                  style={styles.inputLogin}
-                  placeholder="******"
-                  placeholderTextColor="#343434"
-                  secureTextEntry={!showPassword}
-                  onChangeText={setPassword}
-                  name='password'
-              />
-              <TouchableOpacity style={styles.eye} onPress={togglePasswordVisibility}>
-                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={'#a2a2a7'} />
-              </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}><Text style={styles.textBtnNextInfoLogin}>Connexion</Text></TouchableOpacity>
-          <Text onPress={resetPassword} style={styles.textResetPassword}>Mot de passe oublié ?</Text>
+      <Text style={styles.titleInput}>Email</Text>
+      <View style={styles.containerInputLogin}>
+        <Ionicons color={"#707070"} marginRight={15} size={20} name="mail-outline"/>
+        <TextInput
+          style={styles.inputLogin}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Entrez votre email"
+          name="email"
+          placeholderTextColor="#343434"
+        />
       </View>
+
+      <Text style={styles.titleInput}>Mot de passe</Text>
+      <View style={styles.containerInputLogin}>
+        <Ionicons marginRight={15} name='key-outline' size={20} color={'#707070'}/>
+        <TextInput
+          style={styles.inputLogin}
+          placeholder="******"
+          placeholderTextColor="#343434"
+          secureTextEntry={!showPassword}
+          onChangeText={setPassword}
+          name='password'
+        />
+        <TouchableOpacity style={styles.eye} onPress={togglePasswordVisibility}>
+          <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={'#a2a2a7'} />
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}>
+        <Text style={styles.textBtnNextInfoLogin}>Connexion</Text>
+      </TouchableOpacity>
+      <Text onPress={resetPassword} style={styles.textResetPassword}>Mot de passe oublié ?</Text>
+    </View>
   );
 }
+
 
   function useStyles(){
     const {width, height} = useWindowDimensions();
@@ -304,7 +263,7 @@ export function FormLogin() {
       btnNextInfoLogin:{
         marginHorizontal: 20,
         height: (width > 375) ? 55 : 40,
-        backgroundColor: "#0066FF",
+        backgroundColor: "#FF3F00",
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center"
@@ -314,7 +273,7 @@ export function FormLogin() {
         fontSize: (width > 375) ? 18 : 14
       },
       titleInfoLogin:{
-        color: "white",
+        color: "#000",
         textAlign: "center",
         fontSize: (width > 375) ? 28 : 24,
         fontWeight: "700",
@@ -346,7 +305,7 @@ export function FormLogin() {
       lineInfoStat1:{
         width: 25,
         height: 6,
-        backgroundColor: "#0066ff",
+        backgroundColor: "#FF3F00",
         borderRadius: 3
       },
       lineInfoStat2:{
@@ -366,7 +325,7 @@ export function FormLogin() {
       lineInfoOrder2:{
         width: 25,
         height: 6,
-        backgroundColor: "#0066ff",
+        backgroundColor: "#FF3F00",
         borderRadius: 3,
         marginLeft: 10
       },
@@ -386,7 +345,7 @@ export function FormLogin() {
       lineInfoCard3:{
         width: 25,
         height: 6,
-        backgroundColor: "#0066ff",
+        backgroundColor: "#FF3F00",
         borderRadius: 3,
         marginLeft: 10
       },
@@ -404,7 +363,7 @@ export function FormLogin() {
         marginLeft: 10
       },
       titleLogin:{
-        color: "white",
+        color: "#000",
         fontSize: (width > 375) ? 40 : 25,
         marginTop: 150,
         marginLeft:20,
@@ -428,7 +387,7 @@ export function FormLogin() {
       },
       inputLogin:{
         width: 250,
-        color: "white"
+        color: "black"
       },
       eye:{
         position: 'absolute',
@@ -440,7 +399,7 @@ export function FormLogin() {
         marginRight: 20,
         marginTop: 40,
         height: (width > 375) ? 55 : 40,
-        backgroundColor: "#0066FF",
+        backgroundColor: "#FF3F00",
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center" 
@@ -448,8 +407,16 @@ export function FormLogin() {
       textResetPassword:{
         textAlign: "center", 
         fontSize: (width > 375) ? 16 : 14,
-        color : "#0066FF", 
+        color : "black", 
         marginTop: 15
+      },
+      containerInfoLogin:{
+        backgroundColor: "#fff",
+        height: "100%"
+      }, 
+      containerLogin:{
+        backgroundColor: "#fff",
+        height: '100%'
       }
     })
     
