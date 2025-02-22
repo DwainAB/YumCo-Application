@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565192002040",
+    "project_id": "yumeats-b64e2",
+    "storage_bucket": "yumeats-b64e2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565192002040:android:658ec511b659b2d89dae0d",
+        "android_client_info": {
+          "package_name": "com.YumEat.sendnotification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJHF_uLM70G2LZUCcX_XftM-3uAchykEI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
