@@ -168,10 +168,16 @@ function ContentOrder() {
 
     const formatTime = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const formattedDate = date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric' 
+        });
+        return `${time} ${formattedDate}`;
     };
+    
 
-    // Render Functions
     const renderOrderItem = ({ item }) => {
         const deliveryIcon = getDeliveryIcon(item.type);
         const statusIcon = getStatusIcon(item.status);

@@ -5,6 +5,7 @@ import { useColors } from "../ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { supabase } from '../../lib/supabase';
 
 const Utilisateur = () => {
    const { colors } = useColors();
@@ -15,7 +16,10 @@ const Utilisateur = () => {
    const [selectedUser, setSelectedUser] = useState(null);
    const [editedUser, setEditedUser] = useState(null);
    const [isModified, setIsModified] = useState(false);
-   const [restaurantId, setRestaurantId]= useState('')
+   const [restaurantId, setRestaurantId]= useState('');
+   const [userId, setUserId] = useState('');
+   const [userRole, setUserRole] = useState('USER');
+
    const { t } = useTranslation();
    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
@@ -26,7 +30,25 @@ const Utilisateur = () => {
                if (!owner) throw new Error("Aucune donnée propriétaire trouvée");
                const ownerData = JSON.parse(owner);
                if (!ownerData.restaurantId) throw new Error("Restaurant ID non trouvé");
+               setUserId(ownerData.id);
                setRestaurantId(ownerData.restaurantId);
+
+               // Récupérer le rôle de l'utilisateur connecté
+                if (ownerData.id && ownerData.restaurantId) {
+                    const { data, error } = await supabase
+                        .from('roles')
+                        .select('type')
+                        .eq('owner_id', ownerData.id)
+                        .eq('restaurant_id', ownerData.restaurantId)
+                        .single();
+                    
+                    if (error) {
+                        console.error('Erreur lors de la récupération du rôle:', error);
+                    } else if (data) {
+                        setUserRole(data.type);
+                        console.log('Rôle utilisateur:', data.type);
+                    }
+                }
            } catch (error) {
                console.error('Erreur récupération infos:', error);
                Alert.alert("Erreur", "Impossible de récupérer les informations du restaurant");
@@ -200,22 +222,24 @@ const Utilisateur = () => {
            </View>
            
            <View style={styles.cardButtons}>
-               <TouchableOpacity 
-                   style={[styles.cardButton, { backgroundColor: colors.colorAction }]}
-                   onPress={() => handleCall(user)}
-               >
-                   <Icon name="phone" size={20} color="white" />
-                   <Text style={styles.buttonText}>{t('call')}</Text>
-               </TouchableOpacity>
-               
-               <TouchableOpacity 
-                   style={[styles.cardButton, { backgroundColor: colors.colorBorderAndBlock }]}
-                   onPress={() => handleUserPress(user)}
-               >
-                   <Icon name="pencil" size={20} color={colors.colorText} />
-                   <Text style={[styles.buttonText, { color: colors.colorText }]}>{t('edit')}</Text>
-               </TouchableOpacity>
-           </View>
+                <TouchableOpacity 
+                    style={[styles.cardButton, { backgroundColor: colors.colorAction }]}
+                    onPress={() => handleCall(user)}
+                >
+                    <Icon name="phone" size={20} color="white" />
+                    <Text style={styles.buttonText}>{t('call')}</Text>
+                </TouchableOpacity>
+                
+                {(userRole === 'CHEF' || userRole === 'ADMIN') && (
+                    <TouchableOpacity 
+                        style={[styles.cardButton, { backgroundColor: colors.colorBorderAndBlock }]}
+                        onPress={() => handleUserPress(user)}
+                    >
+                        <Icon name="pencil" size={20} color={colors.colorText} />
+                        <Text style={[styles.buttonText, { color: colors.colorText }]}>{t('edit')}</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
        </View>
    );
 

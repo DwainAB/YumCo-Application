@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert,
+  SafeAreaView
+} from "react-native";
 import { useRoute } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
@@ -7,6 +15,21 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 import { supabase } from "../lib/supabase";
+import * as Device from 'expo-device';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Détection de simulateur
+const isSimulator = !Device.isDevice;
+
+// Import conditionnel de expo-print
+let Print;
+if (!isSimulator) {
+  import('expo-print').then(module => {
+    Print = module;
+  }).catch(error => {
+    console.log('Erreur lors de l\'import d\'expo-print:', error);
+  });
+}
 
 function OrderSelectData() {
  const navigation = useNavigation();
@@ -17,6 +40,46 @@ function OrderSelectData() {
  const styles = useStyles();
  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
  const [preparer, setPreparer] = useState(null);
+ const [isPrinting, setIsPrinting] = useState(false);
+ const [restaurantId, setRestaurantId] = useState(null);
+ const [restaurantName, setRestaurantName] = useState('RESTAURANT');
+
+ useEffect(() => {
+  const fetchRestaurantId = async () => {
+      try {
+          const owner = await AsyncStorage.getItem("owner");
+          const ownerData = JSON.parse(owner);                
+          setRestaurantId(ownerData.restaurantId);
+          
+          // Récupérer les informations du restaurant une fois que nous avons l'ID
+          if (ownerData.restaurantId) {
+            fetchRestaurantInfo(ownerData.restaurantId);
+          }
+      } catch (error) {
+          console.error('Erreur récupération utilisateur:', error);
+      }
+  };
+  fetchRestaurantId();
+}, []);
+
+ // Fonction pour récupérer les informations du restaurant depuis Supabase
+ const fetchRestaurantInfo = async (id) => {
+   try {
+     const { data, error } = await supabase
+       .from('restaurants')
+       .select('name')
+       .eq('id', id)
+       .single();
+
+     if (error) throw error;
+     
+     if (data && data.name) {
+       setRestaurantName(data.name.toUpperCase());
+     }
+   } catch (error) {
+     console.error('Erreur lors de la récupération du restaurant:', error);
+   }
+ };
 
  const calculateAndFormatTotalPrice = (order) => {
    let totalPrice = 0;
@@ -31,8 +94,6 @@ function OrderSelectData() {
    const roundedPrice = Math.round(totalPrice * 100) / 100;
    return roundedPrice.toFixed(2);
  };
-
-
 
  const formatPrice = (price) => {
    if (!price && price !== 0) return '0.00 €';
@@ -91,6 +152,153 @@ useEffect(() => {
    }
  };
 
+ // Fonction pour imprimer directement le ticket sans prévisualisation
+ const printReceipt = async () => {
+  setIsPrinting(true);
+  
+  try {
+    // Génération du HTML du ticket
+    const html = createReceiptHTML();
+    
+    // Impression avec sélection automatique de l'imprimante
+    await Print.printAsync({
+      html,
+      width: 280, // Largeur standard pour ticket de caisse
+      orientation: 'portrait'
+    });
+    
+    // Sauvegarder la préférence d'impression automatique
+    await AsyncStorage.setItem('autoprintEnabled', 'true');
+    
+  } catch (error) {
+    console.error('Erreur impression:', error);
+    Alert.alert(
+      "Erreur d'impression",
+      "Impossible d'imprimer le ticket. Vérifiez que votre imprimante est connectée au même réseau Wi-Fi.",
+      [{ text: "OK" }]
+    );
+  } finally {
+    setIsPrinting(false);
+  }
+};
+
+ const createReceiptHTML = () => {
+  const date = new Date().toLocaleString('fr-FR');
+  const total = order.amount_total;
+  
+  return `
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <style>
+          @page {
+            margin: 0;
+            size: 58mm auto;  /* Largeur standard imprimante thermique */
+          }
+          body { 
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            max-width: 280px;
+            padding: 5px;
+            margin: 0 auto;
+            font-size: 12px;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 8px; 
+          }
+          .divider { 
+            border-top: 1px dashed #000; 
+            margin: 5px 0; 
+          }
+          .item { 
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            font-size: 12px;
+          }
+          .total { 
+            text-align: right;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 5px;
+          }
+          h2 {
+            margin: 0;
+            font-size: 16px;
+          }
+          p {
+            margin: 2px 0;
+          }
+          .customer-info {
+            font-size: 11px;
+          }
+          .small {
+            font-size: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>${restaurantName}</h2>
+          <p>${order.client_ref_order}</p>
+          <p>${date}</p>
+          <p>${order.client_method === "Livraison" ? "LIVRAISON" : "À EMPORTER"}</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        ${order.orders.map(item => `
+          <div class="item">
+            <span>${item.quantity}x ${item.name}</span>
+            <span>${item.subtotal.toFixed(2)}€</span>
+          </div>
+          ${item.comment ? `<p class="small" style="margin-left: 8px; font-style: italic;">Note: ${item.comment}</p>` : ''}
+        `).join('')}
+        
+        <div class="divider"></div>
+        
+        <div class="total">
+          TOTAL: ${total.toFixed(2)}€
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="customer-info">
+          <p><b>${t("customer_information")}:</b></p>
+          <p>${order.client_firstname} ${order.client_lastname}</p>
+          ${order.client_phone ? `<p>Tel: ${order.client_phone}</p>` : ''}
+          ${order.client_email ? `<p>Email: ${order.client_email}</p>` : ''}
+          
+          ${order.client_address && order.client_address !== "null, null null" ? `
+            <p>Adresse: ${order.client_address}</p>
+          ` : order.client_method === "Livraison" ? `
+            <p><b>Mode:</b> Livraison (adresse non spécifiée)</p>
+          ` : `
+            <p><b>Mode:</b> À emporter</p>
+          `}
+        </div>
+        
+        ${order.order_comment ? `
+          <div class="divider"></div>
+          <div class="customer-info">
+            <p><b>${t("customer_comment")}:</b></p>
+            <p style="font-style: italic;">"${order.order_comment}"</p>
+          </div>
+        ` : ''}
+        
+        <div class="divider"></div>
+        <p style="text-align: center; margin-top: 5px;">
+          Merci pour votre commande !
+        </p>
+        <p style="text-align: center; font-size: 10px; margin-top: 10px;">
+          Powered by YumCo - Solutions de restauration
+        </p>
+      </body>
+    </html>
+  `;
+}; 
+
  return (
    <View style={[styles.container, {backgroundColor: colors.colorBackground}]}>
      <View style={styles.header}>
@@ -110,7 +318,7 @@ useEffect(() => {
            color={colors.colorAction} 
          />
           <Text style={[styles.orderStatus, {
-            color: order.payment_status === "PAID" ? colors.colorAction : colors.colorRed
+            color: order.payment_status === "PAID" ? "#4CAF50" : colors.colorRed
           }]}>
             {order.payment_status === "PAID" ? t('paid') : t('unpaid')}
           </Text>
@@ -203,8 +411,11 @@ useEffect(() => {
            <InfoRow label="Prénom" value={order.client_firstname} />
            <InfoRow label="Téléphone" value={order.client_phone} />
            <InfoRow label="Email" value={order.client_email} />
-           <InfoRow label="Adresse" value={order.client_address} />
-         </View>
+           <InfoRow 
+              label="Adresse" 
+              value={order.client_address === "null, null null" ? t('takeaway') : order.client_address} 
+            />         
+           </View>
        </View>
 
        <TouchableOpacity 
@@ -215,6 +426,16 @@ useEffect(() => {
            {t('delete')}
          </Text>
        </TouchableOpacity>
+       <TouchableOpacity 
+          onPress={printReceipt} 
+          style={[styles.printButton, {backgroundColor: colors.colorAction}]}
+          disabled={isPrinting}
+        >
+          <Icon name="printer" size={20} color="#FFFFFF" style={styles.printIcon} />
+          <Text style={[styles.printButtonText, {color: "#fff"}]}>
+            {isPrinting ? `${t("printing")}...` : t('print_receipt')}
+          </Text>
+        </TouchableOpacity>
      </ScrollView>
    </View>
  );
@@ -355,7 +576,7 @@ function useStyles() {
    deleteButton: {
      padding: 16,
      borderRadius: 12,
-     marginBottom: 40,
+     marginBottom: 20,
    },
    deleteButtonText: {
      fontSize: width > 375 ? 16 : 14,
@@ -399,6 +620,26 @@ function useStyles() {
     marginLeft: 28,
     marginTop: 4,
   },
+  orderStatus:{
+    fontSize: width > 375 ? 20 : 18,
+    fontWeight: '600',
+  },
+  printButton: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  printButtonText: {
+    fontSize: width > 375 ? 16 : 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  printIcon: {
+    marginRight: 10,
+  }
  });
 }
 

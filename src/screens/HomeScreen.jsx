@@ -178,7 +178,7 @@ function HomeScreen() {
                                             {t('monthly_orders')}
                                         </Text>
                                         <Text style={[styles.overviewIncrease, { color:"#4ECDC4" }]}>
-                                            {statOrder.month_comparison.previous_month.total_orders - statOrder.month_comparison.current_month.total_orders > 0 ? '+' : '-'}
+                                            {statOrder.month_comparison.change.absolute > 0 ? '+' : '-'}
                                             {Math.abs(statOrder.month_comparison.previous_month.total_orders - statOrder.month_comparison.current_month.total_orders)}
                                         </Text>
                                     </View>

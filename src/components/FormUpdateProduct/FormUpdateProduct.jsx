@@ -36,6 +36,8 @@ function FormUpdate() {
     const [isPickerFocused, setIsPickerFocused] = useState(false);
     const pickerRef = useRef(null);
     const [isCategorySelectionModalVisible, setIsCategorySelectionModalVisible] = useState(false);
+    const [userId, setUserId] = useState('')
+    const [userRole, setUserRole] = useState('USER')
 
     // Récupération des produits depuis Supabase
     useEffect(() => {
@@ -55,7 +57,22 @@ function FormUpdate() {
                 const ownerData = JSON.parse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 
-                
+                // Récupérer le rôle de l'utilisateur avec Supabase
+                if (ownerData.id && ownerData.restaurantId) {
+                    const { data, error } = await supabase
+                        .from('roles')
+                        .select('type')
+                        .eq('owner_id', ownerData.id)
+                        .eq('restaurant_id', ownerData.restaurantId)
+                        .single();
+                    
+                    if (error) {
+                        console.error('Erreur lors de la récupération du rôle:', error);
+                    } else if (data) {
+                        setUserRole(data.type);
+                        console.log('Rôle utilisateur:', data.type);
+                    }
+                }
             } catch (error) {
                 console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
@@ -322,6 +339,12 @@ function FormUpdate() {
     };
     
     const handleProductPress = (food) => {
+
+        if (userRole === 'USER') {
+            // Si c'est un utilisateur normal, ne pas autoriser la modification
+            return;
+        }
+        
         setSelectedFood(food);
         setIsBottomSheetVisible(true);
         setInitialFoodImage(food.image_url || null);
@@ -567,7 +590,7 @@ function FormUpdate() {
                         ))
                     ) : (
                         <Text style={[styles.noProductsText, { color: colors.colorText }]}>
-                            {t('Aucun produit')}
+                            {t('no_product')}
                         </Text>
                     )}
                 </View>

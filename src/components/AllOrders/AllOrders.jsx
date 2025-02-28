@@ -136,7 +136,13 @@ function AllOrders({ refreshCounter, onRefresh }) {
 
     const formatTime = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const formattedDate = date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric' 
+        });
+        return `${time} ${formattedDate}`;
     };
 
     const getDeliveryIcon = (type) => {
@@ -269,11 +275,16 @@ function AllOrders({ refreshCounter, onRefresh }) {
                     </View>
                     <View style={styles.orderDetails}>
                         <View>
-                            <Text style={[styles.orderNumber, { color: colors.colorText}]}>
-                                {item.order_number}
-                            </Text>
+                            <View style={styles.orderHeaderLeft}>
+                                <Text style={[styles.orderNumber, { color: colors.colorText}]}>
+                                    {item.order_number}
+                                </Text>
+                                <Text style={[styles.orderTime, { color: colors.colorDetail }]}>
+                                    {formatTime(item.created_at)}
+                                </Text>
+                            </View>
                             <Text style={[styles.customerName, { color: colors.colorDetail }]}>
-                                {formatTime(item.created_at)} - {item.customers.last_name} {item.customers.first_name}
+                                {item.customers.last_name} {item.customers.first_name}
                             </Text>
                         </View>
                         <Text style={[styles.orderPrice, { color: colors.colorText }]}>
@@ -523,7 +534,15 @@ function AllOrders({ refreshCounter, onRefresh }) {
             },
             rightAction: {
                 alignItems: 'center',
-            }
+            },
+            orderHeaderLeft: {
+                flexDirection: 'row',
+                gap: 12,
+                marginBottom: 4,
+            },
+            orderTime: {
+                fontSize: width > 375 ? 14 : 12,
+            },
         });
     }
     

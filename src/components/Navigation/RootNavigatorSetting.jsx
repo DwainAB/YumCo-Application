@@ -13,6 +13,7 @@ import UpdateUserScreen from '../../screens/UpdateUserScreen';
 import CategoriesScreen from '../../screens/categories';
 import UpdateProductScreen from '../../screens/UpdateProductScreen';
 import PolityPrivacy from '../../screens/PolityPrivacy';
+import InformationScreen from '../../screens/InformationScreen';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,7 @@ const RootNavigatorSetting = () => {
       <Stack.Screen name="CategoriesScreen" component={CategoriesScreen} />
       <Stack.Screen name="UpdateProductScreen" component={UpdateProductScreen} />
       <Stack.Screen name="PolityPrivacy" component={PolityPrivacy} />
+      <Stack.Screen name="InformationScreen" component={InformationScreen} />
     </Stack.Navigator>
   );
 };

@@ -26,6 +26,9 @@ function Dashboard() {
    const [userCount, setUserCount] = useState(0);
    const [productCount, setProductCount] = useState(0);
    const colorScheme = useColorScheme();
+   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
+   const [hasStripeId, setHasStripeId] = useState(false);
+   const [userRole, setUserRole] = useState('USER');
 
    useEffect(() => {
     const getLanguageFromStorage = async () => {
@@ -46,6 +49,7 @@ function Dashboard() {
     getLanguageFromStorage();
   }, []);
 
+
   useEffect(() => {
     if (colorScheme === 'dark') {
         console.log("test");
@@ -54,6 +58,7 @@ function Dashboard() {
     }
   }, [colorScheme]);
   
+
   useEffect(() => {
     const fetchRestaurantId = async () => {
         try {
@@ -62,6 +67,37 @@ function Dashboard() {
             setRestaurantId(ownerData.restaurantId);
             setUserId(ownerData.id);
             console.log(ownerData.restaurantId);
+
+            if (ownerData.restaurantId) {
+                const { data, error } = await supabase
+                    .from('restaurants')
+                    .select('stripe_id')
+                    .eq('id', ownerData.restaurantId)
+                    .single();
+                
+                if (error) {
+                    console.error('Erreur lors de la récupération du stripe_id:', error);
+                } else if (data && data.stripe_id) {
+                    setHasStripeId(true);
+                }
+            }
+
+            if (ownerData.id) {
+                const { data: roleData, error: roleError } = await supabase
+                    .from('roles')
+                    .select('type')
+                    .eq('owner_id', ownerData.id)
+                    .eq('restaurant_id', ownerData.restaurantId)
+                    .single();
+                
+                if (roleError) {
+                    console.error('Erreur lors de la récupération du rôle:', roleError);
+                } else if (roleData) {
+                    setUserRole(roleData.type);
+                    console.log('Rôle utilisateur:', roleData.type);
+                }
+            }
+
         } catch (error) {
             console.error('Erreur lors de la récupération des informations utilisateur:', error);
         }
@@ -88,6 +124,7 @@ useEffect(() => {
     fetchUserCount();
 }, [restaurantId]);
 
+
 useEffect(() => {
     const fetchProductCount = async () => {
         if (restaurantId) {
@@ -107,6 +144,8 @@ useEffect(() => {
 
     fetchProductCount();
 }, [restaurantId]);
+
+
 
 const handleRelaunchApp = async () => {
     startLoading();
@@ -141,6 +180,33 @@ const handleRelaunchApp = async () => {
        }
    };
 
+   const openStripeDashboard = async () => {
+    try {
+        startLoading();
+        const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/stripe_generate_dashboard', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ restaurantId }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.dashboard_url) {
+            await Linking.openURL(data.dashboard_url);
+        } else {
+            Alert.alert('Erreur', 'Impossible de générer le tableau de bord Stripe');
+        }
+    } catch (error) {
+        console.error("Erreur lors de l'ouverture du dashboard Stripe:", error);
+        Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion à Stripe');
+    } finally {
+        stopLoading();
+    }
+};
+
    useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
       if (currentTheme === 'system') {
@@ -150,6 +216,8 @@ const handleRelaunchApp = async () => {
   
     return () => subscription.remove();
   }, [currentTheme]);
+
+
 
   const handleThemeChange = async (theme) => {
     try {
@@ -165,6 +233,9 @@ const handleRelaunchApp = async () => {
         console.error("Erreur sauvegarde thème:", error);
     }
   };
+
+  console.log(userId);
+  
 
    const ThemeModal = () => (
        <Modal
@@ -253,8 +324,8 @@ const handleRelaunchApp = async () => {
                         </View>
                         <View style={styles.menuItemRight}>
                             <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>
-                                {currentTheme === 'light' ? 'Clair' : 
-                                currentTheme === 'dark' ? 'Sombre' : 'Système'}
+                                {currentTheme === 'light' ? t("light") : 
+                                currentTheme === 'dark' ? t("dark") : t("system")}
                             </Text>
                             <Icon name="chevron-right" size={20} color={colors.colorDetail} />
                         </View>
@@ -323,6 +394,31 @@ const handleRelaunchApp = async () => {
                                 <Icon name="chevron-right" size={20} color={colors.colorDetail} />
                             </View>
                         </TouchableOpacity>
+                        {userRole !== 'USER' && (
+                            <TouchableOpacity 
+                                style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                                onPress={() => navigation.navigate('InformationScreen')}
+                            >
+                                <View style={styles.menuItemLeft}>
+                                    <Icon name="information" size={20} color="#FFD93D" />
+                                    <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('Information')}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+                        {hasStripeId && userRole !== 'USER' && (
+                            <TouchableOpacity 
+                                style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                                onPress={openStripeDashboard}
+                            >
+                                <View style={styles.menuItemLeft}>
+                                    <Icon name="finance" size={20} color="#00BFA6" />
+                                    <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('payment_dashboard')}</Text>
+                                </View>
+                                <View style={styles.menuItemRight}>
+                                    <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                                </View>
+                            </TouchableOpacity>
+                        )}
                    </View>
                    
                </View>
