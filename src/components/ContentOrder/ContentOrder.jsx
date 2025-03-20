@@ -177,10 +177,37 @@ function ContentOrder() {
         return `${time} ${formattedDate}`;
     };
     
+    // Fonction pour préparer les éléments de commande pour OrderSelect
+    const prepareOrderItems = (orderItems) => {
+        if (!orderItems || !Array.isArray(orderItems)) {
+            return [];
+        }
+        
+        // Transformer les items pour l'affichage
+        return orderItems.map(item => {
+            // Déterminer si c'est un menu (présence de menu_id)
+            const isMenu = !!item.menu_id;
+            
+            return {
+                ...item,
+                is_menu: isMenu,
+                // Si c'est un menu et qu'il a des options, les inclure
+                options: item.options || []
+            };
+        });
+    };
 
     const renderOrderItem = ({ item }) => {
         const deliveryIcon = getDeliveryIcon(item.type);
         const statusIcon = getStatusIcon(item.status);
+        
+        // Vérifier s'il y a des menus dans cette commande
+        const hasMenus = item.order_items && item.order_items.some(orderItem => 
+            orderItem.menu_id !== null
+        );
+        
+        // Préparer les éléments de la commande
+        const preparedOrderItems = prepareOrderItems(item.order_items);
         
         return (
             <TouchableOpacity 
@@ -202,7 +229,7 @@ function ContentOrder() {
                             client_address: item.addresses ? `${item.addresses.street}, ${item.addresses.city} ${item.addresses.postal_code}` : '',
                             client_id: item.id,
                             amount_total: item.amount_total,
-                            orders: item.order_items,
+                            orders: preparedOrderItems,
                             preparing_by: item.preparer ? `${item.preparer.first_name} ${item.preparer.last_name}` : ''
                         }
                     });
@@ -406,6 +433,13 @@ function useStyles() {
         },
         statusIconContainer: {
             marginLeft: 8
+        },
+        // Nouvel indicateur de menu
+        menuIndicator: {
+            backgroundColor: '#E6F0FF',
+            borderRadius: 4,
+            padding: 4,
+            marginRight: 4
         }
     });
 }

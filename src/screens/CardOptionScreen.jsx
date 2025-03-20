@@ -95,9 +95,38 @@ function CardOptionScreen(){
                    style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
                >
                    <View style={styles.menuItemLeft}>
-                       <Icon name="pencil" size={24} color="#FF6B6B" />
-                       <Text style={[styles.menuItemText, {color: colors.colorText}]}>
-                        {userRole === 'USER' ? t('cards') : t('editProduct')}                       </Text>
+                   <Icon name={userRole === 'USER' ? "format-list-bulleted" : "pencil"}  size={24} color="#FF6B6B" />
+                   <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                            {userRole === 'USER' ? t('cards') : t('editProduct')}                       
+                        </Text>
+                   </View>
+                   <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+               </TouchableOpacity>
+
+               {(userRole === 'CHEF' || userRole === 'ADMIN') && (
+                <TouchableOpacity 
+                    onPress={() => navigation.navigate('AddMenu')} 
+                    style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+                >
+                    <View style={styles.menuItemLeft}>
+                            <Icon name="plus-circle" size={24} color="#4ECDC4" />
+                            <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                                {userRole === 'USER' ? t('Menu') : t('add_a_menu')}                       
+                            </Text>
+                    </View>
+                    <Icon name="chevron-right" size={24} color={colors.colorDetail} />
+                </TouchableOpacity>
+               )}
+
+               <TouchableOpacity 
+                   onPress={() => navigation.navigate('EditMenu')} 
+                   style={[styles.menuItem, {backgroundColor: colors.colorBorderAndBlock}]}
+               >
+                   <View style={styles.menuItemLeft}>
+                        <Icon name={userRole === 'USER' ? "format-list-bulleted" : "pencil"}  size={24} color="#FF6B6B" />
+                        <Text style={[styles.menuItemText, {color: colors.colorText}]}>
+                            {userRole === 'USER' ? t('menu') : t('edit_menus')}                       
+                        </Text>
                    </View>
                    <Icon name="chevron-right" size={24} color={colors.colorDetail} />
                </TouchableOpacity>

@@ -19,7 +19,7 @@ import { LoadingProvider, useLoading } from './src/components/Hooks/useLoading';
 import { useColors } from './src/components/ColorContext/ColorContext';
 import { supabase } from './src/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import UpdateModal from './src/components/UpdateModal/UpdateModal'
+// Suppression de l'import UpdateModal
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -135,22 +135,8 @@ const MainApp = () => {
   const iconSize = width > 800 ? 32 : width > 500 ? 24 : 20;
   const { colors } = useColors();
   
-  // Définir directement la version ici
-  const appVersion = "1.0.1"; // Vous pouvez changer cette valeur à chaque mise à jour
-
-  useEffect(() => {
-    const checkStoredVersion = async () => {
-      try {
-        const storedVersion = await AsyncStorage.getItem('lastSeenVersion');
-        console.log('Version stockée dans AsyncStorage:', storedVersion || 'Aucune');
-        console.log('Version actuelle de l\'application:', appVersion);
-      } catch (error) {
-        console.error('Erreur lors de la vérification de la version stockée:', error);
-      }
-    };
-    
-    checkStoredVersion();
-  }, [appVersion]);
+  // La définition de la version est conservée si vous en avez besoin pour d'autres usages
+  const appVersion = "1.0.1";
 
   return (
     <View style={{ flex: 1 }}>
@@ -163,7 +149,7 @@ const MainApp = () => {
               iconName = focused ? 'home' : 'home-outline';
             } else if (route.name === t('titleOrder')) {
               iconName = focused ? 'layers' : 'layers-outline';
-            } else if (route.name === t('titleSetting')) {
+            } else if (route.name === t('dashboard')) {
               iconName = focused ? 'cog' : 'cog-outline';
             }
 
@@ -179,22 +165,9 @@ const MainApp = () => {
       >
         <Tab.Screen name={t('titleScreen')} component={RootNavigatorHome} />
         <Tab.Screen name={t('titleOrder')} component={RootNavigatorOrder} />
-        <Tab.Screen name={t('titleSetting')} component={RootNavigatorSetting} />
+        <Tab.Screen name={t('dashboard')} component={RootNavigatorSetting} />
       </Tab.Navigator>
       
-      {/* Modal de mise à jour avec la version passée en prop */}
-      <UpdateModal 
-        version={appVersion}
-        releaseNotes={`
-        ${t('updateFeature1')}
-        ${t('updateFeature2')}
-        ${t('updateFeature3')}
-        ${t('updateFeature4')}
-        ${t('updateFeature5')}
-        ${t('updateFeature6')}
-        ${t('updateFeature7')}
-        ${t('updateFeature8')}`}
-      />
     </View>
   );
 };

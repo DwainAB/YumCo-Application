@@ -23,11 +23,16 @@ const isSimulator = !Device.isDevice;
 
 // Import conditionnel de expo-print
 let Print;
-if (!isSimulator) {
+let printAsync;
+
+if (!Device.isDevice) {
+  console.log('Mode simulateur détecté, l\'impression sera simulée');
+} else {
   import('expo-print').then(module => {
     Print = module;
+    printAsync = module.printAsync;
   }).catch(error => {
-    console.log('Erreur lors de l\'import d\'expo-print:', error);
+    console.error('Erreur lors de l\'import d\'expo-print:', error);
   });
 }
 
@@ -157,67 +162,94 @@ useEffect(() => {
   setIsPrinting(true);
   
   try {
-    // Génération du HTML du ticket
-    const html = createReceiptHTML();
+    // Détection du simulateur
+    const isSimulator = !Device.isDevice;
     
-    // Impression avec sélection automatique de l'imprimante
-    await Print.printAsync({
-      html,
-      width: 280, // Largeur standard pour ticket de caisse
-      orientation: 'portrait'
-    });
-    
-    // Sauvegarder la préférence d'impression automatique
-    await AsyncStorage.setItem('autoprintEnabled', 'true');
-    
+    if (isSimulator) {
+      // Mode simulateur : afficher seulement une alerte
+      Alert.alert(
+        "Mode simulateur",
+        "L'impression n'est pas disponible sur le simulateur. En production, le ticket serait envoyé à l'imprimante.",
+        [{ text: "OK" }]
+      );
+    } else {
+      // Générer le HTML du ticket
+      const receiptHTML = createReceiptHTML();
+      
+      // Utiliser uniquement les options essentielles pour éviter les erreurs
+      const printResult = await printAsync({
+        html: receiptHTML,
+        selectPrinter: true // Pour permettre à l'utilisateur de choisir l'imprimante
+      });
+      
+      // Ne montrer le message de succès que si l'impression a bien été effectuée
+      if (printResult && printResult.uri) {
+        Alert.alert(
+          "Impression réussie",
+          "Le ticket a été envoyé à l'imprimante.",
+          [{ text: "OK" }]
+        );
+      }
+    }
   } catch (error) {
-    console.error('Erreur impression:', error);
-    Alert.alert(
-      "Erreur d'impression",
-      "Impossible d'imprimer le ticket. Vérifiez que votre imprimante est connectée au même réseau Wi-Fi.",
-      [{ text: "OK" }]
-    );
+    // Vérifier si l'erreur est due à une annulation par l'utilisateur
+    const errorMessage = error.message ? error.message.toLowerCase() : '';
+    
+    if (
+      errorMessage.includes('did not complete') ||
+      errorMessage.includes('cancelled') ||
+      errorMessage.includes('canceled') ||
+      errorMessage.includes('dismiss')
+    ) {
+      // L'utilisateur a simplement annulé, ne pas afficher d'erreur
+      console.log('Impression annulée par l\'utilisateur');
+    } else {
+      // C'est une véritable erreur d'impression
+      console.error('Erreur impression:', error);
+      Alert.alert(
+        "Erreur d'impression",
+        "Impossible d'imprimer le ticket. Détails: " + error.message,
+        [{ text: "OK" }]
+      );
+    }
   } finally {
     setIsPrinting(false);
   }
 };
 
+ // Fonction pour créer le HTML du ticket optimisé pour imprimantes thermiques
  const createReceiptHTML = () => {
   const date = new Date().toLocaleString('fr-FR');
   const total = order.amount_total;
   
   return `
+    <!DOCTYPE html>
     <html>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          @page {
-            margin: 0;
-            size: 58mm auto;  /* Largeur standard imprimante thermique */
-          }
-          body { 
+          body {
             font-family: 'Courier New', monospace;
-            width: 100%;
-            max-width: 280px;
             padding: 5px;
             margin: 0 auto;
             font-size: 12px;
+            max-width: 280px;
           }
-          .header { 
-            text-align: center; 
-            margin-bottom: 8px; 
+          .header {
+            text-align: center;
+            margin-bottom: 8px;
           }
-          .divider { 
-            border-top: 1px dashed #000; 
-            margin: 5px 0; 
+          .divider {
+            border-top: 1px dashed #000;
+            margin: 5px 0;
           }
-          .item { 
+          .item {
             display: flex;
             justify-content: space-between;
             margin: 3px 0;
-            font-size: 12px;
           }
-          .total { 
+          .total {
             text-align: right;
             font-weight: bold;
             font-size: 14px;

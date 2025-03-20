@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, Modal, TextInput, Platform } from "react-native";
+import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, Modal, TextInput, Platform, KeyboardAvoidingView, Keyboard } from "react-native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,7 @@ const InformationScreen = () => {
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPreparationTime, setNewPreparationTime] = useState('15');
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
     
     const { t } = useTranslation();
     const { colors } = useColors();
@@ -40,6 +41,26 @@ const InformationScreen = () => {
             }
         };
         fetchRestaurantId();
+
+        // Ajout des listeners pour détecter l'apparition et la disparition du clavier
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardVisible(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardVisible(false);
+            }
+        );
+
+        // Nettoyage des listeners lors du démontage du composant
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+        };
     }, []);
 
     const fetchRestaurantStatus = async (id) => {
@@ -449,11 +470,23 @@ const InformationScreen = () => {
                     animationType="slide"
                     onRequestClose={() => setIsPrepTimeModalVisible(false)}
                 >
-                    <View style={styles.modalContainer}>
-                        <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
+                    <KeyboardAvoidingView 
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                        style={styles.modalContainer}
+                    >
+                        <View 
+                            style={[
+                                styles.modalContent, 
+                                { 
+                                    backgroundColor: colors.colorBackground,
+                                    // Ajustement de la position du modal quand le clavier est visible
+                                    marginTop: keyboardVisible ? '30%' : 'auto'
+                                }
+                            ]}
+                        >
                             <View style={styles.modalHeader}>
                                 <Text style={[styles.modalTitle, { color: colors.colorText }]}>
-                                    {t('Edit preparation time')}
+                                    {t('average_preparation_time')}
                                 </Text>
                                 <TouchableOpacity 
                                     onPress={() => setIsPrepTimeModalVisible(false)}
@@ -470,9 +503,10 @@ const InformationScreen = () => {
                                 }]}
                                 value={newPreparationTime}
                                 onChangeText={setNewPreparationTime}
-                                placeholder={t('Enter preparation time in minutes')}
+                                placeholder={t('minutes')}
                                 placeholderTextColor={colors.colorDetail}
                                 keyboardType="number-pad"
+                                autoFocus={true}
                             />
 
                             <TouchableOpacity 
@@ -482,7 +516,7 @@ const InformationScreen = () => {
                                 <Text style={styles.saveButtonText}>{t('Save')}</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </KeyboardAvoidingView>
                 </Modal>
             </View>
         </View>

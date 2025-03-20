@@ -279,16 +279,16 @@ const handleRelaunchApp = async () => {
        <View style={[styles.container, { backgroundColor: colors.colorBackground }]}>
            {ThemeModal()}
            <View style={styles.header}>
-               <View style={styles.headerTitle}>
-                   <Text style={[styles.title, { color: colors.colorText }]}>{t('settings')}</Text>
-               </View>
-               <TouchableOpacity 
-                   onPress={handleRelaunchApp}
-                   style={[styles.logoutButton, { backgroundColor: colors.colorBorderAndBlock }]}
-               >
-                   <Icon name="logout" size={24} color={colors.colorText} />
-               </TouchableOpacity>
-           </View>
+                <View style={styles.headerTitleContainer}>
+                    <Text style={[styles.title, { color: colors.colorText }]}>{t('dashboard')}</Text>
+                </View>
+                <TouchableOpacity 
+                    onPress={handleRelaunchApp}
+                    style={[styles.logoutButton, { backgroundColor: colors.colorBorderAndBlock }]}
+                >
+                    <Icon name="logout" size={24} color={colors.colorText} />
+                </TouchableOpacity>
+            </View>
 
            <ScrollView style={styles.content}>
                {/* Section Général */}
@@ -373,7 +373,7 @@ const handleRelaunchApp = async () => {
                         >
                             <View style={styles.menuItemLeft}>
                                 <Icon name="food" size={20} color="#4ECDC4" />
-                                <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('menu')}</Text>
+                                <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('cards')}</Text>
                             </View>
                             <View style={styles.menuItemRight}>
                                 <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>{productCount} {t('products')}</Text>
@@ -382,7 +382,7 @@ const handleRelaunchApp = async () => {
                         </TouchableOpacity>
 
                         <TouchableOpacity 
-                            style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                            style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight, paddingBottom: 15 }]}
                             onPress={() => navigation.navigate('UserOptionScreen')}
                         >
                             <View style={styles.menuItemLeft}>
@@ -396,12 +396,15 @@ const handleRelaunchApp = async () => {
                         </TouchableOpacity>
                         {userRole !== 'USER' && (
                             <TouchableOpacity 
-                                style={[styles.menuItem, { borderBottomColor: colors.colorBorderAndBlock, paddingBottom: 10  }]}
+                                style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight, paddingBottom: 15  }]}
                                 onPress={() => navigation.navigate('InformationScreen')}
                             >
                                 <View style={styles.menuItemLeft}>
                                     <Icon name="information" size={20} color="#FFD93D" />
                                     <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('Information')}</Text>
+                                </View>
+                                <View style={styles.menuItemRight}>
+                                    <Icon name="chevron-right" size={20} color={colors.colorDetail} />
                                 </View>
                             </TouchableOpacity>
                         )}
@@ -471,27 +474,33 @@ function useStyles() {
            flex: 1,
        },
        header: {
-           flexDirection: 'row',
-           alignItems: 'center',
-           justifyContent: 'space-between',
-           paddingHorizontal: 20,
-           marginTop: height > 750 ? 60 : 40,
-           marginBottom: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 20,
+            marginTop: height > 750 ? 60 : 40,
+            marginBottom: 20,
+            position: 'relative',  
        },
-       headerTitle: {
-           flex: 1,
-           alignItems: 'center',
-       },
+       headerTitleContainer: {
+            position: 'absolute',  
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+        },
        title: {
            fontSize: width > 375 ? 24 : 20,
            fontWeight: '600',
        },
        logoutButton: {
-           width: 40,
-           height: 40,
-           borderRadius: 20,
-           alignItems: 'center',
-           justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: 'auto',  // Add this to push it to the right
+            zIndex: 2,
        },
        content: {
            flex: 1,

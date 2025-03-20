@@ -10,7 +10,6 @@ import {
   Platform,
   SafeAreaView
 } from "react-native";
-import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
@@ -26,11 +25,16 @@ const isSimulator = !Device.isDevice;
 
 // Import conditionnel de expo-print
 let Print;
-if (!isSimulator) {
+let printAsync;
+
+if (!Device.isDevice) {
+  console.log('Mode simulateur détecté, l\'impression sera simulée');
+} else {
   import('expo-print').then(module => {
     Print = module;
+    printAsync = module.printAsync;
   }).catch(error => {
-    console.log('Erreur lors de l\'import d\'expo-print:', error);
+    console.error('Erreur lors de l\'import d\'expo-print:', error);
   });
 }
 
@@ -58,7 +62,7 @@ const TimeSelectionModal = ({
           {t("estimated_preparation_time")}
         </Text>
         
-        <ScrollView style={styles.timeOptionsContainer}>
+        <View style={styles.timeOptionsContainer}>
           {timeOptions.map((option) => (
             <TouchableOpacity
               key={option.value}
@@ -80,7 +84,7 @@ const TimeSelectionModal = ({
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
 
         <View style={styles.modalButtons}>
           <TouchableOpacity
@@ -122,8 +126,7 @@ function OrderSelect() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [restaurantId, setRestaurantId] = useState(null);
   const [restaurantName, setRestaurantName] = useState('RESTAURANT');
-  const [receiptHTML, setReceiptHTML] = useState('');
-  const [showPreview, setShowPreview] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
@@ -134,6 +137,37 @@ function OrderSelect() {
     { label: '30 minutes', value: 30 },
     { label: '45 minutes', value: 45 }
   ];
+
+  // Groupe les options de menu par leur menu parent
+  const groupMenuOptions = () => {
+    const menuGroups = {};
+    
+    if (!localOrder.orders || !Array.isArray(localOrder.orders)) {
+      return menuGroups;
+    }
+    
+    // Parcourir tous les éléments de commande
+    localOrder.orders.forEach(item => {
+      // Si c'est un menu (a un menu_id)
+      if (item.menu_id) {
+        const menuId = item.id; // Utiliser l'ID de l'item comme identifiant du menu
+        
+        menuGroups[menuId] = {
+          menuItem: item,
+          options: item.options || [] // Utiliser les options déjà incluses dans l'élément
+        };
+      }
+    });
+    
+    return menuGroups;
+  };
+
+  const toggleMenuExpand = (menuId) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
 
   const getAllStorageKeys = async () => {
     try {
@@ -192,6 +226,14 @@ function OrderSelect() {
 
   useEffect(() => {
     getAllStorageKeys();
+    
+    // Initialiser l'état d'expansion des menus
+    const menus = groupMenuOptions();
+    const initialExpandState = {};
+    Object.keys(menus).forEach(menuId => {
+      initialExpandState[menuId] = false; // Tous les menus sont initialement fermés
+    });
+    setExpandedMenus(initialExpandState);
   }, []);
 
   const handlePreparePress = () => {
@@ -298,16 +340,9 @@ function OrderSelect() {
       ]
     );
   };
-
-  // Fonction pour prévisualiser le ticket
-  const previewReceipt = () => {
-    const html = createReceiptHTML();
-    setReceiptHTML(html);
-    setShowPreview(true);
-  };
   
-  // Fonction pour imprimer le ticket après prévisualisation
-  const printReceiptAfterPreview = async () => {
+  // Fonction d'impression minimaliste qui évite les options avancées
+  const printReceipt = async () => {
     setIsPrinting(true);
     
     try {
@@ -322,83 +357,128 @@ function OrderSelect() {
           [{ text: "OK" }]
         );
       } else {
-        // Configuration spécifique pour imprimante de tickets de caisse
-        await Print.printAsync({
+        // Générer le HTML du ticket
+        const receiptHTML = createReceiptHTML();
+        
+        // Utiliser uniquement les options essentielles
+        const printResult = await printAsync({
           html: receiptHTML,
-          width: 280, // Largeur standard pour les tickets de caisse (58mm ou 80mm)
-          // height omis pour calculer automatiquement en fonction du contenu
-          orientation: 'portrait',
-          selectPrinter: true,
-          // Options supplémentaires pour minimiser l'interaction utilisateur
-          printerType: 'thermal', // Indique une préférence pour les imprimantes thermiques
-          markupFormatterIOS: {
-            // Paramètres iOS pour impression simplifiée
-            paperWidth: 58, // 58mm (standard pour petits tickets)
-            marginLeft: 0,
-            marginRight: 0,
-            marginTop: 0,
-            marginBottom: 0,
-            scalingFactor: 1.0
-          }
+          // Activer explicitement la sélection d'imprimante
+          selectPrinter: true
         });
         
-        // Feedback visuel de succès
+        // Ne montrer le message de succès que si l'impression a bien été effectuée
+        if (printResult && printResult.uri) {
+          Alert.alert(
+            "Impression réussie",
+            "Le ticket a été envoyé à l'imprimante.",
+            [{ text: "OK" }]
+          );
+        }
+      }
+    } catch (error) {
+      // Vérifions si l'erreur est due à une annulation par l'utilisateur
+      const errorMessage = error.message ? error.message.toLowerCase() : '';
+      
+      if (
+        errorMessage.includes('did not complete') ||
+        errorMessage.includes('cancelled') ||
+        errorMessage.includes('canceled') ||
+        errorMessage.includes('dismiss')
+      ) {
+        // L'utilisateur a simplement annulé, ne pas afficher d'erreur
+        console.log('Impression annulée par l\'utilisateur');
+      } else {
+        // C'est une véritable erreur d'impression
+        console.error('Erreur impression:', error);
         Alert.alert(
-          "Impression réussie",
-          "Le ticket a été envoyé à l'imprimante.",
+          "Erreur d'impression",
+          "Impossible d'imprimer le ticket. Détails: " + error.message,
           [{ text: "OK" }]
         );
       }
-      
-    } catch (error) {
-      console.error('Erreur impression:', error);
-      Alert.alert(
-        "Erreur d'impression",
-        "Vérifiez que votre imprimante est allumée et connectée au même réseau Wi-Fi.",
-        [{ text: "OK" }]
-      );
     } finally {
       setIsPrinting(false);
-      setShowPreview(false); // Ferme la prévisualisation après impression
     }
   };
 
+  // HTML optimisé pour s'adapter automatiquement aux imprimantes de tickets
   const createReceiptHTML = () => {
     const date = new Date().toLocaleString('fr-FR');
     const total = localOrder.amount_total;
+    const menuGroups = groupMenuOptions();
+    
+    // Fonction pour générer le HTML des items (produits et menus)
+    const generateItemsHTML = () => {
+      let html = '';
+      
+      // D'abord, afficher tous les produits standards (sans menu_id)
+      const regularProducts = localOrder.orders.filter(item => !item.menu_id);
+      regularProducts.forEach(item => {
+        html += `
+          <div class="item">
+            <span>${item.quantity}x ${item.name}</span>
+            <span>${item.subtotal.toFixed(2)}€</span>
+          </div>
+          ${item.comment ? `<p style="margin-left: 8px; font-style: italic; font-size: 10px;">Note: ${item.comment}</p>` : ''}
+        `;
+      });
+      
+      // Ensuite, afficher tous les menus avec leurs options
+      Object.values(menuGroups).forEach(menuGroup => {
+        const menuItem = menuGroup.menuItem;
+        html += `
+          <div class="item">
+            <span>${menuItem.quantity}x ${menuItem.name} (MENU)</span>
+            <span>${menuItem.subtotal.toFixed(2)}€</span>
+          </div>
+          ${menuItem.comment ? `<p style="margin-left: 8px; font-style: italic; font-size: 10px;">Note: ${menuItem.comment}</p>` : ''}
+        `;
+        
+        // Afficher les options du menu avec indentation
+        if (menuGroup.options && menuGroup.options.length > 0) {
+          menuGroup.options.forEach(option => {
+            html += `
+              <div class="item" style="margin-left: 12px; font-size: 10px;">
+                <span>• ${option.name}</span>
+                ${option.unit_price > 0 ? `<span>+${option.unit_price.toFixed(2)}€</span>` : ''}
+              </div>
+            `;
+          });
+        }
+      });
+      
+      return html;
+    };
     
     return `
+      <!DOCTYPE html>
       <html>
         <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            @page {
-              margin: 0;
-              size: 58mm auto;  /* Largeur standard imprimante thermique */
-            }
-            body { 
+            body {
               font-family: 'Courier New', monospace;
-              width: 100%;
-              max-width: 280px;
               padding: 5px;
               margin: 0 auto;
               font-size: 12px;
+              max-width: 280px;
             }
-            .header { 
-              text-align: center; 
-              margin-bottom: 8px; 
+            .header {
+              text-align: center;
+              margin-bottom: 8px;
             }
-            .divider { 
-              border-top: 1px dashed #000; 
-              margin: 5px 0; 
+            .divider {
+              border-top: 1px dashed #000;
+              margin: 5px 0;
             }
-            .item { 
+            .item {
               display: flex;
               justify-content: space-between;
               margin: 3px 0;
-              font-size: 12px;
             }
-            .total { 
+            .total {
               text-align: right;
               font-weight: bold;
               font-size: 14px;
@@ -410,12 +490,6 @@ function OrderSelect() {
             }
             p {
               margin: 2px 0;
-            }
-            .customer-info {
-              font-size: 11px;
-            }
-            .small {
-              font-size: 10px;
             }
           </style>
         </head>
@@ -429,13 +503,7 @@ function OrderSelect() {
           
           <div class="divider"></div>
           
-          ${localOrder.orders.map(item => `
-            <div class="item">
-              <span>${item.quantity}x ${item.name}</span>
-              <span>${item.subtotal.toFixed(2)}€</span>
-            </div>
-            ${item.comment ? `<p class="small" style="margin-left: 8px; font-style: italic;">Note: ${item.comment}</p>` : ''}
-          `).join('')}
+          ${generateItemsHTML()}
           
           <div class="divider"></div>
           
@@ -445,24 +513,24 @@ function OrderSelect() {
           
           <div class="divider"></div>
           
-          <div class="customer-info">
+          <div style="font-size: 11px;">
             <p><b>${t("customer_information")}:</b></p>
             <p>${localOrder.client_firstname} ${localOrder.client_lastname}</p>
             ${localOrder.client_phone ? `<p>Tel: ${localOrder.client_phone}</p>` : ''}
             ${localOrder.client_email ? `<p>Email: ${localOrder.client_email}</p>` : ''}
             
             ${localOrder.client_address && localOrder.client_address !== "null, null null" ? `
-              <p><b>Adresse:</b> ${localOrder.client_address}</p>
+              <p>Adresse: ${localOrder.client_address}</p>
             ` : localOrder.client_method === "Livraison" ? `
-              <p><b>Mode:</b> Livraison (adresse non spécifiée)</p>
+              <p>Mode: Livraison (adresse non spécifiée)</p>
             ` : `
-              <p><b>Mode:</b> À emporter</p>
+              <p>Mode: À emporter</p>
             `}
           </div>
           
           ${localOrder.order_comment ? `
             <div class="divider"></div>
-            <div class="customer-info">
+            <div style="font-size: 11px;">
               <p><b>${t("customer_comment")}:</b></p>
               <p style="font-style: italic;">"${localOrder.order_comment}"</p>
             </div>
@@ -479,6 +547,113 @@ function OrderSelect() {
       </html>
     `;
   };
+
+  // Rendu des menus avec leurs options
+  const renderMenuItems = () => {
+    const menuGroups = groupMenuOptions();
+    
+    return Object.entries(menuGroups).map(([menuId, group]) => {
+      const menuItem = group.menuItem;
+      const options = group.options;
+      const isExpanded = expandedMenus[menuId];
+      
+      return (
+        <View key={menuId} style={styles.orderItem}>
+          <TouchableOpacity 
+            style={styles.orderItemHeader}
+            onPress={() => toggleMenuExpand(menuId)}
+          >
+            <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
+              x{menuItem.quantity}
+            </Text>
+            <View style={styles.menuTitleContainer}>
+              <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
+                {menuItem.name}
+              </Text>
+              <View style={styles.menuBadge}>
+                <Text style={styles.menuBadgeText}>MENU</Text>
+              </View>
+            </View>
+            <View style={styles.menuPriceContainer}>
+              <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
+                {menuItem.subtotal.toFixed(2)}€
+              </Text>
+              <Icon 
+                name={isExpanded ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color={colors.colorDetail} 
+              />
+            </View>
+          </TouchableOpacity>
+          
+          {menuItem.comment && (
+            <View style={styles.orderItemNote}>
+              <Icon name="note-text-outline" size={16} color={colors.colorAction} />
+              <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
+                {menuItem.comment}
+              </Text>
+            </View>
+          )}
+          
+          {isExpanded && options && options.length > 0 && (
+            <View style={styles.menuOptionsContainer}>
+              {options.map((option, index) => (
+                <View key={index} style={styles.menuOption}>
+                  <View style={styles.menuOptionDot} />
+                  <Text style={[styles.menuOptionName, {color: colors.colorText}]}>
+                    {option.name}
+                  </Text>
+                  {option.unit_price > 0 && (
+                    <Text style={[styles.menuOptionPrice, {color: colors.colorDetail}]}>
+                      +{option.unit_price.toFixed(2)}€
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      );
+    });
+  };
+
+  // Rendu des produits standards (non-menus)
+  const renderRegularProducts = () => {
+    if (!localOrder.orders || !Array.isArray(localOrder.orders)) {
+      return null;
+    }
+    
+    // Filtrer pour ne prendre que les produits (sans menu_id)
+    const regularProducts = localOrder.orders.filter(item => !item.menu_id);
+    
+    return regularProducts.map((item, index) => (
+      <View key={index} style={styles.orderItem}>
+        <View style={styles.orderItemHeader}>
+          <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
+            x{item.quantity}
+          </Text>
+          <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
+            {item.name}
+          </Text>
+          <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
+            {item.subtotal.toFixed(2)}€
+          </Text>
+        </View>
+        {item.comment && (
+          <View style={styles.orderItemNote}>
+            <Icon name="note-text-outline" size={16} color={colors.colorAction} />
+            <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
+              {item.comment}
+            </Text>
+          </View>
+        )}
+        <Text style={[styles.orderItemUnitPrice, {color: colors.colorDetail}]}>
+          ({item.unit_price.toFixed(2)}€ {t('units')})
+        </Text>
+      </View>
+    ));
+  };
+  
 
   return (
     <View style={[styles.container, {backgroundColor: colors.colorBackground}]}>
@@ -581,32 +756,11 @@ function OrderSelect() {
             {t('order_summary')}
           </Text>
           
-          {localOrder.orders.map((item, index) => (
-            <View key={index} style={styles.orderItem}>
-              <View style={styles.orderItemHeader}>
-                <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
-                  x{item.quantity}
-                </Text>
-                <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
-                  {item.name}
-                </Text>
-                <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
-                  {item.subtotal.toFixed(2)}€
-                </Text>
-              </View>
-              {item.comment && (
-                <View style={styles.orderItemNote}>
-                  <Icon name="note-text-outline" size={16} color={colors.colorAction} />
-                  <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
-                    {item.comment}
-                  </Text>
-                </View>
-              )}
-              <Text style={[styles.orderItemUnitPrice, {color: colors.colorDetail}]}>
-                ({item.unit_price.toFixed(2)}€ {t('units')})
-              </Text>
-            </View>
-          ))}
+          {/* Afficher les menus */}
+          {renderMenuItems()}
+          
+          {/* Afficher les produits standards */}
+          {renderRegularProducts()}
           
           <View style={[styles.totalContainer, {borderColor: colors.colorDetail}]}>
             <Text style={[styles.totalText, {color: colors.colorText}]}>{t('total')}</Text>
@@ -640,7 +794,7 @@ function OrderSelect() {
           </TouchableOpacity>
         )}
         <TouchableOpacity 
-          onPress={previewReceipt} 
+          onPress={printReceipt} 
           style={[styles.printButton, {backgroundColor: colors.colorAction}]}
           disabled={isPrinting}
         >
@@ -650,46 +804,6 @@ function OrderSelect() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Modal de prévisualisation du ticket */}
-      <Modal
-        visible={showPreview}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setShowPreview(false)}
-      >
-        <SafeAreaView style={[styles.modalContainer, {backgroundColor: colors.colorBackground}]}>
-          <View style={[styles.modalHeader, {backgroundColor: colors.colorBackground}]}>
-            <Text style={[styles.modalTitle, {color: colors.colorText}]}>Prévisualisation du ticket</Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity 
-                onPress={() => setShowPreview(false)}
-                style={[styles.modalButton, styles.cancelButton]}
-              >
-                <Text style={styles.modalButtonText}>Fermer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={printReceiptAfterPreview}
-                style={[styles.modalButton, styles.printModalButton]}
-                disabled={isPrinting}
-              >
-                <Text style={styles.modalButtonText}>
-                  {isPrinting ? 'Impression...' : 'Imprimer'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <WebView
-            style={styles.webView}
-            originWhitelist={['*']}
-            source={{ html: receiptHTML }}
-            scalesPageToFit={false}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-        </SafeAreaView>
-      </Modal>
     </View>
   );
 }
@@ -869,7 +983,7 @@ function useStyles() {
     deleteButton: {
       padding: 16,
       borderRadius: 12,
-      marginBottom: 40,
+      marginBottom: 20,
     },
     deleteButtonText: {
       fontSize: width > 375 ? 16 : 14,
@@ -897,6 +1011,7 @@ function useStyles() {
     },
     timeOptionsContainer: {
       maxHeight: 300,
+      marginBottom: 20
     },
     timeOption: {
       padding: 16,
@@ -942,48 +1057,72 @@ function useStyles() {
     printIcon: {
       marginRight: 10,
     },
-      // Styles pour la modal de prévisualisation
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'column',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#f9f9f9',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  modalButton: {
-    padding: 10,
-    borderRadius: 6,
-    marginLeft: 10,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#e0e0e0',
-  },
-  printModalButton: {
-    backgroundColor: '#FF3F00',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  webView: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+    // Styles pour la modal de prévisualisation
+    modalContainer: {
+      flex: 1,
+      backgroundColor: '#fff',
+    },
+    modalHeader: {
+      flexDirection: 'column',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
+      backgroundColor: '#f9f9f9',
+    },
+    webView: {
+      flex: 1,
+      backgroundColor: '#f5f5f5',
+    },
+    // Nouveaux styles pour les menus
+    menuTitleContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    menuBadge: {
+      backgroundColor: '#0164FF',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    menuBadgeText: {
+      color: '#FFFFFF',
+      fontSize: width > 375 ? 10 : 8,
+      fontWeight: '600',
+    },
+    menuPriceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    menuOptionsContainer: {
+      marginTop: 8,
+      marginLeft: 35,
+      paddingLeft: 10,
+      borderLeftWidth: 1,
+      borderLeftColor: '#E0E0E0',
+    },
+    menuOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 6,
+    },
+    menuOptionDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: '#0164FF',
+    },
+    menuOptionName: {
+      flex: 1,
+      fontSize: width > 375 ? 14 : 12,
+    },
+    menuOptionPrice: {
+      fontSize: width > 375 ? 13 : 11,
+      fontWeight: '500',
+    },
   });
 }
 

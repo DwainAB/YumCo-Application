@@ -13,7 +13,9 @@ import UpdateUserScreen from '../../screens/UpdateUserScreen';
 import CategoriesScreen from '../../screens/categories';
 import UpdateProductScreen from '../../screens/UpdateProductScreen';
 import PolityPrivacy from '../../screens/PolityPrivacy';
+import FormAddMenu from '../../screens/AddMenuScreen'; 
 import InformationScreen from '../../screens/InformationScreen';
+import EditMenu from '../../screens/EditMenu';
 
 const Stack = createStackNavigator();
 
@@ -35,6 +37,8 @@ const RootNavigatorSetting = () => {
       <Stack.Screen name="UpdateProductScreen" component={UpdateProductScreen} />
       <Stack.Screen name="PolityPrivacy" component={PolityPrivacy} />
       <Stack.Screen name="InformationScreen" component={InformationScreen} />
+      <Stack.Screen name="AddMenu" component={FormAddMenu} />
+      <Stack.Screen name="EditMenu" component={EditMenu} />
     </Stack.Navigator>
   );
 };
