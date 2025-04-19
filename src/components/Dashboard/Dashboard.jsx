@@ -29,6 +29,8 @@ function Dashboard() {
    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
    const [hasStripeId, setHasStripeId] = useState(false);
    const [userRole, setUserRole] = useState('USER');
+   const [tableCount, setTableCount] = useState(0);
+   const [onSiteOption, setOnSiteOption] = useState(false);
 
    useEffect(() => {
     const getLanguageFromStorage = async () => {
@@ -60,7 +62,7 @@ function Dashboard() {
   
 
   useEffect(() => {
-    const fetchRestaurantId = async () => {
+    const fetchRestaurantData = async () => {
         try {
             const owner = await AsyncStorage.getItem("owner");
             const ownerData = JSON.parse(owner);                
@@ -68,17 +70,30 @@ function Dashboard() {
             setUserId(ownerData.id);
             console.log(ownerData.restaurantId);
 
-            if (ownerData.restaurantId) {
+            // Récupérer les informations du restaurant
+            // D'abord vérifier si les données sont dans AsyncStorage
+            const restaurantData = await AsyncStorage.getItem("restaurant");
+            if (restaurantData) {
+                const parsedData = JSON.parse(restaurantData);
+                setOnSiteOption(parsedData.on_site_option);
+                if (parsedData.stripe_id) {
+                    setHasStripeId(true);
+                }
+            } else {
+                // Si les données ne sont pas dans AsyncStorage, les récupérer depuis Supabase
                 const { data, error } = await supabase
                     .from('restaurants')
-                    .select('stripe_id')
+                    .select('stripe_id, on_site_option')
                     .eq('id', ownerData.restaurantId)
                     .single();
                 
                 if (error) {
-                    console.error('Erreur lors de la récupération du stripe_id:', error);
-                } else if (data && data.stripe_id) {
-                    setHasStripeId(true);
+                    console.error('Erreur lors de la récupération des données restaurant:', error);
+                } else if (data) {
+                    setOnSiteOption(data.on_site_option);
+                    if (data.stripe_id) {
+                        setHasStripeId(true);
+                    }
                 }
             }
 
@@ -102,7 +117,7 @@ function Dashboard() {
             console.error('Erreur lors de la récupération des informations utilisateur:', error);
         }
     };
-    fetchRestaurantId();
+    fetchRestaurantData();
 }, []);
 
 useEffect(() => {
@@ -145,7 +160,24 @@ useEffect(() => {
     fetchProductCount();
 }, [restaurantId]);
 
+useEffect(() => {
+    const fetchTableCount = async () => {
+        if (restaurantId) {
+            const { data, error } = await supabase
+                .from('tables')
+                .select('*', { count: 'exact' })
+                .eq('restaurant_id', restaurantId);
 
+            if (error) {
+                console.error('Erreur lors de la récupération du nombre de tables:', error);
+            } else {
+                setTableCount(data.length);
+            }
+        }
+    };
+
+    fetchTableCount();
+}, [restaurantId]);
 
 const handleRelaunchApp = async () => {
     startLoading();
@@ -159,7 +191,8 @@ const handleRelaunchApp = async () => {
             'user',
             'owner',
             'role',
-            'session'
+            'session',
+            'restaurant'
         ]);
 
         // Relance de l'application pour revenir à l'état initial
@@ -380,6 +413,23 @@ const handleRelaunchApp = async () => {
                                 <Icon name="chevron-right" size={20} color={colors.colorDetail} />
                             </View>
                         </TouchableOpacity>
+
+                        {/* Afficher le bouton Table uniquement si on_site_option est true */}
+                        {onSiteOption && (
+                            <TouchableOpacity 
+                                style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight }]}
+                                onPress={() => navigation.navigate('TableSetting')}
+                            >
+                                <View style={styles.menuItemLeft}>
+                                    <Icon name="silverware-fork-knife" size={20} color="#FF6B6B" />
+                                    <Text style={[styles.menuItemText, { color: colors.colorText }]}>{t('table')}</Text>
+                                </View>
+                                <View style={styles.menuItemRight}>
+                                <Text style={[styles.menuItemDetail, { color: colors.colorDetail }]}>{tableCount} {tableCount > 1 ? t('tables') : t('table')}</Text>
+                                <Icon name="chevron-right" size={20} color={colors.colorDetail} />
+                                </View>
+                            </TouchableOpacity>
+                        )}
 
                         <TouchableOpacity 
                             style={[styles.menuItem, { borderBottomColor: colors.colorDetaillight, paddingBottom: 15 }]}

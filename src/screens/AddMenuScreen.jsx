@@ -10,7 +10,8 @@ import {
   Alert,
   Animated,
   ActivityIndicator,   
-  Modal 
+  Modal,
+  Switch
 } from "react-native";
 import { launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -37,6 +38,8 @@ function FormAddMenu() {
     price: "",
     imageURI: null,
     is_active: true,
+    available_online: false, 
+    available_onsite: false, 
     categories: []
   });
 
@@ -88,6 +91,14 @@ function FormAddMenu() {
         }
       ]
     });
+  };
+
+  const toggleAvailableOnline = () => {
+    setMenuData({ ...menuData, available_online: !menuData.available_online });
+  };
+  
+  const toggleAvailableOnsite = () => {
+    setMenuData({ ...menuData, available_onsite: !menuData.available_onsite });
   };
 
   // Suppression d'une catégorie
@@ -244,7 +255,9 @@ function FormAddMenu() {
           description: menuData.description,
           price: parseFloat(menuData.price),
           image_url: imageUrl,
-          is_active: menuData.is_active
+          is_active: menuData.is_active,
+          available_online: menuData.available_online,
+          available_onsite: menuData.available_onsite,
         }])
         .select();
 
@@ -317,269 +330,313 @@ function FormAddMenu() {
       price: "",
       imageURI: null,
       is_active: true,
+      available_online: false,
+      available_onsite: false,
       categories: []
     });
   };
 
   return (
-    <>
-    <HeaderSetting name={t('Menu')} navigateTo="CardOptionScreen"/>
-    <ScrollView style={styles.containerScrollAddMenu}>
-      <Animated.View style={[styles.containerFormAddMenu, {opacity: fadeAnim}]}>
-        {/* Section principale */}
-        <View style={styles.mainSection}>
-          {/* Section image */}
-          <View style={styles.imagePickerContainer}>
-            <View style={styles.imageContainer}>
-              {menuData.imageURI ? (
-                <Image
-                  source={{ uri: menuData.imageURI.uri }}
-                  style={styles.previewImage}
-                />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Ionicons name="restaurant-outline" size={50} color={colors.colorAction} />
-                  <Text style={styles.uploadText}>{t('add_image')}</Text>
-                </View>
-              )}
-              <TouchableOpacity 
-                style={styles.addImageButton}
-                onPress={handleClickUpload}
-              >
-                <Ionicons name="camera" size={22} color="white" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Informations de base du menu */}
-          <View style={styles.formSection}>
-            <Text style={styles.sectionHeader}>{t('menu_details')}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('menu_name')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={t('menu_name')}
-                placeholderTextColor={colors.placeholderColor}
-                value={menuData.name}
-                onChangeText={(text) => setMenuData({ ...menuData, name: text })}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('description')}</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder={t('description')}
-                placeholderTextColor={colors.placeholderColor}
-                value={menuData.description}
-                onChangeText={(text) => setMenuData({ ...menuData, description: text })}
-                multiline={true}
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('price')}</Text>
-              <View style={styles.priceInputContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.placeholderColor}
-                  value={menuData.price}
-                  onChangeText={handlePriceChange}
-                  keyboardType="numeric"
-                />
-                <Text style={styles.priceSuffix}>€</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Section des catégories */}
-          <View style={styles.categoriesSection}>
-            <View style={styles.sectionHeaderContainer}>
-              <Text style={styles.sectionHeader}>{t('categories')}</Text>
-            </View>
-
-            {menuData.categories.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="list-outline" size={40} color={colors.colorAction} />
-                <Text style={styles.emptyText}>{t('no_category_selected')}</Text>
-                <Text style={styles.emptySubtext}>{t('description')}</Text>
-                
+    <View style={{backgroundColor: colors.colorBackground, flex: 1}}>
+      <HeaderSetting name={t('Menu')} navigateTo="CardOptionScreen"/>
+      <ScrollView style={styles.containerScrollAddMenu}>
+        <Animated.View style={[styles.containerFormAddMenu, {opacity: fadeAnim}]}>
+          {/* Section principale */}
+          <View style={styles.mainSection}>
+            {/* Section image */}
+            <View style={styles.imagePickerContainer}>
+              <View style={styles.imageContainer}>
+                {menuData.imageURI ? (
+                  <Image
+                    source={{ uri: menuData.imageURI.uri }}
+                    style={styles.previewImage}
+                  />
+                ) : (
+                  <View style={styles.placeholderImage}>
+                    <Ionicons name="restaurant-outline" size={50} color={colors.colorAction} />
+                    <Text style={[styles.uploadText, {color: colors.colorText}]}>{t('add_image')}</Text>
+                  </View>
+                )}
                 <TouchableOpacity 
-                  style={[styles.addButton, styles.emptyAddButton]}
-                  onPress={addCategory}
+                  style={[styles.addImageButton, {backgroundColor: colors.colorAction}]}
+                  onPress={handleClickUpload}
                 >
-                  <Ionicons name="add-circle" size={20} color="white" />
-                  <Text style={styles.addButtonText}>{t('add_category')}</Text>
+                  <Ionicons name="camera" size={22} color="white" />
                 </TouchableOpacity>
               </View>
-            ) : (
-              menuData.categories.map((category, categoryIndex) => (
-                <View key={categoryIndex} style={styles.categoryCard}>
-                  <View style={styles.categoryHeader}>
-                    <Text style={styles.categoryTitle}>
-                      {t('category')} {categoryIndex + 1}
-                    </Text>
-                    <TouchableOpacity 
-                      onPress={() => removeCategory(categoryIndex)}
-                      style={styles.removeButton}
-                    >
-                      <Ionicons name="trash-outline" size={20} color={colors.dangerColor} />
-                    </TouchableOpacity>
-                  </View>
+            </View>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('category_name')}</Text>
-                    <TextInput
-                      style={styles.categoryInput}
-                      placeholder={t('category_name')}
-                      placeholderTextColor={colors.placeholderColor}
-                      value={category.name}
-                      onChangeText={(text) => updateCategory(categoryIndex, 'name', text)}
-                    />
-                  </View>
+            {/* Informations de base du menu */}
+            <View style={[styles.formSection, {backgroundColor: colors.colorBorderAndBlock}]}>
+              <Text style={[styles.sectionHeader, {color: colors.colorText}]}>{t('menu_details')}</Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('menu_name')}</Text>
+                <TextInput
+                  style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
+                  placeholder={t('menu_name')}
+                  placeholderTextColor="#777"
+                  value={menuData.name}
+                  onChangeText={(text) => setMenuData({ ...menuData, name: text })}
+                />
+              </View>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{t('max_option')}</Text>
-                    <TextInput
-                      style={styles.categoryInput}
-                      placeholder="1"
-                      placeholderTextColor={colors.placeholderColor}
-                      value={category.max_options}
-                      onChangeText={(text) => {
-                        if (/^\d*$/.test(text)) {
-                          updateCategory(categoryIndex, 'max_options', text)
-                        }
-                      }}
-                      keyboardType="numeric"
-                    />
-                  </View>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('description')}</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea, {color: colors.colorText, borderColor: colors.colorText}]}
+                  placeholder={t('description')}
+                  placeholderTextColor="#777"
+                  value={menuData.description}
+                  onChangeText={(text) => setMenuData({ ...menuData, description: text })}
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
 
-                  <View style={styles.checkboxContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.checkbox, 
-                        category.is_required ? {backgroundColor: colors.colorAction} : {}
-                      ]}
-                      onPress={() => updateCategory(categoryIndex, 'is_required', !category.is_required)}
-                    >
-                      {category.is_required && <Ionicons name="checkmark" size={16} color="white" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>{t('category_required')}</Text>
-                  </View>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, {color: colors.colorText}]}>{t('price')}</Text>
+                <View style={styles.priceInputContainer}>
+                  <TextInput
+                    style={[styles.input, {color: colors.colorText, borderColor: colors.colorText}]}
+                    placeholder="0.00"
+                    placeholderTextColor="#777"
+                    value={menuData.price}
+                    onChangeText={handlePriceChange}
+                    keyboardType="numeric"
+                  />
+                  <Text style={[styles.priceSuffix, {color: colors.colorText}]}>€</Text>
+                </View>
+              </View>
+              
+              {/* Section disponibilité */}
+              <View style={styles.availabilitySection}>
+                <Text style={[styles.subSectionHeader, {color: colors.colorText}]}>{t('availability')}</Text>
+                
+                {/* Toggle pour disponible en ligne */}
+                <View style={styles.switchContainer}>
+                  <Text style={[styles.switchLabel, {color: colors.colorText}]}>{t('show_online')}</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: colors.colorAction }}
+                    thumbColor={menuData.available_online ? "#ffffff" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={toggleAvailableOnline}
+                    value={menuData.available_online}
+                  />
+                </View>
+                
+                {/* Toggle pour disponible sur place */}
+                <View style={styles.switchContainer}>
+                  <Text style={[styles.switchLabel, {color: colors.colorText}]}>{t('show_on_site')}</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: colors.colorAction }}
+                    thumbColor={menuData.available_onsite ? "#ffffff" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={toggleAvailableOnsite}
+                    value={menuData.available_onsite}
+                  />
+                </View>
+                
+                {/* Toggle pour disponibilité générale */}
+                <View style={styles.switchContainer}>
+                  <Text style={[styles.switchLabel, {color: colors.colorText}]}>{t('is_available')}</Text>
+                  <Switch
+                    trackColor={{ false: "#767577", true: colors.colorAction }}
+                    thumbColor={menuData.is_active ? "#ffffff" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={(value) => setMenuData({ ...menuData, is_active: value })}
+                    value={menuData.is_active}
+                  />
+                </View>
+              </View>
+            </View>
 
-                  {/* Options de la catégorie */}
-                  <View style={styles.optionsSection}>
-                    <View style={styles.optionsHeader}>
-                      <Text style={styles.optionsTitle}>{t('options')}</Text>
+            {/* Section des catégories */}
+            <View style={styles.categoriesSection}>
+              <View style={styles.sectionHeaderContainer}>
+                <Text style={[styles.sectionHeader, {color: colors.colorText}]}>{t('categories')}</Text>
+              </View>
+
+              {menuData.categories.length === 0 ? (
+                <View style={[styles.emptyContainer, {backgroundColor: colors.colorBorderAndBlock}]}>
+                  <Ionicons name="list-outline" size={40} color={colors.colorAction} />
+                  <Text style={[styles.emptyText, {color: colors.colorText}]}>{t('no_category_selected')}</Text>
+                  <Text style={styles.emptySubtext}>{t('description')}</Text>
+                  
+                  <TouchableOpacity 
+                    style={[styles.addButton, styles.emptyAddButton, {backgroundColor: colors.colorAction}]}
+                    onPress={addCategory}
+                  >
+                    <Ionicons name="add-circle" size={20} color="white" />
+                    <Text style={styles.addButtonText}>{t('add_category')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                menuData.categories.map((category, categoryIndex) => (
+                  <View key={categoryIndex} style={[styles.categoryCard, {backgroundColor: colors.colorBorderAndBlock}]}>
+                    <View style={styles.categoryHeader}>
+                      <Text style={[styles.categoryTitle, {color: colors.colorText}]}>
+                        {t('category')} {categoryIndex + 1}
+                      </Text>
+                      <TouchableOpacity 
+                        onPress={() => removeCategory(categoryIndex)}
+                        style={styles.removeButton}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={colors.colorAction} />
+                      </TouchableOpacity>
                     </View>
 
-                    {category.options.length === 0 ? (
-                      <View style={styles.emptyOptionsContainer}>
-                        <Text style={styles.emptyOptionsText}>{t('no_option_selected')}</Text>
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, {color: colors.colorText}]}>{t('category_name')}</Text>
+                      <TextInput
+                        style={[styles.categoryInput, {color: colors.colorText, borderColor: colors.colorText}]}
+                        placeholder={t('category_name')}
+                        placeholderTextColor="#777"
+                        value={category.name}
+                        onChangeText={(text) => updateCategory(categoryIndex, 'name', text)}
+                      />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, {color: colors.colorText}]}>{t('max_option')}</Text>
+                      <TextInput
+                        style={[styles.categoryInput, {color: colors.colorText, borderColor: colors.colorText}]}
+                        placeholder="1"
+                        placeholderTextColor="#777"
+                        value={category.max_options}
+                        onChangeText={(text) => {
+                          if (/^\d*$/.test(text)) {
+                            updateCategory(categoryIndex, 'max_options', text)
+                          }
+                        }}
+                        keyboardType="numeric"
+                      />
+                    </View>
+
+                    <View style={styles.checkboxContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.checkbox, 
+                          {borderColor: colors.colorAction},
+                          category.is_required ? {backgroundColor: colors.colorAction} : {}
+                        ]}
+                        onPress={() => updateCategory(categoryIndex, 'is_required', !category.is_required)}
+                      >
+                        {category.is_required && <Ionicons name="checkmark" size={16} color="white" />}
+                      </TouchableOpacity>
+                      <Text style={[styles.checkboxLabel, {color: colors.colorText}]}>{t('category_required')}</Text>
+                    </View>
+
+                    {/* Options de la catégorie */}
+                    <View style={[styles.optionsSection, {backgroundColor: colors.colorBackground}]}>
+                      <View style={styles.optionsHeader}>
+                        <Text style={[styles.optionsTitle, {color: colors.colorText}]}>{t('options')}</Text>
+                      </View>
+
+                      {category.options.length === 0 ? (
+                        <View style={[styles.emptyOptionsContainer, {backgroundColor: colors.colorBorderAndBlock, borderColor: colors.colorText}]}>
+                          <Text style={[styles.emptyOptionsText, {color: colors.colorText}]}>{t('no_option_selected')}</Text>
+                          <TouchableOpacity 
+                            style={[styles.addOptionButton, styles.emptyAddOptionButton, {backgroundColor: colors.colorAction}]}
+                            onPress={() => addOption(categoryIndex)}
+                          >
+                            <Ionicons name="add" size={18} color="white" />
+                            <Text style={styles.addButtonText}>{t('add_option')}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        category.options.map((option, optionIndex) => (
+                          <View key={optionIndex} style={[styles.optionCard, {backgroundColor: colors.colorBorderAndBlock}]}>
+                            <View style={styles.optionHeader}>
+                              <Text style={[styles.optionTitle, {color: colors.colorText}]}>
+                                {t('option')} {optionIndex + 1}
+                              </Text>
+                              <TouchableOpacity 
+                                onPress={() => removeOption(categoryIndex, optionIndex)}
+                                style={styles.removeOptionButton}
+                              >
+                                <Ionicons name="close-circle" size={20} color={colors.colorAction} />
+                              </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.optionInputGroup}>
+                              <Text style={[styles.optionLabel, {color: colors.colorText}]}>{t('option_name')}</Text>
+                              <TextInput
+                                style={[styles.optionInput, {color: colors.colorText, borderColor: colors.colorText}]}
+                                placeholder={t('optien_name')}
+                                placeholderTextColor="#777"
+                                value={option.name}
+                                onChangeText={(text) => updateOption(categoryIndex, optionIndex, 'name', text)}
+                              />
+                            </View>
+
+                            <View style={styles.optionInputGroup}>
+                              <Text style={[styles.optionLabel, {color: colors.colorText}]}>{t('extra_price')}</Text>
+                              <View style={styles.optionPriceContainer}>
+                                <TextInput
+                                  style={[styles.optionInput, {color: colors.colorText, borderColor: colors.colorText}]}
+                                  placeholder="0.00"
+                                  placeholderTextColor="#777"
+                                  value={option.additional_price}
+                                  onChangeText={(text) => {
+                                    const convertedValue = text.replace(',', '.');
+                                    const regex = /^[0-9]*\.?[0-9]*$/;
+                                    
+                                    if (regex.test(convertedValue) || convertedValue === '') {
+                                      updateOption(categoryIndex, optionIndex, 'additional_price', convertedValue);
+                                    }
+                                  }}
+                                  keyboardType="numeric"
+                                />
+                                <Text style={[styles.optionPriceSuffix, {color: colors.colorText}]}>€</Text>
+                              </View>
+                              <Text style={[styles.priceHint, {color: colors.colorText}]}>0 = {t('included_in_menu')}</Text>
+                            </View>
+                          </View>
+                        ))
+                      )}
+                      
+                      {/* Bouton d'ajout d'option en bas */}
+                      {category.options.length > 0 && (
                         <TouchableOpacity 
-                          style={[styles.addOptionButton, styles.emptyAddOptionButton]}
+                          style={[styles.addOptionButton, styles.bottomAddButton, {backgroundColor: colors.colorAction}]}
                           onPress={() => addOption(categoryIndex)}
                         >
                           <Ionicons name="add" size={18} color="white" />
                           <Text style={styles.addButtonText}>{t('add_option')}</Text>
                         </TouchableOpacity>
-                      </View>
-                    ) : (
-                      category.options.map((option, optionIndex) => (
-                        <View key={optionIndex} style={styles.optionCard}>
-                          <View style={styles.optionHeader}>
-                            <Text style={styles.optionTitle}>
-                              {t('option')} {optionIndex + 1}
-                            </Text>
-                            <TouchableOpacity 
-                              onPress={() => removeOption(categoryIndex, optionIndex)}
-                              style={styles.removeOptionButton}
-                            >
-                              <Ionicons name="close-circle" size={20} color={colors.dangerColor} />
-                            </TouchableOpacity>
-                          </View>
-
-                          <View style={styles.optionInputGroup}>
-                            <Text style={styles.optionLabel}>{t('option_name')}</Text>
-                            <TextInput
-                              style={styles.optionInput}
-                              placeholder={t('optien_name')}
-                              placeholderTextColor={colors.placeholderColor}
-                              value={option.name}
-                              onChangeText={(text) => updateOption(categoryIndex, optionIndex, 'name', text)}
-                            />
-                          </View>
-
-                          <View style={styles.optionInputGroup}>
-                            <Text style={styles.optionLabel}>{t('extra_price')}</Text>
-                            <View style={styles.optionPriceContainer}>
-                              <TextInput
-                                style={styles.optionInput}
-                                placeholder="0.00"
-                                placeholderTextColor={colors.placeholderColor}
-                                value={option.additional_price}
-                                onChangeText={(text) => {
-                                  const convertedValue = text.replace(',', '.');
-                                  const regex = /^[0-9]*\.?[0-9]*$/;
-                                  
-                                  if (regex.test(convertedValue) || convertedValue === '') {
-                                    updateOption(categoryIndex, optionIndex, 'additional_price', convertedValue);
-                                  }
-                                }}
-                                keyboardType="numeric"
-                              />
-                              <Text style={styles.optionPriceSuffix}>€</Text>
-                            </View>
-                            <Text style={styles.priceHint}>0 = {t('included_in_menu')}</Text>
-                          </View>
-                        </View>
-                      ))
-                    )}
-                    
-                    {/* Bouton d'ajout d'option en bas */}
-                    {category.options.length > 0 && (
-                      <TouchableOpacity 
-                        style={[styles.addOptionButton, styles.bottomAddButton]}
-                        onPress={() => addOption(categoryIndex)}
-                      >
-                        <Ionicons name="add" size={18} color="white" />
-                        <Text style={styles.addButtonText}>{t('add_option')}</Text>
-                      </TouchableOpacity>
-                    )}
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))
-            )}
-            
-            {/* Bouton d'ajout de catégorie en bas */}
-            {menuData.categories.length > 0 && (
-              <TouchableOpacity 
-                style={[styles.addButton, styles.bottomAddCategoryButton]}
-                onPress={addCategory}
-              >
-                <Ionicons name="add-circle" size={20} color="white" />
-                <Text style={styles.addButtonText}>{t('add_category')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+                ))
+              )}
+              
+              {/* Bouton d'ajout de catégorie en bas */}
+              {menuData.categories.length > 0 && (
+                <TouchableOpacity 
+                  style={[styles.addButton, styles.bottomAddCategoryButton, {backgroundColor: colors.colorAction}]}
+                  onPress={addCategory}
+                >
+                  <Ionicons name="add-circle" size={20} color="white" />
+                  <Text style={styles.addButtonText}>{t('add_category')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-          {/* Bouton de soumission */}
-          <TouchableOpacity 
-            style={styles.submitButton} 
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>{t('add_menu')}</Text>
-            <Ionicons name="checkmark-circle" size={20} color="white" style={styles.submitIcon} />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </ScrollView>
-    <LoadingModal />
-    </>
+            {/* Bouton de soumission */}
+            <TouchableOpacity 
+              style={[styles.submitButton, {backgroundColor: colors.colorAction}]} 
+              onPress={handleSubmit}
+            >
+              <Text style={styles.submitButtonText}>{t('add_menu')}</Text>
+              <Ionicons name="checkmark-circle" size={20} color="white" style={styles.submitIcon} />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </ScrollView>
+      <LoadingModal />
+    </View>
   );
 }
 
@@ -587,7 +644,6 @@ function useStyles(colors, width) {
   return StyleSheet.create({
     containerScrollAddMenu: {
       flex: 1,
-      backgroundColor: colors.backgroundColor || '#f8f9fa',
     },
     containerFormAddMenu: {
       paddingBottom: 80,
@@ -609,27 +665,23 @@ function useStyles(colors, width) {
       width: 160,
       height: 160,
       borderRadius: 80,
-      backgroundColor: '#f0f0f0',
+      backgroundColor: colors.colorBackground,
       borderWidth: 3,
-      borderColor: colors.colorAction || '#0066FF',
+      borderColor: colors.colorAction,
     },
     placeholderImage: {
       width: 160,
       height: 160,
       borderRadius: 80,
-      backgroundColor: '#f8f9fa',
+      backgroundColor: colors.colorBackground,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: '#e0e0e0',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 2,
-      elevation: 2,
+      borderColor: colors.colorText,
+      borderStyle: 'dashed',
     },
     uploadText: {
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginTop: 8,
       fontSize: 12,
       textAlign: 'center',
@@ -642,7 +694,7 @@ function useStyles(colors, width) {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.colorAction || '#0066FF',
+      backgroundColor: colors.colorAction,
       justifyContent: 'center',
       alignItems: 'center',
       elevation: 5,
@@ -655,7 +707,7 @@ function useStyles(colors, width) {
       shadowRadius: 4,
     },
     formSection: {
-      backgroundColor: '#fff',
+      backgroundColor: colors.colorBorderAndBlock,
       borderRadius: 15,
       padding: 20,
       marginBottom: 20,
@@ -668,8 +720,14 @@ function useStyles(colors, width) {
     sectionHeader: {
       fontSize: 18,
       fontWeight: '700',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginBottom: 20,
+    },
+    subSectionHeader: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.colorText,
+      marginBottom: 15,
     },
     sectionHeaderContainer: {
       flexDirection: 'row',
@@ -684,23 +742,24 @@ function useStyles(colors, width) {
     label: {
       fontSize: 15,
       fontWeight: '600',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginBottom: 8,
     },
     input: {
       borderWidth: 1,
-      borderColor: '#e0e0e0',
+      borderColor: colors.colorText,
       height: (width > 375) ? 50 : 45,
       borderRadius: 12,
       paddingHorizontal: 16,
       fontSize: 15,
-      color: colors.colorText || '#343434',
-      backgroundColor: '#f9f9f9',
+      color: colors.colorText,
+      backgroundColor: colors.colorBackground,
     },
     textArea: {
       height: 100,
       paddingTop: 12,
       paddingBottom: 12,
+      textAlignVertical: 'top',
     },
     priceInputContainer: {
       position: 'relative',
@@ -710,7 +769,25 @@ function useStyles(colors, width) {
       right: 18,
       top: (width > 375) ? 14 : 12,
       fontSize: 16,
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
+      fontWeight: '500',
+    },
+    availabilitySection: {
+      marginTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: colors.colorText,
+      paddingTop: 15,
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 15,
+      paddingHorizontal: 5,
+    },
+    switchLabel: {
+      fontSize: 15,
+      color: colors.colorText,
       fontWeight: '500',
     },
     categoriesSection: {
@@ -719,7 +796,7 @@ function useStyles(colors, width) {
     addButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.colorAction || '#0066FF',
+      backgroundColor: colors.colorAction,
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderRadius: 25,
@@ -736,7 +813,7 @@ function useStyles(colors, width) {
       fontWeight: '600',
     },
     emptyContainer: {
-      backgroundColor: '#fff',
+      backgroundColor: colors.colorBorderAndBlock,
       borderRadius: 15,
       padding: 30,
       alignItems: 'center',
@@ -751,17 +828,17 @@ function useStyles(colors, width) {
     emptyText: {
       fontSize: 16,
       fontWeight: '600',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginTop: 10,
       marginBottom: 8,
     },
     emptySubtext: {
       fontSize: 14,
-      color: '#888',
+      color: colors.colorDetail || '#888',
       textAlign: 'center',
     },
     categoryCard: {
-      backgroundColor: '#fff',
+      backgroundColor: colors.colorBorderAndBlock,
       borderRadius: 15,
       padding: 20,
       marginBottom: 15,
@@ -777,13 +854,13 @@ function useStyles(colors, width) {
       alignItems: 'center',
       marginBottom: 20,
       borderBottomWidth: 1,
-      borderBottomColor: '#f0f0f0',
+      borderBottomColor: colors.colorText,
       paddingBottom: 10,
     },
     categoryTitle: {
       fontSize: 17,
       fontWeight: '700',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
     },
     removeButton: {
       padding: 5,
@@ -791,17 +868,17 @@ function useStyles(colors, width) {
     inputLabel: {
       fontSize: 14,
       fontWeight: '500',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginBottom: 8,
     },
     categoryInput: {
       borderWidth: 1,
-      borderColor: '#e0e0e0',
+      borderColor: colors.colorText,
       height: 45,
       borderRadius: 10,
       paddingHorizontal: 15,
-      color: colors.colorText || '#343434',
-      backgroundColor: '#f9f9f9',
+      color: colors.colorText,
+      backgroundColor: colors.colorBackground,
     },
     checkboxContainer: {
       flexDirection: 'row',
@@ -813,7 +890,7 @@ function useStyles(colors, width) {
       width: 22,
       height: 22,
       borderWidth: 2,
-      borderColor: colors.colorAction || '#0066FF',
+      borderColor: colors.colorAction,
       borderRadius: 5,
       justifyContent: 'center',
       alignItems: 'center',
@@ -821,11 +898,11 @@ function useStyles(colors, width) {
     },
     checkboxLabel: {
       fontSize: 14,
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
     },
     optionsSection: {
       marginTop: 5,
-      backgroundColor: '#f8f9fa',
+      backgroundColor: colors.colorBackground,
       borderRadius: 12,
       padding: 15,
     },
@@ -838,12 +915,12 @@ function useStyles(colors, width) {
     optionsTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
     },
     addOptionButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.colorAction || '#0066FF',
+      backgroundColor: colors.colorAction,
       paddingHorizontal: 10,
       paddingVertical: 6,
       borderRadius: 20,
@@ -854,19 +931,19 @@ function useStyles(colors, width) {
       elevation: 2,
     },
     emptyOptionsContainer: {
-      backgroundColor: '#fff',
+      backgroundColor: colors.colorBorderAndBlock,
       borderRadius: 10,
       padding: 20,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 10,
       borderWidth: 1,
-      borderColor: '#e0e0e0',
+      borderColor: colors.colorText,
       borderStyle: 'dashed',
     },
     emptyOptionsText: {
       fontSize: 14,
-      color: '#888',
+      color: colors.colorText,
       marginBottom: 15,
     },
     emptyAddButton: {
@@ -887,7 +964,7 @@ function useStyles(colors, width) {
       paddingVertical: 10,
     },
     optionCard: {
-      backgroundColor: '#fff',
+      backgroundColor: colors.colorBorderAndBlock,
       borderRadius: 10,
       padding: 15,
       marginBottom: 10,
@@ -906,7 +983,7 @@ function useStyles(colors, width) {
     optionTitle: {
       fontSize: 15,
       fontWeight: '600',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
     },
     removeOptionButton: {
       padding: 3,
@@ -917,17 +994,17 @@ function useStyles(colors, width) {
     optionLabel: {
       fontSize: 13,
       fontWeight: '500',
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       marginBottom: 6,
     },
     optionInput: {
       borderWidth: 1,
-      borderColor: '#e0e0e0',
+      borderColor: colors.colorText,
       height: 40,
       borderRadius: 8,
       paddingHorizontal: 12,
-      color: colors.colorText || '#343434',
-      backgroundColor: '#f9f9f9',
+      color: colors.colorText,
+      backgroundColor: colors.colorBackground,
     },
     optionPriceContainer: {
       position: 'relative',
@@ -937,16 +1014,16 @@ function useStyles(colors, width) {
       right: 14,
       top: 10,
       fontSize: 15,
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
     },
     priceHint: {
       fontSize: 12,
-      color: '#777',
+      color: colors.colorDetail || '#777',
       marginTop: 4,
     },
     submitButton: {
       flexDirection: 'row',
-      backgroundColor: colors.colorAction || '#0066FF',
+      backgroundColor: colors.colorAction,
       height: 55,
       borderRadius: 15,
       justifyContent: 'center',
@@ -974,7 +1051,7 @@ function useStyles(colors, width) {
       alignItems: 'center',
     },
     loadingContainer: {
-      backgroundColor: 'white',
+      backgroundColor: colors.colorBackground,
       padding: 25,
       borderRadius: 15,
       alignItems: 'center',
@@ -987,7 +1064,7 @@ function useStyles(colors, width) {
     loadingText: {
       marginTop: 15,
       fontSize: 16,
-      color: colors.colorText || '#343434',
+      color: colors.colorText,
       fontWeight: '500',
     },
     placeholderColor: '#aaa',

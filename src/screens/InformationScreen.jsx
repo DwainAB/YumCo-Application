@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, Modal, TextInput, Platform, KeyboardAvoidingView, Keyboard } from "react-native";
+import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, Modal, ScrollView, TextInput, Platform, KeyboardAvoidingView, Keyboard } from "react-native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
@@ -8,11 +8,17 @@ import { useWindowDimensions } from "react-native";
 import * as Haptics from 'expo-haptics';
 import { supabase } from "../lib/supabase";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import HoursModal from "../components/Modals/HoursModal"; // Importez le composant modal
+import { useNavigation } from '@react-navigation/native';
 
 const InformationScreen = () => {
     const [isEnabled, setIsEnabled] = useState(false);
     const [pickupEnabled, setPickupEnabled] = useState(false);
-    const [deliveryEnabled, setDeliveryEnabled] = useState(false);
+    const [middayDeliveryEnabled, setMiddayDeliveryEnabled] = useState(false);
+    const [eveningDeliveryEnabled, setEveningDeliveryEnabled] = useState(false);
+    const [reservationEnabled, setReservationEnabled] = useState(false);
+    const [allYouCanEatEnabled, setAllYouCanEatEnabled] = useState(false); // Nouvel état pour "All you can eat"
+    const [aLaCarteEnabled, setALaCarteEnabled] = useState(false); // Nouvel état pour "À la carte"
     const [restaurantId, setRestaurantId] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
@@ -20,14 +26,18 @@ const InformationScreen = () => {
     const [isPhoneModalVisible, setIsPhoneModalVisible] = useState(false);
     const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
     const [isPrepTimeModalVisible, setIsPrepTimeModalVisible] = useState(false);
+    const [isHoursModalVisible, setIsHoursModalVisible] = useState(false); // État pour le modal des horaires
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPreparationTime, setNewPreparationTime] = useState('15');
     const [keyboardVisible, setKeyboardVisible] = useState(false);
-    
+    const [maxDeliveryKm, setMaxDeliveryKm] = useState(5);
+    const [isMaxDeliveryKmModalVisible, setIsMaxDeliveryKmModalVisible] = useState(false);
+    const [newMaxDeliveryKm, setNewMaxDeliveryKm] = useState('5');
     const { t } = useTranslation();
     const { colors } = useColors();
     const styles = useStyles();
+    const navigation = useNavigation();
 
     useEffect(() => {
         const fetchRestaurantId = async () => {
@@ -67,7 +77,7 @@ const InformationScreen = () => {
         try {
             const { data, error } = await supabase
                 .from('restaurants')
-                .select('accept_orders, pickup_option, delivery_option, phone, email, preparation_time')
+                .select('accept_orders, pickup_option, "midday_delivery", "evening_delivery", reservation_option, phone, email, preparation_time, max_delivery_kilometer, all_you_can_eat_option, a_la_carte')
                 .eq('id', id)
                 .single();
 
@@ -76,16 +86,55 @@ const InformationScreen = () => {
             if (data) {
                 setIsEnabled(data.accept_orders);
                 setPickupEnabled(data.pickup_option);
-                setDeliveryEnabled(data.delivery_option);
+                setMiddayDeliveryEnabled(data["midday_delivery"]);
+                setEveningDeliveryEnabled(data["evening_delivery"]);
+                setReservationEnabled(data.reservation_option || false);
+                setAllYouCanEatEnabled(data.all_you_can_eat_option || false); // Initialisation de l'état "All you can eat"
+                setALaCarteEnabled(data.a_la_carte || false); // Initialisation de l'état "À la carte"
                 setPhoneNumber(data.phone || '');
                 setNewPhoneNumber(data.phone || '');
                 setEmail(data.email || '');
                 setNewEmail(data.email || '');
                 setPreparationTime(data.preparation_time || 15);
                 setNewPreparationTime(String(data.preparation_time || 15));
+                setMaxDeliveryKm(data.max_delivery_kilometer || 5);
+                setNewMaxDeliveryKm(String(data.max_delivery_kilometer || 5));
             }
         } catch (error) {
             console.error('Erreur lors de la récupération du status:', error);
+        }
+    };
+
+    const updateMaxDeliveryKm = async () => {
+        try {
+            Haptics.selectionAsync();
+            
+            const maxKm = parseFloat(newMaxDeliveryKm.replace(',', '.'));
+            if (isNaN(maxKm) || maxKm < 0.1) {
+                Alert.alert(
+                    t('Invalid distance'),
+                    t('Please enter a valid delivery distance')
+                );
+                return;
+            }
+            
+            const { data, error } = await supabase
+                .from('restaurants')
+                .update({ max_delivery_kilometer: maxKm })
+                .eq('id', restaurantId);
+    
+            if (error) throw error;
+    
+            setMaxDeliveryKm(maxKm);
+            setIsMaxDeliveryKmModalVisible(false);
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success
+            );
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de la distance de livraison:', error);
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Error
+            );
         }
     };
 
@@ -105,8 +154,20 @@ const InformationScreen = () => {
                 case 'pickup_option':
                     setPickupEnabled(newStatus);
                     break;
-                case 'delivery_option':
-                    setDeliveryEnabled(newStatus);
+                case 'midday_delivery':
+                    setMiddayDeliveryEnabled(newStatus);
+                    break;
+                case 'evening_delivery':
+                    setEveningDeliveryEnabled(newStatus);
+                    break;
+                case 'reservation_option':
+                    setReservationEnabled(newStatus);
+                    break;
+                case 'all_you_can_eat_option':
+                    setAllYouCanEatEnabled(newStatus);
+                    break;
+                case 'a_la_carte':
+                    setALaCarteEnabled(newStatus);
                     break;
             }
             
@@ -210,25 +271,53 @@ const InformationScreen = () => {
         
         switch(type) {
             case 'orders':
-                title = newStatus ? t('Enable orders') : t('Disable orders');
+                title = newStatus ? t('enable') : t('disable');
                 message = newStatus 
                     ? t('Are you sure you want to enable orders?')
                     : t('Are you sure you want to disable orders? This will prevent new orders from coming in.');
                 field = 'accept_orders';
                 break;
             case 'pickup':
-                title = newStatus ? t('Enable pickup') : t('Disable pickup');
+                title = newStatus ? t('enable') : t('disable');
                 message = newStatus
                     ? t('Are you sure you want to enable pickup orders?')
                     : t('Are you sure you want to disable pickup orders?');
                 field = 'pickup_option';
                 break;
-            case 'delivery':
-                title = newStatus ? t('Enable delivery') : t('Disable delivery');
+            case 'midday_delivery':
+                title = newStatus ? t('enable') : t('disable');
                 message = newStatus
-                    ? t('Are you sure you want to enable delivery orders?')
-                    : t('Are you sure you want to disable delivery orders?');
-                field = 'delivery_option';
+                    ? t('confirm_enable_lunch_delivery')
+                    : t('confirm_disable_lunch_delivery');
+                field = 'midday_delivery';
+                break;
+            case 'evening_delivery':
+                title = newStatus ? t('enable') : t('disable');
+                message = newStatus
+                    ? t('confirm_enable_dinner_delivery')
+                    : t('confirm_disable_dinner_delivery');
+                field = 'evening_delivery';
+                break;
+            case 'reservation':
+                title = newStatus ? t('enable') : t('disable');
+                message = newStatus
+                    ? t('Are you sure you want to enable reservations?')
+                    : t('Are you sure you want to disable reservations? This will prevent new reservations from coming in.');
+                field = 'reservation_option';
+                break;
+            case 'all_you_can_eat_option':
+                title = newStatus ? t('enable') : t('disable');
+                message = newStatus
+                    ? t('Are you sure you want to enable All You Can Eat service?')
+                    : t('Are you sure you want to disable All You Can Eat service?');
+                field = 'all_you_can_eat_option';
+                break;
+            case 'a_la_carte':
+                title = newStatus ? t('enable') : t('disable');
+                message = newStatus
+                    ? t('Are you sure you want to enable À la carte service?')
+                    : t('Are you sure you want to disable À la carte service?');
+                field = 'a_la_carte';
                 break;
         }
 
@@ -296,7 +385,11 @@ const InformationScreen = () => {
                 navigateTo="SettingPage"
             />
             
-            <View style={styles.content}>
+            <ScrollView 
+                style={styles.content}
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={{ paddingBottom: 30 }} 
+            >
                 <Text style={[styles.sectionHeader, { color: colors.colorText }]}>
                     {t('Contact')}
                 </Text>
@@ -314,12 +407,97 @@ const InformationScreen = () => {
                     </View>
                     <View style={styles.settingContainer}>
                         <ContactInfoRow
-                            title={t('Email')}
+                            title={t('email')}
                             value={email}
                             onPress={() => {
                                 Haptics.selectionAsync();
                                 setIsEmailModalVisible(true);
                             }}
+                        />
+                    </View>
+                </View>
+
+                <Text style={[styles.sectionHeader, { color: colors.colorText }]}>
+                    {t('schedules')}
+                </Text>
+                
+                <View style={[styles.card, { backgroundColor: colors.colorBorderAndBlock }]}>
+                    <TouchableOpacity 
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setIsHoursModalVisible(true);
+                        }}
+                        style={styles.settingContainer}
+                    >
+                        <View style={styles.phoneRow}>
+                            <View>
+                                <Text style={[styles.settingTitle, { color: colors.colorText }]}>
+                                    {t('opening_hours')}
+                                </Text>
+                                <Text style={[styles.settingDescription, { color: colors.colorDetail }]}>
+                                    {t('set_opening_hours')}
+                                </Text>
+                            </View>
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    Haptics.selectionAsync();
+                                    setIsHoursModalVisible(true);
+                                }}
+                                style={[styles.editButton, { backgroundColor: colors.colorAction }]}
+                            >
+                                <Icon name="clock-outline" size={20} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Nouvelle section: Commande sur place */}
+                <Text style={[styles.sectionHeader, { color: colors.colorText }]}>
+                    {t('Commande sur place')}
+                </Text>
+                
+                <View style={[styles.card, { backgroundColor: colors.colorBorderAndBlock }]}>
+                    <View style={[styles.settingContainer, styles.borderBottom]}>
+                        <SettingRow
+                            title={t('all_you_can_eat')}
+                            description={allYouCanEatEnabled ? t('all_you_can_eat_enabled') : t('all_you_can_eat_disabled')}
+                            value={allYouCanEatEnabled}
+                            onToggle={() => handleToggle('all_you_can_eat_option', allYouCanEatEnabled)}
+                        />
+                        {allYouCanEatEnabled && (
+                            <TouchableOpacity 
+                                style={[styles.manageButton, { backgroundColor: colors.colorAction }]}
+                                onPress={() => {
+                                    Haptics.selectionAsync();
+                                    navigation.navigate('allYouCanEatSetting', { restaurantId });
+                                }}
+                            >
+                                <Text style={styles.manageButtonText}>{t('configure_menu_type')}</Text>
+                                <Icon name="arrow-right" size={18} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                    <View style={styles.settingContainer}>
+                        <SettingRow
+                            title={t('a_la_carte')}
+                            description={aLaCarteEnabled ? t('a_la_carte_enabled') : t('a_la_carte_disabled')}
+                            value={aLaCarteEnabled}
+                            onToggle={() => handleToggle('a_la_carte', aLaCarteEnabled)}
+                        />
+                    </View>
+                </View>
+
+                <Text style={[styles.sectionHeader, { color: colors.colorText }]}>
+                    {t('reservation')}
+                </Text>
+                
+                <View style={[styles.card, { backgroundColor: colors.colorBorderAndBlock }]}>
+                    <View style={styles.settingContainer}>
+                        <SettingRow
+                            title={t('enable_reservations')}
+                            description={reservationEnabled ? t('reservation_enabled') : t('reservation_disabled')}
+                            value={reservationEnabled}
+                            onToggle={() => handleToggle('reservation', reservationEnabled)}
                         />
                     </View>
                 </View>
@@ -349,10 +527,19 @@ const InformationScreen = () => {
 
                     <View style={[styles.settingContainer, styles.borderBottom]}>
                         <SettingRow
-                            title={t('Delivery orders')}
-                            description={deliveryEnabled ? t('Delivery is enabled') : t('Delivery is disabled')}
-                            value={deliveryEnabled}
-                            onToggle={() => handleToggle('delivery', deliveryEnabled)}
+                            title={t('lunch_delivery_service')}
+                            description={middayDeliveryEnabled ? t('enable') : t('disable')}
+                            value={middayDeliveryEnabled}
+                            onToggle={() => handleToggle('midday_delivery', middayDeliveryEnabled)}
+                        />
+                    </View>
+
+                    <View style={[styles.settingContainer, styles.borderBottom]}>
+                        <SettingRow
+                            title={t('dinner_delivery_service')}
+                            description={eveningDeliveryEnabled ? t('enable') : t('disable')}
+                            value={eveningDeliveryEnabled}
+                            onToggle={() => handleToggle('evening_delivery', eveningDeliveryEnabled)}
                         />
                     </View>
 
@@ -377,148 +564,234 @@ const InformationScreen = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
+                    <View style={[styles.settingContainer]}>
+                        <View style={styles.phoneRow}>
+                            <View>
+                                <Text style={[styles.settingTitle, { color: colors.colorText }]}>
+                                    {t('max_delivery_distance')}
+                                </Text>
+                                <Text style={[styles.settingDescription, { color: colors.colorDetail }]}>
+                                    {maxDeliveryKm} {t('kilometers')}
+                                </Text>
+                            </View>
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    Haptics.selectionAsync();
+                                    setIsMaxDeliveryKmModalVisible(true);
+                                }}
+                                style={[styles.editButton, { backgroundColor: colors.colorAction }]}
+                            >
+                                <Icon name="pencil" size={20} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
+            </ScrollView>
 
-                <Modal
-                    visible={isPhoneModalVisible}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setIsPhoneModalVisible(false)}
-                >
-                    <View style={styles.modalContainer}>
-                        <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
-                            <View style={styles.modalHeader}>
-                                <Text style={[styles.modalTitle, { color: colors.colorText }]}>
-                                    {t('Edit phone number')}
-                                </Text>
-                                <TouchableOpacity 
-                                    onPress={() => setIsPhoneModalVisible(false)}
-                                    style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
-                                >
-                                    <Icon name="close" size={24} color={colors.colorText} />
-                                </TouchableOpacity>
-                            </View>
-
-                            <TextInput
-                                style={[styles.input, { 
-                                    backgroundColor: colors.colorBorderAndBlock,
-                                    color: colors.colorText
-                                }]}
-                                value={newPhoneNumber}
-                                onChangeText={setNewPhoneNumber}
-                                placeholder={t('Enter phone number')}
-                                placeholderTextColor={colors.colorDetail}
-                                keyboardType="phone-pad"
-                            />
-
+            {/* Modal pour éditer le numéro de téléphone */}
+            <Modal
+                visible={isPhoneModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsPhoneModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {t('Edit phone number')}
+                            </Text>
                             <TouchableOpacity 
-                                style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
-                                onPress={updatePhoneNumber}
+                                onPress={() => setIsPhoneModalVisible(false)}
+                                style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
                             >
-                                <Text style={styles.saveButtonText}>{t('Save')}</Text>
+                                <Icon name="close" size={24} color={colors.colorText} />
                             </TouchableOpacity>
                         </View>
-                    </View>
-                </Modal>
 
-                <Modal
-                    visible={isEmailModalVisible}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setIsEmailModalVisible(false)}
-                >
-                    <View style={styles.modalContainer}>
-                        <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
-                            <View style={styles.modalHeader}>
-                                <Text style={[styles.modalTitle, { color: colors.colorText }]}>
-                                    {t('Edit email')}
-                                </Text>
-                                <TouchableOpacity 
-                                    onPress={() => setIsEmailModalVisible(false)}
-                                    style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
-                                >
-                                    <Icon name="close" size={24} color={colors.colorText} />
-                                </TouchableOpacity>
-                            </View>
+                        <TextInput
+                            style={[styles.input, { 
+                                backgroundColor: colors.colorBorderAndBlock,
+                                color: colors.colorText
+                            }]}
+                            value={newPhoneNumber}
+                            onChangeText={setNewPhoneNumber}
+                            placeholder={t('Enter phone number')}
+                            placeholderTextColor={colors.colorDetail}
+                            keyboardType="phone-pad"
+                        />
 
-                            <TextInput
-                                style={[styles.input, { 
-                                    backgroundColor: colors.colorBorderAndBlock,
-                                    color: colors.colorText
-                                }]}
-                                value={newEmail}
-                                onChangeText={setNewEmail}
-                                placeholder={t('Enter email')}
-                                placeholderTextColor={colors.colorDetail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-
-                            <TouchableOpacity 
-                                style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
-                                onPress={updateEmail}
-                            >
-                                <Text style={styles.saveButtonText}>{t('Save')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
-
-                <Modal
-                    visible={isPrepTimeModalVisible}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setIsPrepTimeModalVisible(false)}
-                >
-                    <KeyboardAvoidingView 
-                        behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={styles.modalContainer}
-                    >
-                        <View 
-                            style={[
-                                styles.modalContent, 
-                                { 
-                                    backgroundColor: colors.colorBackground,
-                                    // Ajustement de la position du modal quand le clavier est visible
-                                    marginTop: keyboardVisible ? '30%' : 'auto'
-                                }
-                            ]}
+                        <TouchableOpacity 
+                            style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
+                            onPress={updatePhoneNumber}
                         >
-                            <View style={styles.modalHeader}>
-                                <Text style={[styles.modalTitle, { color: colors.colorText }]}>
-                                    {t('average_preparation_time')}
-                                </Text>
-                                <TouchableOpacity 
-                                    onPress={() => setIsPrepTimeModalVisible(false)}
-                                    style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
-                                >
-                                    <Icon name="close" size={24} color={colors.colorText} />
-                                </TouchableOpacity>
-                            </View>
+                            <Text style={styles.saveButtonText}>{t('confirm')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
-                            <TextInput
-                                style={[styles.input, { 
-                                    backgroundColor: colors.colorBorderAndBlock,
-                                    color: colors.colorText
-                                }]}
-                                value={newPreparationTime}
-                                onChangeText={setNewPreparationTime}
-                                placeholder={t('minutes')}
-                                placeholderTextColor={colors.colorDetail}
-                                keyboardType="number-pad"
-                                autoFocus={true}
-                            />
-
+            {/* Modal pour éditer l'email */}
+            <Modal
+                visible={isEmailModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsEmailModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {t('Edit email')}
+                            </Text>
                             <TouchableOpacity 
-                                style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
-                                onPress={updatePreparationTime}
+                                onPress={() => setIsEmailModalVisible(false)}
+                                style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
                             >
-                                <Text style={styles.saveButtonText}>{t('Save')}</Text>
+                                <Icon name="close" size={24} color={colors.colorText} />
                             </TouchableOpacity>
                         </View>
-                    </KeyboardAvoidingView>
-                </Modal>
-            </View>
+
+                        <TextInput
+                            style={[styles.input, { 
+                                backgroundColor: colors.colorBorderAndBlock,
+                                color: colors.colorText
+                            }]}
+                            value={newEmail}
+                            onChangeText={setNewEmail}
+                            placeholder={t('Enter email')}
+                            placeholderTextColor={colors.colorDetail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+
+                        <TouchableOpacity 
+                            style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
+                            onPress={updateEmail}
+                        >
+                            <Text style={styles.saveButtonText}>{t('confirm')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal pour le temps de préparation */}
+            <Modal
+                visible={isPrepTimeModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsPrepTimeModalVisible(false)}
+            >
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={styles.modalContainer}
+                >
+                    <View 
+                        style={[
+                            styles.modalContent, 
+                            { 
+                                backgroundColor: colors.colorBackground,
+                                // Ajustement de la position du modal quand le clavier est visible
+                                marginTop: keyboardVisible ? '30%' : 'auto'
+                            }
+                        ]}
+                    >
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {t('average_preparation_time')}
+                            </Text>
+                            <TouchableOpacity 
+                                onPress={() => setIsPrepTimeModalVisible(false)}
+                                style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
+                            >
+                                <Icon name="close" size={24} color={colors.colorText} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TextInput
+                            style={[styles.input, { 
+                                backgroundColor: colors.colorBorderAndBlock,
+                                color: colors.colorText
+                            }]}
+                            value={newPreparationTime}
+                            onChangeText={setNewPreparationTime}
+                            placeholder={t('minutes')}
+                            placeholderTextColor={colors.colorDetail}
+                            keyboardType="number-pad"
+                            autoFocus={true}
+                        />
+
+                        <TouchableOpacity 
+                            style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
+                            onPress={updatePreparationTime}
+                        >
+                            <Text style={styles.saveButtonText}>{t('confirm')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Modal pour la distance de livraison */}
+            <Modal
+                visible={isMaxDeliveryKmModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsMaxDeliveryKmModalVisible(false)}
+            >
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={styles.modalContainer}
+                >
+                    <View 
+                        style={[
+                            styles.modalContent, 
+                            { 
+                                backgroundColor: colors.colorBackground,
+                                marginTop: keyboardVisible ? '30%' : 'auto'
+                            }
+                        ]}
+                    >
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {t('max_delivery_distance')}
+                            </Text>
+                            <TouchableOpacity 
+                                onPress={() => setIsMaxDeliveryKmModalVisible(false)}
+                                style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
+                            >
+                                <Icon name="close" size={24} color={colors.colorText} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TextInput
+                            style={[styles.input, { 
+                                backgroundColor: colors.colorBorderAndBlock,
+                                color: colors.colorText
+                            }]}
+                            value={newMaxDeliveryKm}
+                            onChangeText={setNewMaxDeliveryKm}
+                            placeholder={t('kilometers')}
+                            placeholderTextColor={colors.colorDetail}
+                            keyboardType="numeric"
+                            autoFocus={true}
+                        />
+
+                        <TouchableOpacity 
+                            style={[styles.saveButton, { backgroundColor: colors.colorAction }]}
+                            onPress={updateMaxDeliveryKm}
+                        >
+                            <Text style={styles.saveButtonText}>{t('confirm')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* Modal pour les horaires */}
+            <HoursModal 
+                visible={isHoursModalVisible}
+                onClose={() => setIsHoursModalVisible(false)}
+                restaurantId={restaurantId}
+            />
         </View>
     );
 };
@@ -625,6 +898,19 @@ function useStyles() {
         saveButtonText: {
             color: '#FFFFFF',
             fontSize: width > 375 ? 16 : 14,
+            fontWeight: '600',
+        },
+        manageButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 12,
+            borderRadius: 10,
+            marginTop: 12,
+        },
+        manageButtonText: {
+            color: '#FFFFFF',
+            fontSize: width > 375 ? 14 : 12,
             fontWeight: '600',
         },
     });

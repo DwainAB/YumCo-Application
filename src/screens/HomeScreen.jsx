@@ -38,7 +38,7 @@ function HomeScreen() {
                 const ownerData = JSON.parse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 setUserId(ownerData);
-                console.log('est',ownerData);
+                //console.log('est',ownerData);
             } catch (error) {
                 console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
@@ -70,7 +70,7 @@ function HomeScreen() {
 
                 const orderData = await orderResponse.json();
                 setStatOrder(orderData.data);
-                console.log(orderData.data);
+                //console.log(orderData.data);
 
                 // Appel pour l'analyse du chiffre d'affaires
                 const revenueResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/turnover_analysis', {
@@ -90,7 +90,7 @@ function HomeScreen() {
 
                 const revenueData = await revenueResponse.json();
                 setStatRevenue(revenueData.data);
-                console.log(revenueData.data);
+                //console.log(revenueData.data);
                 
             } catch (error) {
                 console.error('Erreur lors de la récupération des statistiques:', error);

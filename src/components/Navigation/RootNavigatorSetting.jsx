@@ -16,6 +16,8 @@ import PolityPrivacy from '../../screens/PolityPrivacy';
 import FormAddMenu from '../../screens/AddMenuScreen'; 
 import InformationScreen from '../../screens/InformationScreen';
 import EditMenu from '../../screens/EditMenu';
+import TableSettingScreen from '../../screens/TableSettingScreen';
+import AllYouCanEatSettingScreen from '../../screens/AllYouCanEatSettingScreen';
 
 const Stack = createStackNavigator();
 
@@ -39,6 +41,9 @@ const RootNavigatorSetting = () => {
       <Stack.Screen name="InformationScreen" component={InformationScreen} />
       <Stack.Screen name="AddMenu" component={FormAddMenu} />
       <Stack.Screen name="EditMenu" component={EditMenu} />
+      <Stack.Screen name="TableSetting" component={TableSettingScreen} />
+      <Stack.Screen name="allYouCanEatSetting" component={AllYouCanEatSettingScreen} />
+
     </Stack.Navigator>
   );
 };

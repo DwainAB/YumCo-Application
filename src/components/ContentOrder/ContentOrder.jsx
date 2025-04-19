@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -19,6 +19,7 @@ function ContentOrder() {
     const [restaurantId, setRestaurantId] = useState('');
     const [userId, setUserId] = useState('');
     const [lastFetchTime, setLastFetchTime] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
     const { t } = useTranslation();
 
     const navigation = useNavigation();
@@ -58,6 +59,7 @@ function ContentOrder() {
 
     // Orders Fetching
     const fetchOrders = async () => {
+        setIsLoading(true);
         try {
             const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
                 method: 'POST',
@@ -72,14 +74,28 @@ function ContentOrder() {
             const result = await response.json();
             console.log(result);
             
-            
             if (result.success) {
                 setOrders(result.data);
                 filterOrders(selectedFilter, result.data);
+                
+                // Attendre 2 secondes avant de masquer le loader
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 2000);
+            } else {
+                // Attendre 2 secondes avant de masquer le loader même en cas d'erreur
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 2000);
             }
         } catch (error) {
             console.error('Erreur lors de la récupération des commandes:', error.message);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            
+            // Attendre 2 secondes avant de masquer le loader même en cas d'erreur
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 2000);
         }
     };
 
@@ -101,7 +117,8 @@ function ContentOrder() {
         let filtered = ordersToFilter.filter(order => 
             order.status !== "COMPLETED" && 
             order.status !== "CANCELLED" && 
-            order.status !== "DELETED"
+            order.status !== "DELETED" &&
+            order.status !== "IN_PROGRESS"
         );
 
         if (filter !== 'ALL') {
@@ -112,8 +129,12 @@ function ContentOrder() {
     };
 
     useEffect(() => {
-        filterOrders(selectedFilter);
-    }, [orders, selectedFilter]);
+        // Ne filtrer que si nous ne sommes pas en train de charger les données
+        // Cela évite le clignotement entre "Pas de commandes" et les commandes réelles
+        if (!isLoading) {
+            filterOrders(selectedFilter);
+        }
+    }, [orders, selectedFilter, isLoading]);
 
     // Update Notification Token
     const updateNotificationToken = async (token) => {
@@ -308,19 +329,33 @@ function ContentOrder() {
                 <FilterButton title={t('takeaway')} value="PICKUP" />
             </View>
 
-            <FlatList
-                data={filteredOrders}
-                renderItem={renderOrderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.ordersList}
-                showsVerticalScrollIndicator={false}
-                refreshing={refreshing}
-                onRefresh={async () => {
-                    setRefreshing(true);
-                    await fetchOrders();
-                    setRefreshing(false);
-                }}
-            />
+            {isLoading && !refreshing ? (
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={colors.colorAction} />
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredOrders}
+                    renderItem={renderOrderItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.ordersList}
+                    showsVerticalScrollIndicator={false}
+                    refreshing={refreshing}
+                    onRefresh={async () => {
+                        setRefreshing(true);
+                        await fetchOrders();
+                        setRefreshing(false);
+                    }}
+                    ListEmptyComponent={() => (
+                        <View style={styles.emptyContainer}>
+                            <Icon name="receipt-text-outline" size={50} color={colors.colorBorderAndBlock} />
+                            <Text style={[styles.emptyText, { color: colors.colorText }]}>
+                                {t('no_orders')}
+                            </Text>
+                        </View>
+                    )}
+                />
+            )}
 
             <TouchableOpacity 
                 style={[styles.historyButton, { backgroundColor: colors.colorAction }]}
@@ -440,6 +475,30 @@ function useStyles() {
             borderRadius: 4,
             padding: 4,
             marginRight: 4
+        },
+        // Styles pour le loader
+        loaderContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingBottom: 80,
+        },
+        loaderText: {
+            marginTop: 12,
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '500',
+        },
+        // Style pour afficher un message quand il n'y a pas de commandes
+        emptyContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingTop: 50,
+        },
+        emptyText: {
+            marginTop: 12,
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '500',
         }
     });
 }

@@ -225,6 +225,8 @@ function FormUpdate() {
                     image_url: foodData?.imageURI ? foodData.imageURI.uri : baseFoodData.image_url,
                     is_available: foodData?.is_available !== undefined ? foodData.is_available : baseFoodData.is_available,
                     category_id: foodData?.category_id !== undefined ? Number(foodData.category_id) : Number(baseFoodData.category_id),
+                    available_online: foodData?.available_online !== undefined ? foodData.available_online : baseFoodData.available_online,
+                    available_onsite: foodData?.available_onsite !== undefined ? foodData.available_onsite : baseFoodData.available_onsite,
                 })
                 .eq('id', selectedFood.id);
     
@@ -339,7 +341,6 @@ function FormUpdate() {
     };
     
     const handleProductPress = (food) => {
-
         if (userRole === 'USER') {
             // Si c'est un utilisateur normal, ne pas autoriser la modification
             return;
@@ -356,6 +357,8 @@ function FormUpdate() {
                 imageURI: food.image_url ? { uri: food.image_url } : null,
                 is_available: food.is_available,
                 category_id: food.category_id,
+                available_online: food.available_online || false, // Ajout du nouveau champ
+                available_onsite: food.available_onsite || false, // Ajout du nouveau champ
             }
         });
     };
@@ -750,6 +753,71 @@ function FormUpdate() {
                                         {
                                             transform: [{
                                                 translateX: (editableFoods[selectedFood.id]?.is_available ?? selectedFood.is_available)
+                                                    ? 20
+                                                    : 0
+                                            }]
+                                        }
+                                    ]} />
+                                </TouchableOpacity>
+                            </View>
+                            {/* Toggle pour disponible en ligne */}
+                            <View style={styles.switchContainer}>
+                                <Text style={[styles.switchLabel, { color: colors.colorText }]}>
+                                    {t('show_online')}
+                                </Text>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.switchButton,
+                                        {
+                                            backgroundColor: (editableFoods[selectedFood.id]?.available_online ?? selectedFood.available_online)
+                                                ? '#4CAF50'
+                                                : '#FF4444'
+                                        }
+                                    ]}
+                                    onPress={() => handleInputChange(
+                                        selectedFood.id,
+                                        !(editableFoods[selectedFood.id]?.available_online ?? selectedFood.available_online),
+                                        'available_online'
+                                    )}
+                                >
+                                    <View style={[
+                                        styles.switchKnob,
+                                        {
+                                            transform: [{
+                                                translateX: (editableFoods[selectedFood.id]?.available_online ?? selectedFood.available_online)
+                                                    ? 20
+                                                    : 0
+                                            }]
+                                        }
+                                    ]} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Toggle pour disponible sur place */}
+                            <View style={styles.switchContainer}>
+                                <Text style={[styles.switchLabel, { color: colors.colorText }]}>
+                                    {t('show_on_site')}
+                                </Text>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.switchButton,
+                                        {
+                                            backgroundColor: (editableFoods[selectedFood.id]?.available_onsite ?? selectedFood.available_onsite)
+                                                ? '#4CAF50'
+                                                : '#FF4444'
+                                        }
+                                    ]}
+                                    onPress={() => handleInputChange(
+                                        selectedFood.id,
+                                        !(editableFoods[selectedFood.id]?.available_onsite ?? selectedFood.available_onsite),
+                                        'available_onsite'
+                                    )}
+                                >
+                                    <View style={[
+                                        styles.switchKnob,
+                                        {
+                                            transform: [{
+                                                translateX: (editableFoods[selectedFood.id]?.available_onsite ?? selectedFood.available_onsite)
                                                     ? 20
                                                     : 0
                                             }]

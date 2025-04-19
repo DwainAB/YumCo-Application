@@ -145,6 +145,8 @@ export default function EditMenu() {
                 price: menu.price.toString(),
                 imageURI: menu.image_url ? { uri: menu.image_url } : null,
                 is_active: menu.is_active,
+                available_online: menu.available_online || false, // Ajout du nouveau champ
+                available_onsite: menu.available_onsite || false,
                 categories: [...menu.categories] // Copie profonde des catégories
             }
         });
@@ -548,6 +550,8 @@ const handleDeleteOption = (categoryIndex, optionIndex) => {
                     description: menuData.description,
                     price: parseFloat(menuData.price),
                     is_active: menuData.is_active,
+                    available_online: menuData.available_online, 
+                    available_onsite: menuData.available_onsite,
                     image_url: menuData.imageURI ? menuData.imageURI.uri : null
                 },
                 categories: []
@@ -1369,6 +1373,71 @@ const handleDeleteOption = (categoryIndex, optionIndex) => {
                                         {
                                             transform: [{
                                                 translateX: (editableMenus[selectedMenu.id]?.is_active ?? selectedMenu.is_active)
+                                                    ? 20
+                                                    : 0
+                                            }]
+                                        }
+                                    ]} />
+                                </TouchableOpacity>
+                            </View>
+                            {/* Toggle pour disponible en ligne */}
+                            <View style={styles.switchContainer}>
+                                <Text style={[styles.switchLabel, { color: colors.colorText }]}>
+                                    {t('show_online')}
+                                </Text>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.switchButton,
+                                        {
+                                            backgroundColor: (editableMenus[selectedMenu.id]?.available_online ?? selectedMenu.available_online)
+                                                ? '#4CAF50'
+                                                : '#FF4444'
+                                        }
+                                    ]}
+                                    onPress={() => handleInputChange(
+                                        selectedMenu.id,
+                                        !(editableMenus[selectedMenu.id]?.available_online ?? selectedMenu.available_online),
+                                        'available_online'
+                                    )}
+                                >
+                                    <View style={[
+                                        styles.switchKnob,
+                                        {
+                                            transform: [{
+                                                translateX: (editableMenus[selectedMenu.id]?.available_online ?? selectedMenu.available_online)
+                                                    ? 20
+                                                    : 0
+                                            }]
+                                        }
+                                    ]} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Toggle pour disponible sur place */}
+                            <View style={styles.switchContainer}>
+                                <Text style={[styles.switchLabel, { color: colors.colorText }]}>
+                                    {t('show_on_site')}
+                                </Text>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.switchButton,
+                                        {
+                                            backgroundColor: (editableMenus[selectedMenu.id]?.available_onsite ?? selectedMenu.available_onsite)
+                                                ? '#4CAF50'
+                                                : '#FF4444'
+                                        }
+                                    ]}
+                                    onPress={() => handleInputChange(
+                                        selectedMenu.id,
+                                        !(editableMenus[selectedMenu.id]?.available_onsite ?? selectedMenu.available_onsite),
+                                        'available_onsite'
+                                    )}
+                                >
+                                    <View style={[
+                                        styles.switchKnob,
+                                        {
+                                            transform: [{
+                                                translateX: (editableMenus[selectedMenu.id]?.available_onsite ?? selectedMenu.available_onsite)
                                                     ? 20
                                                     : 0
                                             }]

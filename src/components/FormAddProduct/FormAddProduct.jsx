@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Switch } from "react-native";
 import {launchImageLibraryAsync, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -26,6 +26,8 @@ function FormAddProduct() {
         category: "",
         is_available: true,
         is_deleted: false,
+        available_online: false,  // Ajout du nouveau champ
+        available_onsite: false,  // Ajout du nouveau champ
     });
 
     useEffect(() => {
@@ -105,7 +107,9 @@ function FormAddProduct() {
                     category_id: productData.category,
                     restaurant_id: restaurantId,
                     is_available: productData.is_available,
-                    is_deleted: productData.is_deleted
+                    is_deleted: productData.is_deleted,
+                    available_online: productData.available_online,  // Ajout du nouveau champ
+                    available_onsite: productData.available_onsite,  // Ajout du nouveau champ
                 }])
                 .select();
     
@@ -129,6 +133,8 @@ function FormAddProduct() {
             category: "",
             is_available: true,
             is_deleted: false,
+            available_online: false,  // Réinitialisation des nouveaux champs
+            available_onsite: false,  // Réinitialisation des nouveaux champs
         });
         pickerKey.current += 1;
     };
@@ -140,6 +146,15 @@ function FormAddProduct() {
         if (regex.test(convertedValue) || convertedValue === '') {
             setProductData({ ...productData, price: convertedValue });
         }
+    };
+    
+    // Toggle handlers pour les nouvelles options
+    const toggleAvailableOnline = () => {
+        setProductData({ ...productData, available_online: !productData.available_online });
+    };
+    
+    const toggleAvailableOnsite = () => {
+        setProductData({ ...productData, available_onsite: !productData.available_onsite });
     };
     
     //Upload de l'image
@@ -255,6 +270,33 @@ function FormAddProduct() {
                     keyboardType="numeric"
                 />
 
+                {/* Nouvelles options de disponibilité avec toggles */}
+                <View style={styles.toggleContainer}>
+                    <Text style={[styles.label, {color: colors.colorText, marginLeft: 0}]}>{t('availability')}</Text>
+                    
+                    <View style={styles.toggleOption}>
+                        <Text style={[styles.toggleLabel, {color: colors.colorText}]}>{t('show_online')}</Text>
+                        <Switch
+                            trackColor={{ false: "#767577", true: colors.colorAction }}
+                            thumbColor={productData.available_online ? "#ffffff" : "#f4f3f4"}
+                            ios_backgroundColor="#3e3e3e"
+                            onValueChange={toggleAvailableOnline}
+                            value={productData.available_online}
+                        />
+                    </View>
+                    
+                    <View style={styles.toggleOption}>
+                        <Text style={[styles.toggleLabel, {color: colors.colorText}]}>{t('show_on_site')}</Text>
+                        <Switch
+                            trackColor={{ false: "#767577", true: colors.colorAction }}
+                            thumbColor={productData.available_onsite ? "#ffffff" : "#f4f3f4"}
+                            ios_backgroundColor="#3e3e3e"
+                            onValueChange={toggleAvailableOnsite}
+                            value={productData.available_onsite}
+                        />
+                    </View>
+                </View>
+
                 <TouchableOpacity 
                     style={[styles.buttonAddProduct, {backgroundColor: colors.colorAction}]} 
                     onPress={handleSubmit}
@@ -266,7 +308,6 @@ function FormAddProduct() {
     );
 }
 
-// Les styles restent identiques à votre code original
 function useStyles(){
     const {width} = useWindowDimensions();
 
@@ -380,6 +421,21 @@ function useStyles(){
             shadowOpacity: 0.25,
             shadowRadius: 3.84,
         },
+        // Styles pour les nouveaux toggles
+        toggleContainer: {
+            marginHorizontal: 30,
+            marginTop: 10,
+        },
+        toggleOption: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 15,
+        },
+        toggleLabel: {
+            fontSize: 16,
+            fontWeight: '500',
+        }
     });
 }
 

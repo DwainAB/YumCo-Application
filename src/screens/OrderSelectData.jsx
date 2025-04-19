@@ -48,6 +48,10 @@ function OrderSelectData() {
  const [isPrinting, setIsPrinting] = useState(false);
  const [restaurantId, setRestaurantId] = useState(null);
  const [restaurantName, setRestaurantName] = useState('RESTAURANT');
+ const [expandedMenus, setExpandedMenus] = useState({});
+
+ // Vérifier si la commande est de type ON_SITE
+ const isOnSite = order.client_method === "Sur place";
 
  useEffect(() => {
   const fetchRestaurantId = async () => {
@@ -107,26 +111,68 @@ function OrderSelectData() {
 
  const fetchPreparer = async (preparingById) => {
   try {
+    // Si l'ID est vide ou invalide, ne pas faire la requête
+    if (!preparingById || preparingById.length < 5) {
+      console.log('ID préparateur invalide ou vide');
+      return;
+    }
+    
     const { data, error } = await supabase
       .from('owners')
       .select('first_name, last_name')
       .eq('id', preparingById)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Gérer l'erreur silencieusement pour éviter de bloquer l'UI
+      console.error('Erreur lors de la récupération du préparateur:', error);
+      
+      // Utiliser une valeur par défaut
+      setPreparer({ 
+        first_name: '',
+        last_name: 'Préparateur inconnu' 
+      });
+      return;
+    }
     
-    setPreparer(data);
+    if (data) {
+      setPreparer(data);
+    } else {
+      // Aucun résultat trouvé
+      setPreparer({ 
+        first_name: '',
+        last_name: 'Préparateur inconnu' 
+      });
+    }
   } catch (error) {
     console.error('Erreur lors de la récupération du préparateur:', error);
+    // Utiliser une valeur par défaut en cas d'erreur
+    setPreparer({ 
+      first_name: '',
+      last_name: 'Préparateur inconnu' 
+    });
   }
 };
 
-// Appeler fetchPreparer quand la commande est chargée
+// Gestion du préparateur
 useEffect(() => {
-  if (order?.preparing_by) {
-    fetchPreparer(order.preparing_by);
+  // Vérifier si preparing_by est un UUID ou directement un nom
+  if (order?.preparing_by && !isOnSite) {
+    // Vérifier si preparing_by ressemble à un UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (uuidRegex.test(order.preparing_by)) {
+      // Si c'est un UUID, fetch les données du préparateur
+      fetchPreparer(order.preparing_by);
+    } else {
+      // Si c'est déjà un nom formaté, l'utiliser directement
+      setPreparer({ 
+        first_name: '',
+        last_name: order.preparing_by 
+      });
+    }
   }
-}, [order]);
+}, [order, isOnSite]);
 
  const handleDelete = async () => {
    try {
@@ -217,10 +263,83 @@ useEffect(() => {
   }
 };
 
- // Fonction pour créer le HTML du ticket optimisé pour imprimantes thermiques
- const createReceiptHTML = () => {
+const createReceiptHTML = () => {
   const date = new Date().toLocaleString('fr-FR');
   const total = order.amount_total;
+  const menuGroups = groupMenuOptions();
+  
+  // Fonction pour générer le HTML des items (produits et menus)
+  const generateItemsHTML = () => {
+    let html = '';
+    
+    // D'abord, afficher tous les produits standards (sans menu_id)
+    const regularProducts = order.orders.filter(item => !item.menu_id);
+    regularProducts.forEach(item => {
+      const itemPrice = item.subtotal ? item.subtotal.toFixed(2) : (item.product_price * item.order_quantity).toFixed(2);
+      html += `
+        <div class="item">
+          <span>${item.order_quantity || item.quantity}x ${item.name || item.product_name}</span>
+          <span>${itemPrice}€</span>
+        </div>
+        ${item.comment ? `<p class="small" style="margin-left: 8px; font-style: italic;">Note: ${item.comment}</p>` : ''}
+      `;
+    });
+    
+    // Ensuite, afficher tous les menus avec leurs options
+    Object.values(menuGroups).forEach(menuGroup => {
+      const menuItem = menuGroup.menuItem;
+      const menuPrice = menuItem.subtotal ? menuItem.subtotal.toFixed(2) : (menuItem.product_price * menuItem.order_quantity).toFixed(2);
+      html += `
+        <div class="item">
+          <span>${menuItem.order_quantity || menuItem.quantity}x ${menuItem.name || menuItem.product_name} (MENU)</span>
+          <span>${menuPrice}€</span>
+        </div>
+        ${menuItem.comment ? `<p class="small" style="margin-left: 8px; font-style: italic;">Note: ${menuItem.comment}</p>` : ''}
+      `;
+      
+      // Afficher les options du menu avec indentation
+      if (menuGroup.options && menuGroup.options.length > 0) {
+        menuGroup.options.forEach(option => {
+          html += `
+            <div class="item" style="margin-left: 12px; font-size: 10px;">
+              <span>• ${option.name}</span>
+              ${option.unit_price > 0 ? `<span>+${option.unit_price.toFixed(2)}€</span>` : ''}
+            </div>
+          `;
+        });
+      }
+    });
+    
+    return html;
+  };
+  
+  // Adapter le contenu du ticket selon le type de commande
+  let customerInfoSection = '';
+  if (!isOnSite) {
+    customerInfoSection = `
+      <div class="customer-info">
+        <p><b>${t("customer_information")}:</b></p>
+        <p>${order.client_firstname} ${order.client_lastname}</p>
+        ${order.client_phone ? `<p>Tel: ${order.client_phone}</p>` : ''}
+        ${order.client_email ? `<p>Email: ${order.client_email}</p>` : ''}
+        
+        ${order.client_address && order.client_address !== "null, null null" ? `
+          <p>Adresse: ${order.client_address}</p>
+        ` : order.client_method === "Livraison" ? `
+          <p><b>Mode:</b> Livraison (adresse non spécifiée)</p>
+        ` : `
+          <p><b>Mode:</b> À emporter</p>
+        `}
+      </div>
+    `;
+  } else if (order.table_number) {
+    // Pour les commandes sur place, montrer le numéro de table
+    customerInfoSection = `
+      <div class="customer-info">
+        <p><b>Table:</b> ${order.table_number}${order.table_location ? ` (${order.table_location})` : ''}</p>
+      </div>
+    `;
+  }
   
   return `
     <!DOCTYPE html>
@@ -273,20 +392,14 @@ useEffect(() => {
       <body>
         <div class="header">
           <h2>${restaurantName}</h2>
-          <p>${order.client_ref_order}</p>
+          ${order.client_ref_order ? `<p>${order.client_ref_order}</p>` : ''}
           <p>${date}</p>
-          <p>${order.client_method === "Livraison" ? "LIVRAISON" : "À EMPORTER"}</p>
+          <p>${isOnSite ? "SUR PLACE" : order.client_method === "Livraison" ? "LIVRAISON" : "À EMPORTER"}</p>
         </div>
         
         <div class="divider"></div>
         
-        ${order.orders.map(item => `
-          <div class="item">
-            <span>${item.quantity}x ${item.name}</span>
-            <span>${item.subtotal.toFixed(2)}€</span>
-          </div>
-          ${item.comment ? `<p class="small" style="margin-left: 8px; font-style: italic;">Note: ${item.comment}</p>` : ''}
-        `).join('')}
+        ${generateItemsHTML()}
         
         <div class="divider"></div>
         
@@ -296,20 +409,7 @@ useEffect(() => {
         
         <div class="divider"></div>
         
-        <div class="customer-info">
-          <p><b>${t("customer_information")}:</b></p>
-          <p>${order.client_firstname} ${order.client_lastname}</p>
-          ${order.client_phone ? `<p>Tel: ${order.client_phone}</p>` : ''}
-          ${order.client_email ? `<p>Email: ${order.client_email}</p>` : ''}
-          
-          ${order.client_address && order.client_address !== "null, null null" ? `
-            <p>Adresse: ${order.client_address}</p>
-          ` : order.client_method === "Livraison" ? `
-            <p><b>Mode:</b> Livraison (adresse non spécifiée)</p>
-          ` : `
-            <p><b>Mode:</b> À emporter</p>
-          `}
-        </div>
+        ${customerInfoSection}
         
         ${order.order_comment ? `
           <div class="divider"></div>
@@ -329,7 +429,172 @@ useEffect(() => {
       </body>
     </html>
   `;
-}; 
+};
+
+const groupMenuOptions = () => {
+  const menuGroups = {};
+  
+  if (!order.orders || !Array.isArray(order.orders)) {
+    return menuGroups;
+  }
+  
+  // Parcourir tous les éléments de commande
+  order.orders.forEach(item => {
+    // Si c'est un menu (a un menu_id)
+    if (item.menu_id) {
+      const menuId = item.id; // Utiliser l'ID de l'item comme identifiant du menu
+      
+      menuGroups[menuId] = {
+        menuItem: item,
+        options: item.options || [] // Utiliser les options déjà incluses dans l'élément
+      };
+    }
+  });
+  
+  return menuGroups;
+};
+
+const toggleMenuExpand = (menuId) => {
+  setExpandedMenus(prev => ({
+    ...prev,
+    [menuId]: !prev[menuId]
+  }));
+};
+
+// Ajouter cette fonction pour initialiser l'état d'expansion des menus dans useEffect
+// Ajouter ces lignes dans le premier useEffect qui récupère le restaurantId
+useEffect(() => {
+  const fetchRestaurantId = async () => {
+      try {
+          const owner = await AsyncStorage.getItem("owner");
+          const ownerData = JSON.parse(owner);                
+          setRestaurantId(ownerData.restaurantId);
+          
+          // Récupérer les informations du restaurant une fois que nous avons l'ID
+          if (ownerData.restaurantId) {
+            fetchRestaurantInfo(ownerData.restaurantId);
+          }
+      } catch (error) {
+          console.error('Erreur récupération utilisateur:', error);
+      }
+  };
+  fetchRestaurantId();
+  
+  // Initialiser l'état d'expansion des menus
+  const menus = groupMenuOptions();
+  const initialExpandState = {};
+  Object.keys(menus).forEach(menuId => {
+    initialExpandState[menuId] = false; // Tous les menus sont initialement fermés
+  });
+  setExpandedMenus(initialExpandState);
+}, []);
+
+// Ajouter ces fonctions pour rendre les menus et les produits standards
+// Fonction pour rendre les menus avec leurs options
+const renderMenuItems = () => {
+  const menuGroups = groupMenuOptions();
+  
+  return Object.entries(menuGroups).map(([menuId, group]) => {
+    const menuItem = group.menuItem;
+    const options = group.options;
+    const isExpanded = expandedMenus[menuId];
+    
+    return (
+      <View key={menuId} style={styles.orderItem}>
+        <TouchableOpacity 
+          style={styles.orderItemHeader}
+          onPress={() => toggleMenuExpand(menuId)}
+        >
+          <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
+            x{menuItem.quantity}
+          </Text>
+          <View style={styles.menuTitleContainer}>
+            <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
+              {menuItem.name}
+            </Text>
+            <View style={styles.menuBadge}>
+              <Text style={styles.menuBadgeText}>MENU</Text>
+            </View>
+          </View>
+          <View style={styles.menuPriceContainer}>
+            <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
+              {menuItem.subtotal ? menuItem.subtotal.toFixed(2) : (menuItem.product_price * menuItem.order_quantity).toFixed(2)}€
+            </Text>
+            <Icon 
+              name={isExpanded ? "chevron-up" : "chevron-down"} 
+              size={20} 
+              color={colors.colorDetail} 
+            />
+          </View>
+        </TouchableOpacity>
+        
+        {menuItem.comment && (
+          <View style={styles.orderItemNote}>
+            <Icon name="note-text-outline" size={16} color={colors.colorAction} />
+            <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
+              {menuItem.comment}
+            </Text>
+          </View>
+        )}
+        
+        {isExpanded && options && options.length > 0 && (
+          <View style={styles.menuOptionsContainer}>
+            {options.map((option, index) => (
+              <View key={index} style={styles.menuOption}>
+                <View style={styles.menuOptionDot} />
+                <Text style={[styles.menuOptionName, {color: colors.colorText}]}>
+                  {option.name}
+                </Text>
+                {option.unit_price > 0 && (
+                  <Text style={[styles.menuOptionPrice, {color: colors.colorDetail}]}>
+                    +{option.unit_price.toFixed(2)}€
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  });
+};
+
+const renderRegularProducts = () => {
+  if (!order.orders || !Array.isArray(order.orders)) {
+    return null;
+  }
+  
+  // Filtrer pour ne prendre que les produits (sans menu_id)
+  const regularProducts = order.orders.filter(item => !item.menu_id);
+  
+  return regularProducts.map((item, index) => (
+    <View key={index} style={styles.orderItem}>
+      <View style={styles.orderItemHeader}>
+        <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
+          x{item.order_quantity || item.quantity}
+        </Text>
+        <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
+          {item.name || item.product_name}
+        </Text>
+        <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
+          {item.subtotal ? item.subtotal.toFixed(2) : (item.product_price * item.order_quantity).toFixed(2)}€
+        </Text>
+      </View>
+      {item.comment && (
+        <View style={styles.orderItemNote}>
+          <Icon name="note-text-outline" size={16} color={colors.colorAction} />
+          <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
+            {item.comment}
+          </Text>
+        </View>
+      )}
+      <Text style={[styles.orderItemUnitPrice, {color: colors.colorDetail}]}>
+        ({item.unit_price ? item.unit_price.toFixed(2) : item.product_price.toFixed(2)}€ {t('units')})
+      </Text>
+    </View>
+  ));
+};
+
 
  return (
    <View style={[styles.container, {backgroundColor: colors.colorBackground}]}>
@@ -344,12 +609,16 @@ useEffect(() => {
          <Text style={[styles.orderRef, {color: colors.colorText}]}>
            {order.client_ref_order}
          </Text>
-         <Icon 
-           name={order.client_method === "Livraison" ? "bike-fast" : "shopping-outline"} 
-           size={24} 
-           color={colors.colorAction} 
-         />
-          <Text style={[styles.orderStatus, {
+         {isOnSite ? (
+           <Icon name="silverware-fork-knife" size={24} color="#FF9500" />
+         ) : (
+           <Icon 
+             name={order.client_method === "Livraison" ? "bike-fast" : "shopping-outline"} 
+             size={24} 
+             color={colors.colorAction} 
+           />
+         )}
+         <Text style={[styles.orderStatus, {
             color: order.payment_status === "PAID" ? "#4CAF50" : colors.colorRed
           }]}>
             {order.payment_status === "PAID" ? t('paid') : t('unpaid')}
@@ -358,30 +627,50 @@ useEffect(() => {
      </View>
 
      <ScrollView style={styles.content}>
-      <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
-        <View style={styles.preparingHeader}>
-          <Icon name="progress-check" size={24} color={colors.colorAction} />
-          <View style={styles.preparingTitleContainer}>
-            <Text style={[styles.preparingTitle, {color: colors.colorText}]}>
-              {t('order_ready')}
-            </Text>
-            <Text style={[styles.preparingTimestamp, {color: colors.colorDetail}]}>
-              {t('finished')}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.preparingInfo, {backgroundColor: colors.colorBackground}]}>
-          <View style={styles.preparingStaffInfo}>
-            <Icon name="account" size={20} color={colors.colorAction} />
-            <Text style={[styles.preparingText, {color: colors.colorDetail}]}>
-              {t('prepared_by')}
-            </Text>
-          </View>
-          <Text style={[styles.preparingName, {color: colors.colorText}]}>
-            {preparer ? `${preparer.first_name} ${preparer.last_name}` : 'Chargement...'}
-          </Text>
-        </View>
-      </View>
+       {/* Section "préparé par" - affichée seulement si ce n'est pas une commande sur place */}
+       {!isOnSite && (
+         <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
+           <View style={styles.preparingHeader}>
+             <Icon name="progress-check" size={24} color={colors.colorAction} />
+             <View style={styles.preparingTitleContainer}>
+               <Text style={[styles.preparingTitle, {color: colors.colorText}]}>
+                 {t('order_ready')}
+               </Text>
+               <Text style={[styles.preparingTimestamp, {color: colors.colorDetail}]}>
+                 {t('finished')}
+               </Text>
+             </View>
+           </View>
+           <View style={[styles.preparingInfo, {backgroundColor: colors.colorBackground}]}>
+             <View style={styles.preparingStaffInfo}>
+               <Icon name="account" size={20} color={colors.colorAction} />
+               <Text style={[styles.preparingText, {color: colors.colorDetail}]}>
+                 {t('prepared_by')}
+               </Text>
+             </View>
+             <Text style={[styles.preparingName, {color: colors.colorText}]}>
+               {preparer 
+                 ? (preparer.first_name ? `${preparer.first_name} ${preparer.last_name}` : preparer.last_name)
+                 : 'Chargement...'}
+             </Text>
+           </View>
+         </View>
+       )}
+
+       {/* Section "Information Table" - affichée seulement pour les commandes sur place */}
+       {isOnSite && order.table_number && (
+         <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
+           <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
+             {t('table_information')}
+           </Text>
+           <View style={styles.clientInfo}>
+             <InfoRow label="Numéro de table" value={order.table_number} />
+             {order.table_location && (
+               <InfoRow label="Emplacement" value={order.table_location} />
+             )}
+           </View>
+         </View>
+       )}
 
        {order.order_comment && (
          <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
@@ -394,61 +683,43 @@ useEffect(() => {
          </View>
        )}
 
-       <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
-         <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
-           {t('order_summary')}
-         </Text>
-         
-         {order.orders.map((item, index) => (
-           <View key={index} style={styles.orderItem}>
-             <View style={styles.orderItemHeader}>
-               <Text style={[styles.orderItemQuantity, {backgroundColor: colors.colorAction}]}>
-                 x{item.quantity}
-               </Text>
-               <Text style={[styles.orderItemTitle, {color: colors.colorText}]}>
-                 {item.name}
-               </Text>
-               <Text style={[styles.orderItemPrice, {color: colors.colorText}]}>
-                {item.subtotal.toFixed(2)}€
-               </Text>
-             </View>
-             {item.comment && (
-               <View style={styles.orderItemNote}>
-                 <Icon name="note-text-outline" size={16} color={colors.colorAction} />
-                 <Text style={[styles.orderItemNoteText, {color: colors.colorDetail}]}>
-                   {item.comment}
-                 </Text>
-               </View>
-             )}
-             <Text style={[styles.orderItemUnitPrice, {color: colors.colorDetail}]}>
-             ({item.unit_price.toFixed(2)}€ {t('units')})
-             </Text>
-           </View>
-         ))}
-         
-         <View style={styles.totalContainer}>
-           <Text style={[styles.totalText, {color: colors.colorText}]}>{t('total')}</Text>
-           <Text style={[styles.totalAmount, {color: colors.colorAction}]}>
-            {order.amount_total.toFixed(2)} €
-           </Text>
-         </View>
-       </View>
+      <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
+        <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
+          {t('order_summary')}
+        </Text>
+        
+        {/* Afficher les menus */}
+        {renderMenuItems()}
+        
+        {/* Afficher les produits standards */}
+        {renderRegularProducts()}
+        
+        <View style={styles.totalContainer}>
+          <Text style={[styles.totalText, {color: colors.colorText}]}>{t('total')}</Text>
+          <Text style={[styles.totalAmount, {color: colors.colorAction}]}>
+          {order.amount_total.toFixed(2)} €
+          </Text>
+        </View>
+      </View>
 
-       <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
-         <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
-           {t('customer_information')}
-         </Text>
-         <View style={styles.clientInfo}>
-           <InfoRow label="Nom" value={order.client_lastname} />
-           <InfoRow label="Prénom" value={order.client_firstname} />
-           <InfoRow label="Téléphone" value={order.client_phone} />
-           <InfoRow label="Email" value={order.client_email} />
-           <InfoRow 
-              label="Adresse" 
-              value={order.client_address === "null, null null" ? t('takeaway') : order.client_address} 
-            />         
-           </View>
-       </View>
+       {/* Section Informations client - affichée seulement si ce n'est pas une commande sur place */}
+       {!isOnSite && (
+         <View style={[styles.section, {backgroundColor: colors.colorBorderAndBlock}]}>
+           <Text style={[styles.sectionTitle, {color: colors.colorDetail}]}>
+             {t('customer_information')}
+           </Text>
+           <View style={styles.clientInfo}>
+             <InfoRow label="Nom" value={order.client_lastname} />
+             <InfoRow label="Prénom" value={order.client_firstname} />
+             <InfoRow label="Téléphone" value={order.client_phone} />
+             <InfoRow label="Email" value={order.client_email} />
+             <InfoRow 
+                label="Adresse" 
+                value={order.client_address === "null, null null" ? t('takeaway') : order.client_address} 
+              />         
+             </View>
+         </View>
+       )}
 
        <TouchableOpacity 
          onPress={handleDelete} 
@@ -671,7 +942,56 @@ function useStyles() {
   },
   printIcon: {
     marginRight: 10,
-  }
+  },
+  menuTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  menuBadge: {
+    backgroundColor: '#0164FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  menuBadgeText: {
+    color: '#FFFFFF',
+    fontSize: width > 375 ? 10 : 8,
+    fontWeight: '600',
+  },
+  menuPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  menuOptionsContainer: {
+    marginTop: 8,
+    marginLeft: 35,
+    paddingLeft: 10,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(162, 162, 167, 0.1)',
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  menuOptionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#0164FF',
+  },
+  menuOptionName: {
+    flex: 1,
+    fontSize: width > 375 ? 14 : 12,
+  },
+  menuOptionPrice: {
+    fontSize: width > 375 ? 13 : 11,
+    fontWeight: '500',
+  },
  });
 }
 
