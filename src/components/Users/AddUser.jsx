@@ -228,11 +228,7 @@ const AddUser = () => {
                                        styles.userInput,
                                        { 
                                            color: colors.colorText,
-                                           borderColor: errors[field] ? 
-                                               colors.colorRed : 
-                                               currentFocus === field ?
-                                                   colors.colorAction :
-                                                   colors.colorText
+                                           borderColor: colors.colorText,
                                        }
                                    ]}
                                    placeholder={label}
@@ -314,81 +310,84 @@ const AddUser = () => {
 };
 
 function useStyles() {
-   const { width } = useWindowDimensions();
-
-   return StyleSheet.create({
-       mainContainer: {
-           flex: 1,
-       },
-       scrollViewContent: {
-           flexGrow: 1,
-           paddingBottom: 40,
-       },
-       containerFormAddUser: {
-           paddingTop: 20,
-       },
-       userInput: {
-           borderWidth: 1,
-           height: (width > 375) ? 50 : 40,
-           borderRadius: 20,
-           paddingLeft: 20,
-           marginBottom: 20,
-           marginHorizontal: 30,
-           ...Platform.select({
-               ios: {
-                   shadowColor: '#000',
-                   shadowOffset: { width: 0, height: 1 },
-                   shadowOpacity: 0.2,
-                   shadowRadius: 1.41,
-               },
-               android: {
-                   elevation: 2,
-               }
-           }),
-       },
-       containerButtonAddUser: {
-           height: (width > 375) ? 50 : 40,
-           justifyContent: "center",
-           alignItems: "center",
-           borderRadius: 20,
-           marginTop: 20,
-           marginHorizontal: 30,
-           marginBottom: 20,
-           ...Platform.select({
-               ios: {
-                   shadowColor: '#000',
-                   shadowOffset: { width: 0, height: 2 },
-                   shadowOpacity: 0.25,
-                   shadowRadius: 3.84,
-               },
-               android: {
-                   elevation: 5,
-               }
-           }),
-       },
-       btnAddUser: {
-           color: "#fff",
-           fontSize: 16,
-           fontWeight: '600',
-       },
-       labelUser: {
-           marginLeft: 30,
-           fontSize: (width > 375) ? 16 : 13,
-           marginBottom: 10,
-           fontWeight: '500',
-       },
-       pickerIcon: {
-           position: 'absolute',
-           right: 40,
-           height: '100%',
-           justifyContent: 'center',
-           alignItems: 'center',
-       },
-       pickerArrow: {
-           marginRight: 0,
-           marginTop: -15,
-       }
-   });
-}
+    const { width } = useWindowDimensions();
+ 
+    return StyleSheet.create({
+        mainContainer: {
+            flex: 1,
+        },
+        scrollViewContent: {
+            flexGrow: 1,
+            paddingBottom: 40,
+        },
+        containerFormAddUser: {
+            paddingTop: 20,
+        },
+        userInput: {
+            borderWidth: 1,
+            height: (width > 375) ? 50 : 40,
+            borderRadius: 20,
+            paddingLeft: 20,
+            marginBottom: 20,
+            marginHorizontal: 30,
+            ...Platform.select({
+                ios: {},
+                android: {
+                    height: (width > 375) ? 50 : 40,
+                    borderRadius: 20,
+                    paddingLeft: 20,
+                    elevation: 0,
+                    paddingVertical: 8,  // Ajout pour corriger la hauteur
+                    textAlignVertical: 'center',  // Centrer le texte verticalement
+                    includeFontPadding: false,  // Supprimer le padding par défaut
+                    fontWeight: 'normal',  // Assurer le bon rendu de la police
+                    backgroundColor: 'transparent',  // Assurer que le background soit transparent
+                }
+            }),
+        },
+        containerButtonAddUser: {
+            height: (width > 375) ? 50 : 40,
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: 20,
+            marginTop: 20,
+            marginHorizontal: 30,
+            marginBottom: 20,
+            ...Platform.select({
+                ios: {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                },
+                android: {
+                    elevation: 5,
+                }
+            }),
+        },
+        btnAddUser: {
+            color: "#fff",
+            fontSize: 16,
+            fontWeight: '600',
+        },
+        labelUser: {
+            marginLeft: 30,
+            fontSize: (width > 375) ? 16 : 13,
+            marginBottom: 10,
+            fontWeight: '500',
+        },
+        pickerIcon: {
+            position: 'absolute',
+            right: 40,
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        pickerArrow: {
+            marginRight: 0,
+            marginTop: -15,
+        }
+    });
+ }
 
 export default AddUser;

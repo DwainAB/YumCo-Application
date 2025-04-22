@@ -374,5 +374,11 @@
   "textPrivacyPolicy11": "We reserve the right to modify this privacy policy at any time. If changes are made, the updated privacy policy will be posted on this page with the update date.",
   "textPrivacyPolicy12": "Contact",
   "textPrivacyPolicy13": "If you have any questions or concerns about this privacy policy, please contact us at: contact@yumco.fr",
-  "textPrivacyPolicy14": "By using the YumCo mobile application, you agree to the terms of this privacy policy."
+  "textPrivacyPolicy14": "By using the YumCo mobile application, you agree to the terms of this privacy policy.",
+  "minimum_order": "Minimum order",
+  "maximum_distance": "Maximum distance",
+  "delivery_zones_conditions": "Delivery zones and conditions",
+  "add_new_zones_conditions": "Add new zones and conditions",
+  "current_zones_conditions": "Current zones and conditions",
+  "configure_zones_conditions": "Configure your zones and conditions"
 }

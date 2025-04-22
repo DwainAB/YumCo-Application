@@ -391,5 +391,11 @@
     "textPrivacyPolicy11": "当社は、本プライバシーポリシーを随時変更する権利を有します。変更が行われた場合、更新されたプライバシーポリシーはこのページに掲載され、更新日が明記されます。",
     "textPrivacyPolicy12": "お問い合わせ",
     "textPrivacyPolicy13": "プライバシーポリシーに関してご質問や懸念がある場合は、次の方法でお問い合わせください: contact@yumco.fr",
-    "textPrivacyPolicy14": "YumCoモバイルアプリケーションを使用することにより、本プライバシーポリシーの条項に同意したものとみなされます。"
+    "textPrivacyPolicy14": "YumCoモバイルアプリケーションを使用することにより、本プライバシーポリシーの条項に同意したものとみなされます。",
+    "minimum_order": "最低注文",
+    "maximum_distance": "最大距離",
+    "delivery_zones_conditions": "配達区域と条件",
+    "add_new_zones_conditions": "新しい区域と条件を追加",
+    "current_zones_conditions": "現在の区域と条件",
+    "configure_zones_conditions": "ゾーンと条件を設定する"
 }

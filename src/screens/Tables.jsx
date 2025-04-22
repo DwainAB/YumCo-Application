@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
@@ -318,6 +318,7 @@ export default function Tables() {
 
 function styles() {
     const { width, height } = useWindowDimensions();
+    const isAndroid = Platform.OS === 'android';
     
     return StyleSheet.create({
         safeArea: {
@@ -330,7 +331,7 @@ function styles() {
         headerContainer: {
             width: '100%',
             alignItems: 'center',
-            paddingTop: 10,
+            paddingTop: isAndroid ? 60 : 10, // Ajout de padding supplémentaire sur Android
         },
         contentContainer: {
             flex: 1,

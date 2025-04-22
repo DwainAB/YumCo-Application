@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, Platform } from "react-native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
@@ -354,6 +354,7 @@ export default function TableSettingScreen() {
 
 function styles() {
     const { width, height } = useWindowDimensions();
+    const isAndroid = Platform.OS === 'android';
     
     return StyleSheet.create({
         safeArea: {
@@ -370,7 +371,7 @@ function styles() {
         containerHeader: {
             justifyContent: "space-between", 
             flexDirection: "row",
-            marginTop: (height > 750) ? 20 : 10, // Valeurs réduites pour moins d'espace
+            marginTop: isAndroid ? (height > 750 ? 60 : 25) : (height > 750 ? 20 : 10), 
             paddingRight: 35,
             paddingLeft: 35,
             alignItems: 'center',

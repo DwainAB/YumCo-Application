@@ -17,8 +17,8 @@ const InformationScreen = () => {
     const [middayDeliveryEnabled, setMiddayDeliveryEnabled] = useState(false);
     const [eveningDeliveryEnabled, setEveningDeliveryEnabled] = useState(false);
     const [reservationEnabled, setReservationEnabled] = useState(false);
-    const [allYouCanEatEnabled, setAllYouCanEatEnabled] = useState(false); // Nouvel état pour "All you can eat"
-    const [aLaCarteEnabled, setALaCarteEnabled] = useState(false); // Nouvel état pour "À la carte"
+    const [allYouCanEatEnabled, setAllYouCanEatEnabled] = useState(false); 
+    const [aLaCarteEnabled, setALaCarteEnabled] = useState(false); 
     const [restaurantId, setRestaurantId] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
@@ -26,7 +26,7 @@ const InformationScreen = () => {
     const [isPhoneModalVisible, setIsPhoneModalVisible] = useState(false);
     const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
     const [isPrepTimeModalVisible, setIsPrepTimeModalVisible] = useState(false);
-    const [isHoursModalVisible, setIsHoursModalVisible] = useState(false); // État pour le modal des horaires
+    const [isHoursModalVisible, setIsHoursModalVisible] = useState(false); 
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPreparationTime, setNewPreparationTime] = useState('15');
@@ -34,6 +34,11 @@ const InformationScreen = () => {
     const [maxDeliveryKm, setMaxDeliveryKm] = useState(5);
     const [isMaxDeliveryKmModalVisible, setIsMaxDeliveryKmModalVisible] = useState(false);
     const [newMaxDeliveryKm, setNewMaxDeliveryKm] = useState('5');
+    const [deliveryTiers, setDeliveryTiers] = useState([]);
+    const [isDeliveryTiersModalVisible, setIsDeliveryTiersModalVisible] = useState(false);
+    const [editingTierIndex, setEditingTierIndex] = useState(null);
+    const [currentMinOrder, setCurrentMinOrder] = useState('');
+    const [currentMaxDistance, setCurrentMaxDistance] = useState('');
     const { t } = useTranslation();
     const { colors } = useColors();
     const styles = useStyles();
@@ -77,7 +82,7 @@ const InformationScreen = () => {
         try {
             const { data, error } = await supabase
                 .from('restaurants')
-                .select('accept_orders, pickup_option, "midday_delivery", "evening_delivery", reservation_option, phone, email, preparation_time, max_delivery_kilometer, all_you_can_eat_option, a_la_carte')
+                .select('accept_orders, pickup_option, "midday_delivery", "evening_delivery", reservation_option, phone, email, preparation_time, max_delivery_kilometer, all_you_can_eat_option, a_la_carte, delivery_tiers')
                 .eq('id', id)
                 .single();
 
@@ -99,9 +104,102 @@ const InformationScreen = () => {
                 setNewPreparationTime(String(data.preparation_time || 15));
                 setMaxDeliveryKm(data.max_delivery_kilometer || 5);
                 setNewMaxDeliveryKm(String(data.max_delivery_kilometer || 5));
+                setDeliveryTiers(data.delivery_tiers || []);
             }
         } catch (error) {
             console.error('Erreur lors de la récupération du status:', error);
+        }
+    };
+
+    const openDeliveryTiersModal = () => {
+        Haptics.selectionAsync();
+        setIsDeliveryTiersModalVisible(true);
+    };
+    
+    // Fonction pour ajouter un nouveau palier
+    const addDeliveryTier = () => {
+        const minOrder = parseFloat(currentMinOrder.replace(',', '.'));
+        const maxDistance = parseFloat(currentMaxDistance.replace(',', '.'));
+        
+        if (isNaN(minOrder) || minOrder <= 0 || isNaN(maxDistance) || maxDistance <= 0) {
+            Alert.alert(
+                t('Invalid values'),
+                t('Please enter valid values for minimum order and maximum distance')
+            );
+            return;
+        }
+        
+        // Vérifier si nous éditons un palier existant ou en ajoutons un nouveau
+        if (editingTierIndex !== null) {
+            const updatedTiers = [...deliveryTiers];
+            updatedTiers[editingTierIndex] = { min_order: minOrder, max_distance: maxDistance };
+            setDeliveryTiers(updatedTiers);
+            setEditingTierIndex(null);
+        } else {
+            setDeliveryTiers([...deliveryTiers, { min_order: minOrder, max_distance: maxDistance }]);
+        }
+        
+        // Réinitialiser les champs
+        setCurrentMinOrder('');
+        setCurrentMaxDistance('');
+    };
+    
+    // Fonction pour éditer un palier existant
+    const editTier = (index) => {
+        const tier = deliveryTiers[index];
+        setCurrentMinOrder(String(tier.min_order));
+        setCurrentMaxDistance(String(tier.max_distance));
+        setEditingTierIndex(index);
+    };
+    
+    // Fonction pour supprimer un palier
+    const deleteTier = (index) => {
+        Alert.alert(
+            t('Delete tier'),
+            t('Are you sure you want to delete this delivery tier?'),
+            [
+                {
+                    text: t('Cancel'),
+                    style: 'cancel',
+                },
+                {
+                    text: t('Delete'),
+                    style: 'destructive',
+                    onPress: () => {
+                        const updatedTiers = [...deliveryTiers];
+                        updatedTiers.splice(index, 1);
+                        setDeliveryTiers(updatedTiers);
+                    }
+                }
+            ]
+        );
+    };
+    
+    // Fonction pour sauvegarder les paliers de livraison dans la base de données
+    const saveDeliveryTiers = async () => {
+        try {
+            Haptics.selectionAsync();
+            
+            // Trier les paliers par distance
+            const sortedTiers = [...deliveryTiers].sort((a, b) => a.max_distance - b.max_distance);
+            
+            const { data, error } = await supabase
+                .from('restaurants')
+                .update({ delivery_tiers: sortedTiers })
+                .eq('id', restaurantId);
+    
+            if (error) throw error;
+    
+            setDeliveryTiers(sortedTiers);
+            setIsDeliveryTiersModalVisible(false);
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success
+            );
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour des paliers de livraison:', error);
+            Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Error
+            );
         }
     };
 
@@ -542,6 +640,28 @@ const InformationScreen = () => {
                             onToggle={() => handleToggle('evening_delivery', eveningDeliveryEnabled)}
                         />
                     </View>
+                    {(middayDeliveryEnabled || eveningDeliveryEnabled) && (
+                        <View style={[styles.settingContainer, styles.borderBottom]}>
+                            <View style={styles.phoneRow}>
+                                <View>
+                                    <Text style={[styles.settingTitle, { color: colors.colorText }]}>
+                                        {t('delivery_zones_conditions')}
+                                    </Text>
+                                    <Text style={[styles.settingDescription, { color: colors.colorDetail }]}>
+                                        {deliveryTiers.length > 0 
+                                            ? t('configure_zones_conditions', { count: deliveryTiers.length }) 
+                                            : t('no_delivery_tiers')}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity 
+                                    onPress={openDeliveryTiersModal}
+                                    style={[styles.editButton, { backgroundColor: colors.colorAction }]}
+                                >
+                                    <Icon name="pencil" size={20} color="#FFFFFF" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
 
                     <View style={styles.settingContainer}>
                         <View style={styles.phoneRow}>
@@ -587,6 +707,122 @@ const InformationScreen = () => {
                     </View>
                 </View>
             </ScrollView>
+
+            {/* Nouveau modal pour les paliers de livraison */}
+            <Modal
+                visible={isDeliveryTiersModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsDeliveryTiersModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.colorBackground }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={[styles.modalTitle, { color: colors.colorText }]}>
+                                {t('delivery_zones_conditions')}
+                            </Text>
+                            <TouchableOpacity 
+                                onPress={() => setIsDeliveryTiersModalVisible(false)}
+                                style={[styles.closeButton, { backgroundColor: colors.colorBorderAndBlock }]}
+                            >
+                                <Icon name="close" size={24} color={colors.colorText} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Liste des paliers existants */}
+                        {deliveryTiers.length > 0 && (
+                            <View style={styles.tiersList}>
+                                <Text style={[styles.tiersListHeader, { color: colors.colorText }]}>
+                                    {t('current_zones_conditions')}
+                                </Text>
+                                {deliveryTiers.map((tier, index) => (
+                                    <View key={index} style={[styles.tierItem, { backgroundColor: colors.colorBorderAndBlock }]}>
+                                        <View style={styles.tierInfo}>
+                                            <Text style={[styles.tierText, { color: colors.colorText }]}>
+                                                {t('minimum_order')}: {tier.min_order}€
+                                            </Text>
+                                            <Text style={[styles.tierText, { color: colors.colorText }]}>
+                                                {t('maximum_distance')}: {tier.max_distance}km
+                                            </Text>
+                                        </View>
+                                        <View style={styles.tierActions}>
+                                            <TouchableOpacity 
+                                                onPress={() => editTier(index)}
+                                                style={[styles.tierActionButton, { backgroundColor: colors.colorAction }]}
+                                            >
+                                                <Icon name="pencil" size={16} color="#FFFFFF" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity 
+                                                onPress={() => deleteTier(index)}
+                                                style={[styles.tierActionButton, { backgroundColor: '#FF3B30', marginLeft: 8 }]}
+                                            >
+                                                <Icon name="delete" size={16} color="#FFFFFF" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Formulaire d'ajout/édition de palier */}
+                        <Text style={[styles.formLabel, { color: colors.colorText, marginTop: 16 }]}>
+                            {editingTierIndex !== null ? t('edit') : t('add_new_zones_conditions')}
+                        </Text>
+                        
+                        <View style={styles.tierForm}>
+                            <View style={styles.formRow}>
+                                <Text style={[styles.inputLabel, { color: colors.colorDetail }]}>
+                                    {t('minimum_order')} (€)
+                                </Text>
+                                <TextInput
+                                    style={[styles.tierInput, { 
+                                        backgroundColor: colors.colorBorderAndBlock,
+                                        color: colors.colorText
+                                    }]}
+                                    value={currentMinOrder}
+                                    onChangeText={setCurrentMinOrder}
+                                    keyboardType="numeric"
+                                    placeholder="10"
+                                    placeholderTextColor={colors.colorDetail}
+                                />
+                            </View>
+                            
+                            <View style={styles.formRow}>
+                                <Text style={[styles.inputLabel, { color: colors.colorDetail }]}>
+                                    {t('maximum_distance')} (km)
+                                </Text>
+                                <TextInput
+                                    style={[styles.tierInput, { 
+                                        backgroundColor: colors.colorBorderAndBlock,
+                                        color: colors.colorText
+                                    }]}
+                                    value={currentMaxDistance}
+                                    onChangeText={setCurrentMaxDistance}
+                                    keyboardType="numeric"
+                                    placeholder="5"
+                                    placeholderTextColor={colors.colorDetail}
+                                />
+                            </View>
+                        </View>
+
+                        <TouchableOpacity 
+                            style={[styles.addButton, { backgroundColor: colors.colorAction }]}
+                            onPress={addDeliveryTier}
+                        >
+                            <Text style={styles.buttonText}>
+                                {editingTierIndex !== null ? t('edit') : t('add')}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={[styles.saveButton, { backgroundColor: colors.colorAction, marginTop: 16 }]}
+                            onPress={saveDeliveryTiers}
+                        >
+                            <Text style={styles.saveButtonText}>{t('Save')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Modal pour éditer le numéro de téléphone */}
             <Modal
@@ -909,6 +1145,72 @@ function useStyles() {
             marginTop: 12,
         },
         manageButtonText: {
+            color: '#FFFFFF',
+            fontSize: width > 375 ? 14 : 12,
+            fontWeight: '600',
+        },
+        modalDescription: {
+            fontSize: width > 375 ? 14 : 12,
+            marginBottom: 16,
+        },
+        tiersList: {
+            marginBottom: 16,
+        },
+        tiersListHeader: {
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '600',
+            marginBottom: 8,
+        },
+        tierItem: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 8,
+        },
+        tierInfo: {
+            flex: 1,
+        },
+        tierText: {
+            fontSize: width > 375 ? 14 : 12,
+        },
+        tierActions: {
+            flexDirection: 'row',
+        },
+        tierActionButton: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        formLabel: {
+            fontSize: width > 375 ? 16 : 14,
+            fontWeight: '600',
+            marginBottom: 8,
+        },
+        tierForm: {
+            marginBottom: 16,
+        },
+        formRow: {
+            marginBottom: 12,
+        },
+        inputLabel: {
+            fontSize: width > 375 ? 14 : 12,
+            marginBottom: 4,
+        },
+        tierInput: {
+            borderRadius: 8,
+            padding: 12,
+            fontSize: width > 375 ? 16 : 14,
+        },
+        addButton: {
+            padding: 12,
+            borderRadius: 8,
+            alignItems: 'center',
+        },
+        buttonText: {
             color: '#FFFFFF',
             fontSize: width > 375 ? 14 : 12,
             fontWeight: '600',

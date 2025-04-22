@@ -374,5 +374,11 @@
   "textPrivacyPolicy11": "我们保留随时修改本隐私政策的权利。如果进行更改，更新后的隐私政策将发布在本页面上，并注明更新日期。",
   "textPrivacyPolicy12": "联系方式",
   "textPrivacyPolicy13": "如果您对本隐私政策有任何疑问或疑虑，请联系我们：contact@yumco.fr",
-  "textPrivacyPolicy14": "使用YumCo移动应用程序即表示您同意本隐私政策的条款。"
+  "textPrivacyPolicy14": "使用YumCo移动应用程序即表示您同意本隐私政策的条款。",
+  "minimum_order": "最低订单",
+  "maximum_distance": "最大距离",
+  "delivery_zones_conditions": "交付区域和条件",
+  "add_new_zones_conditions": "添加新区域和条件",
+  "current_zones_conditions": "当前区域和条件",
+  "configure_zones_conditions": "配置您的区域和条件"
 }

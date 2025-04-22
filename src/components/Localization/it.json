@@ -374,5 +374,11 @@
     "textPrivacyPolicy11": "Reservamo-nos o direito de modificar esta política de privacidade a qualquer momento. Se forem feitas alterações, a política de privacidade atualizada será publicada nesta página com a data de atualização.",
     "textPrivacyPolicy12": "Contato",
     "textPrivacyPolicy13": "Se você tiver dúvidas ou preocupações sobre esta política de privacidade, entre em contato conosco em: contact@yumco.fr",
-    "textPrivacyPolicy14": "Ao usar o aplicativo móvel YumCo, você concorda com os termos desta política de privacidade."
+    "textPrivacyPolicy14": "Ao usar o aplicativo móvel YumCo, você concorda com os termos desta política de privacidade.",
+    "minimum_order": "Minimo d'ordine",
+    "maximum_distance": "Distanza massima",
+    "delivery_zones_conditions": "Zone e condizioni di consegna",
+    "add_new_zones_conditions": "Aggiungi nuove zone e condizioni",
+    "current_zones_conditions": "Zone e condizioni attuali",
+    "configure_zones_conditions": "Configura le tue zone e condizioni"
 }
