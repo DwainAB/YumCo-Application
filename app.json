@@ -2,7 +2,7 @@
   "expo": {
     "name": "YumCo",
     "slug": "eatopia",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "scheme": "yumco",
@@ -24,7 +24,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.eatopia.app",
       "deploymentTarget": "15.1",
-      "buildNumber": "2",
+      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Cette application nécessite l'accès à votre photothèque pour vous permettre de sélectionner et partager vos photos de plats et expériences culinaires"
       }

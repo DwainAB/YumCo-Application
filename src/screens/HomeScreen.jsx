@@ -197,11 +197,15 @@ function HomeScreen() {
                                             {t('best_selling')}
                                         </Text>
                                         <Text style={[styles.overviewSales, { color: colors.colorText }]}>
-                                            {statOrder.products_analysis[0].total_ordered} {t('sales')}
+                                            {statOrder.products_analysis && statOrder.products_analysis[0] && statOrder.products_analysis[0].total_ordered 
+                                                ? `${statOrder.products_analysis[0].total_ordered} ${t('sales')}` 
+                                                : `${0} ${t('sales')}`}
                                         </Text>
                                     </View>
                                     <Text style={[styles.overviewValue, { color: colors.colorText }]}>
-                                        {statOrder.products_analysis[0].name}
+                                        {statOrder.products_analysis && statOrder.products_analysis[0] && statOrder.products_analysis[0].name 
+                                            ? statOrder.products_analysis[0].name 
+                                            :0}
                                     </Text>
                                 </View>
                             </View>
