@@ -11,6 +11,7 @@ import { useLoading } from "../Hooks/useLoading";
 import { Linking } from 'react-native';
 import { Appearance, useColorScheme } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { API_CONFIG } from '../../config/constants';
 
 function Dashboard() {
    const navigation = useNavigation();
@@ -26,7 +27,6 @@ function Dashboard() {
    const [userCount, setUserCount] = useState(0);
    const [productCount, setProductCount] = useState(0);
    const colorScheme = useColorScheme();
-   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
    const [hasStripeId, setHasStripeId] = useState(false);
    const [userRole, setUserRole] = useState('USER');
    const [tableCount, setTableCount] = useState(0);
@@ -216,11 +216,11 @@ const handleRelaunchApp = async () => {
    const openStripeDashboard = async () => {
     try {
         startLoading();
-        const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/stripe_generate_dashboard', {
+        const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/stripe_generate_dashboard`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({ restaurantId }),
         });

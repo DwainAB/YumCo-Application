@@ -7,6 +7,7 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import i18n from "../components/i18n/i18n";
+import { API_CONFIG } from '../config/constants';
 
 function OrdersAnalysisScreen() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -14,7 +15,6 @@ function OrdersAnalysisScreen() {
     const { colors } = useColors();
     const [restaurantId, setRestaurantId] = useState('');
     const [userId, setUserId] = useState('');
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
     const [statOrder, setStatOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const { t } = useTranslation();
@@ -40,11 +40,11 @@ function OrdersAnalysisScreen() {
 
             try {
                 setIsLoading(true);
-                const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/order_analysis', {
+                const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/order_analysis`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                        "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                     },
                     body: JSON.stringify({
                         restaurant_id: restaurantId

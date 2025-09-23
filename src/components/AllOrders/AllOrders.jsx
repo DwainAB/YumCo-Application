@@ -11,6 +11,7 @@ import { useWindowDimensions } from "react-native";
 import { useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { supabase } from "../../lib/supabase";
+import { API_CONFIG } from '../../config/constants';
 
 function AllOrders({ refreshCounter, onRefresh }) {
     const [orders, setOrders] = useState([]);
@@ -31,8 +32,6 @@ function AllOrders({ refreshCounter, onRefresh }) {
     const { colors } = useColors();
     const styles = useStyles();
     const route = useRoute();
-    
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
 
     useEffect(() => {
         if (route.params?.triggerRefresh) {
@@ -155,11 +154,11 @@ function AllOrders({ refreshCounter, onRefresh }) {
     const fetchOrders = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
+            const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/getRestaurantOrders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
                 },
                 body: JSON.stringify({
                     restaurant_id: restaurantId
@@ -302,11 +301,11 @@ function AllOrders({ refreshCounter, onRefresh }) {
                                         style: 'destructive',
                                         onPress: async () => {
                                             try {
-                                                const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder', {
+                                                const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
                                                     method: 'POST',
                                                     headers: {
                                                         'Content-Type': 'application/json',
-                                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                                                        'Authorization': `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`
                                                     },
                                                     body: JSON.stringify({
                                                         order_id: order.id,

@@ -6,6 +6,7 @@ import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { supabase } from '../../lib/supabase';
+import { API_CONFIG } from '../../config/constants';
 
 const Utilisateur = () => {
    const { colors } = useColors();
@@ -21,7 +22,6 @@ const Utilisateur = () => {
    const [userRole, setUserRole] = useState('USER');
 
    const { t } = useTranslation();
-   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
    useEffect(() => {
        const fetchRestaurantId = async () => {
@@ -67,11 +67,11 @@ const Utilisateur = () => {
        if (!restaurantId) return;
        setIsLoading(true);
        try {
-           const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantUsers", {
+           const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/getRestaurantUsers`, {
                method: "POST",
                headers: {
                    "Content-Type": "application/json",
-                   "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                   "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
                    "apikey": SUPABASE_ANON_KEY
                },
                body: JSON.stringify({ restaurant_id: restaurantId })
@@ -117,11 +117,11 @@ const Utilisateur = () => {
 
    const handleUpdate = async () => {
        try {
-           const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateUser", {
+           const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateUser`, {
                method: "POST",
                headers: { 
                    "Content-Type": "application/json",
-                   "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                   "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
                    "apikey": SUPABASE_ANON_KEY
                },
                body: JSON.stringify({
@@ -160,11 +160,11 @@ const Utilisateur = () => {
                    text: "OK",
                    onPress: async () => {
                        try {
-                           const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/deleteUser", {
+                           const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/deleteUser`, {
                                method: "POST",
                                headers: { 
                                    "Content-Type": "application/json",
-                                   "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                                   "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
                                    "apikey": SUPABASE_ANON_KEY
                                },
                                body: JSON.stringify({ user_id: userId })

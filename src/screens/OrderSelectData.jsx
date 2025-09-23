@@ -15,6 +15,7 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 import { supabase } from "../lib/supabase";
+import { API_CONFIG } from '../config/constants';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -43,7 +44,6 @@ function OrderSelectData() {
  const { order } = route.params;
  const { t } = useTranslation();
  const styles = useStyles();
- const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
  const [preparer, setPreparer] = useState(null);
  const [isPrinting, setIsPrinting] = useState(false);
  const [restaurantId, setRestaurantId] = useState(null);
@@ -176,11 +176,11 @@ useEffect(() => {
 
  const handleDelete = async () => {
    try {
-     const updateResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder', {
+     const updateResponse = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
        method: 'POST',
        headers: {
          'Content-Type': 'application/json',
-         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+         'Authorization': `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`
        },
        body: JSON.stringify({
          order_id: order.order_id,

@@ -6,6 +6,7 @@ import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
+import { API_CONFIG } from '../config/constants';
 
 function RevenueAnalysisScreen() {
     const styles = useStyles();
@@ -13,7 +14,6 @@ function RevenueAnalysisScreen() {
     const [restaurantId, setRestaurantId] = useState('');
     const [userId, setUserId] = useState('');
     const [theme, setTheme] = useState(''); // Nouveau state pour le thème
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
     const [isLoading, setIsLoading] = useState(true);
     const [statTurnover, setStatTurnover] =useState(null)
     const { t } = useTranslation();
@@ -55,11 +55,11 @@ function RevenueAnalysisScreen() {
 
             try {
                 setIsLoading(true);
-                const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/turnover_analysis', {
+                const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/turnover_analysis`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                        "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                     },
                     body: JSON.stringify({
                         restaurant_id: restaurantId

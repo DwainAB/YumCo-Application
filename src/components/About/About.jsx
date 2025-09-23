@@ -9,6 +9,7 @@ import imgCard from "../../assets/imgCard.png"
 import { useWindowDimensions } from "react-native";
 import { useLoading } from "../Hooks/useLoading";
 import { supabase, checkSession } from "../../lib/supabase";
+import { API_CONFIG } from "../../config/constants";
 
 export  function InfoStat({nextPage}){
   const styles = useStyles()
@@ -90,7 +91,6 @@ export function FormLogin() {
   const [password, setPassword] = useState("");
   const styles = useStyles();
   const { startLoading, stopLoading } = useLoading();
-  const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
   // Vérifier la session au chargement
   useEffect(() => {
@@ -180,11 +180,11 @@ export function FormLogin() {
     try {
       startLoading();
   
-      const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/resetPassword', {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/resetPassword`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ email: email.trim().toLowerCase() })
       });

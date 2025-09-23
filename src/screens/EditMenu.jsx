@@ -13,6 +13,7 @@ import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { decode } from "base64-arraybuffer";
 import Modal from 'react-native-modal';
 import { supabase } from '../lib/supabase';
+import { API_CONFIG } from '../config/constants';
 
 export default function EditMenu() {
     const { t } = useTranslation();
@@ -90,11 +91,11 @@ export default function EditMenu() {
         
         try {
             setLoading(true);
-            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/get_menu_by_restaurant', {
+            const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/get_menu_by_restaurant`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTg1NzQwMiwiZXhwIjoyMDUxNDMzNDAyfQ.GtsWwUhv5mGODjj8_P4w2p5jE9TjyaGJQNZE72yLqOc',
+                    'authorization': `Bearer ${API_CONFIG.SUPABASE_SERVICE_ROLE_KEY}`,
                 },
                 body: JSON.stringify({
                     restaurant_id: restaurantId
@@ -352,11 +353,11 @@ const handleDeleteCategory = (categoryIndex) => {
             if (category.id && !category.id.startsWith('temp-')) {
                 try {
                     // Appel direct à l'API pour supprimer la catégorie
-                    const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/update_menu', {
+                    const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/update_menu`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTg1NzQwMiwiZXhwIjoyMDUxNDMzNDAyfQ.GtsWwUhv5mGODjj8_P4w2p5jE9TjyaGJQNZE72yLqOc',
+                            'authorization': `Bearer ${API_CONFIG.SUPABASE_SERVICE_ROLE_KEY}`,
                         },
                         body: JSON.stringify({
                             menu_id: selectedMenu.id,
@@ -436,11 +437,11 @@ const handleDeleteOption = (categoryIndex, optionIndex) => {
             if (option.id && !option.id.startsWith('temp-')) {
                 try {
                     // Appel direct à l'API pour supprimer l'option
-                    const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/update_menu', {
+                    const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/update_menu`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTg1NzQwMiwiZXhwIjoyMDUxNDMzNDAyfQ.GtsWwUhv5mGODjj8_P4w2p5jE9TjyaGJQNZE72yLqOc',
+                            'authorization': `Bearer ${API_CONFIG.SUPABASE_SERVICE_ROLE_KEY}`,
                         },
                         body: JSON.stringify({
                             menu_id: selectedMenu.id,
@@ -626,11 +627,11 @@ const handleDeleteOption = (categoryIndex, optionIndex) => {
             console.log("Données envoyées à l'API pour les catégories:", JSON.stringify(updateData.categories, null, 2));
 
             // Appel à l'API pour mettre à jour le menu
-            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/update_menu', {
+            const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/update_menu`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTg1NzQwMiwiZXhwIjoyMDUxNDMzNDAyfQ.GtsWwUhv5mGODjj8_P4w2p5jE9TjyaGJQNZE72yLqOc',
+                    'authorization': `Bearer ${API_CONFIG.SUPABASE_SERVICE_ROLE_KEY}`,
                 },
                 body: JSON.stringify(updateData)
             });
@@ -736,11 +737,11 @@ const handleDeleteOption = (categoryIndex, optionIndex) => {
                     
                     try {
                         // Appel à l'API pour supprimer le menu
-                        const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/update_menu', {
+                        const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/update_menu`, {
                             method: 'DELETE',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNTg1NzQwMiwiZXhwIjoyMDUxNDMzNDAyfQ.GtsWwUhv5mGODjj8_P4w2p5jE9TjyaGJQNZE72yLqOc',
+                                'authorization': `Bearer ${API_CONFIG.SUPABASE_SERVICE_ROLE_KEY}`,
                             },
                             body: JSON.stringify({
                                 menu_id: menuId

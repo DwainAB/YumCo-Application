@@ -9,6 +9,7 @@ import { useLoading } from "../Hooks/useLoading";
 import * as Haptics from 'expo-haptics';
 import { registerForPushNotificationsAsync } from '../Notifications/NotificationsOrder';
 import { useTranslation } from 'react-i18next';
+import { API_CONFIG } from '../../config/constants';
 
 function ContentOrder() {
     const [selectedFilter, setSelectedFilter] = useState('ALL');
@@ -26,8 +27,6 @@ function ContentOrder() {
     const { colors } = useColors();
     const styles = useStyles();
     const { startLoading, stopLoading } = useLoading();
-    
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
     // Notifications et Token Setup
     useEffect(() => {
@@ -61,11 +60,11 @@ function ContentOrder() {
     const fetchOrders = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders', {
+            const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/getRestaurantOrders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                    "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                 },
                 body: JSON.stringify({
                     restaurant_id: restaurantId
@@ -139,12 +138,12 @@ function ContentOrder() {
     // Update Notification Token
     const updateNotificationToken = async (token) => {
         try {
-            const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateUser", {
+            const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateUser`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    "apikey": SUPABASE_ANON_KEY
+                    "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
+                    "apikey": API_CONFIG.SUPABASE_ANON_KEY
                 },
                 body: JSON.stringify({
                     user_id: userId,

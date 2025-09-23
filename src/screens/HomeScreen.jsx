@@ -6,6 +6,7 @@ import { useWindowDimensions } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
+import { API_CONFIG } from '../config/constants';
 
 function HomeScreen() {
     const { colors } = useColors();
@@ -13,7 +14,6 @@ function HomeScreen() {
     const styles = useStyles();
     const [restaurantId, setRestaurantId] = useState('');
     const [userId, setUserId] = useState('');
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
     const [statOrder, setStatOrder] = useState(null);
     const [statRevenue, setStatRevenue] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,11 +53,11 @@ function HomeScreen() {
             try {
                 setIsLoading(true);
                 // Appel pour l'analyse des commandes
-                const orderResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/order_analysis', {
+                const orderResponse = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/order_analysis`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                        "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                     },
                     body: JSON.stringify({
                         restaurant_id: restaurantId
@@ -73,11 +73,11 @@ function HomeScreen() {
                 //console.log(orderData.data);
 
                 // Appel pour l'analyse du chiffre d'affaires
-                const revenueResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/turnover_analysis', {
+                const revenueResponse = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/turnover_analysis`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                        "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                     },
                     body: JSON.stringify({
                         restaurant_id: restaurantId

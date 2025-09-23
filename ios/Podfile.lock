@@ -1,7 +1,7 @@
 PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
-  - EASClient (0.13.2):
+  - EASClient (0.13.3):
     - ExpoModulesCore
   - EXApplication (6.0.2):
     - ExpoModulesCore
@@ -11,7 +11,7 @@ PODS:
     - ExpoModulesCore
     - React-Core
   - EXJSONUtils (0.14.0)
-  - EXManifests (0.15.5):
+  - EXManifests (0.15.7):
     - ExpoModulesCore
   - EXNotifications (0.29.13):
     - ExpoModulesCore
@@ -265,8 +265,14 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - ExpoPrint (14.0.3):
+    - ExpoModulesCore
+  - ExpoSharing (13.0.1):
+    - ExpoModulesCore
+  - ExpoSplashScreen (0.29.22):
+    - ExpoModulesCore
   - EXStructuredHeaders (4.0.0)
-  - EXUpdates (0.26.13):
+  - EXUpdates (0.27.2):
     - DoubleConversion
     - EASClient
     - EXManifests
@@ -1553,6 +1559,8 @@ PODS:
     - React-Core
   - react-native-segmented-control (2.5.4):
     - React-Core
+  - react-native-thermal-receipt-printer (1.2.0-rc.2):
+    - React
   - react-native-webview (13.12.5):
     - DoubleConversion
     - glog
@@ -1845,6 +1853,8 @@ PODS:
     - React-Core
   - RNCPicker (2.9.0):
     - React-Core
+  - RNDateTimePicker (8.2.0):
+    - React-Core
   - RNGestureHandler (2.20.2):
     - DoubleConversion
     - glog
@@ -1888,6 +1898,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSVG (15.11.2):
+    - React-Core
   - SDWebImage/Core (5.20.1)
   - SDWebImageWebPCoder (0.14.6):
     - libwebp (~> 1.0)
@@ -1919,6 +1931,9 @@ DEPENDENCIES:
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoPrint (from `../node_modules/expo-print/ios`)
+  - ExpoSharing (from `../node_modules/expo-sharing/ios`)
+  - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - EXStructuredHeaders (from `../node_modules/expo-structured-headers/ios`)
   - EXUpdates (from `../node_modules/expo-updates/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -1959,6 +1974,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-segmented-control (from `../node_modules/@react-native-segmented-control/segmented-control`)"
+  - react-native-thermal-receipt-printer (from `../node_modules/react-native-thermal-receipt-printer`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1989,8 +2005,10 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2048,6 +2066,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
+  ExpoPrint:
+    :path: "../node_modules/expo-print/ios"
+  ExpoSharing:
+    :path: "../node_modules/expo-sharing/ios"
+  ExpoSplashScreen:
+    :path: "../node_modules/expo-splash-screen/ios"
   EXStructuredHeaders:
     :path: "../node_modules/expo-structured-headers/ios"
   EXUpdates:
@@ -2125,6 +2149,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-segmented-control:
     :path: "../node_modules/@react-native-segmented-control/segmented-control"
+  react-native-thermal-receipt-printer:
+    :path: "../node_modules/react-native-thermal-receipt-printer"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-nativeconfig:
@@ -2185,22 +2211,26 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCPicker:
     :path: "../node_modules/@react-native-picker/picker"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
-  EASClient: 98a61222936d688d74ec09297b84c18dac478880
+  EASClient: 88b5fd19d0787186a0c7e6ba76deb2d4f96395ce
   EXApplication: 4c72f6017a14a65e338c5e74fca418f35141e819
   EXConstants: 30c43b9ca8391c31bab9cc45c97f16eddcf11042
   EXImageLoader: e5da974e25b13585c196b658a440720c075482d5
   EXJSONUtils: 01fc7492b66c234e395dcffdd5f53439c5c29c93
-  EXManifests: 15142dee1be3ea1cd0039feddef3888c3f0bb057
+  EXManifests: 807ab5394ca9f8dd5e64283f02876b2f85c4eb72
   EXNotifications: a762c9647d87682e9822f5798ca6666b5a81e213
   Expo: 63515728b6f238842dc95702eb0fb385f00d7c5a
   expo-dev-client: 6166140e8a75696f3c965fe225a9542d39eeb652
@@ -2216,8 +2246,11 @@ SPEC CHECKSUMS:
   ExpoImagePicker: 0213e20a6635ffd56c5012d2b1cb3af4d3b71bed
   ExpoKeepAwake: b0171a73665bfcefcfcc311742a72a956e6aa680
   ExpoModulesCore: aa81b6bfdbb61e92e216ca173d1d68a7c692cdea
+  ExpoPrint: 13208d67f48c190ccfeb9b97aa3394ff31ec606b
+  ExpoSharing: 849a5ce9985c22598c16ec027e32969be8062e8e
+  ExpoSplashScreen: cb4e3d3ee646ed59810f7776cca0ae5c03ab4285
   EXStructuredHeaders: 09c70347b282e3d2507e25fb4c747b1b885f87f6
-  EXUpdates: cf357d714e87d1a4f1df2dfdec99ef515cecac0a
+  EXUpdates: 115523ce17f329611854dcd60dafe75c1b1e5b96
   EXUpdatesInterface: 7c977640bdd8b85833c19e3959ba46145c5719db
   FBLazyVector: be509404b5de73a64a74284edcaf73a5d1e128b1
   fmt: 10c6e61f4be25dc963c36bd73fc7b1705fe975be
@@ -2256,6 +2289,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 9010f5187c13b6734cf80358870fff6f3b6fc7b3
   react-native-safe-area-context: 8b8404e70b0cbf2a56428a17017c14c1dcc16448
   react-native-segmented-control: 7578bb8808205cc5d09fbb026eb32829d7b0b56f
+  react-native-thermal-receipt-printer: 1ac37fbaa14f544e605bd32d3927ec8ffe2a204b
   react-native-webview: 286356dfd10655a87a61f8192037904fec3c4921
   React-nativeconfig: 539ff4de6ce3b694e8e751080568c281c84903ce
   React-NativeModulesApple: 702246817c286d057e23fe4b1302019796e62521
@@ -2286,8 +2320,10 @@ SPEC CHECKSUMS:
   ReactCommon: 3c1c8c6d777103c0e60e37c6c5f08e828e2a77c9
   RNCAsyncStorage: aa75595c1aefa18f868452091fa0c411a516ce11
   RNCPicker: 0e683a85cae99a8a739e97a49f269a4630de0a01
+  RNDateTimePicker: 818460dc31b0dc5ec58289003e27dd8d022fb79c
   RNGestureHandler: 27a63f2218affdf1a426d56682f9b174904838b3
   RNScreens: 4a5ab20b324ed1e3fe3862796b8f8e0a6208c415
+  RNSVG: a07e14363aa208062c6483bad24a438d5986d490
   SDWebImage: 33d0f23bddeb5d209ae959153883247be6703713
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748

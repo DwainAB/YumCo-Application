@@ -4,6 +4,7 @@ import { useWindowDimensions } from "react-native";
 import { supabase } from "../../lib/supabase";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import { API_CONFIG } from '../../config/constants';
 
 
 const RestaurantDetailsModal = ({ visible, table, onClose, colors, onTableUpdate, restaurantId }) => {
@@ -20,7 +21,6 @@ const RestaurantDetailsModal = ({ visible, table, onClose, colors, onTableUpdate
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [productQuantities, setProductQuantities] = useState({});
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho"
   const [activeOrder, setActiveOrder] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -206,11 +206,11 @@ const handleNewOrder = async () => {
       };
       
       // Appeler l'API pour créer une nouvelle commande
-      const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/newOrder", {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/newOrder`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(newOrderData)
       });
@@ -505,11 +505,11 @@ const handleConfirmProducts = async () => {
       console.log("Données à envoyer (étape 1):", JSON.stringify(updateData));
       
       // Envoyer la requête
-      const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder", {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(updateData)
       });
@@ -609,11 +609,11 @@ const handleConfirmProducts = async () => {
 const fetchTableOrder = async (restaurantId, tableId) => {
     try {
       setLoadingOrder(true);
-      const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getRestaurantOrders", {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/getRestaurantOrders`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           "restaurant_id": restaurantId,
@@ -677,7 +677,7 @@ const fetchCategoriesAndProducts = async () => {
     };
     
     // Récupérer les catégories et produits standards
-    const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/getCategoryProductByRestaurant", {
+    const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/getCategoryProductByRestaurant`, {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -693,7 +693,7 @@ const fetchCategoriesAndProducts = async () => {
     const data = await response.json();
     
     // Récupérer les menus
-    const menusResponse = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/get_menu_by_restaurant", {
+    const menusResponse = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/get_menu_by_restaurant`, {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -1732,11 +1732,11 @@ const handleConfirmFormulas = async () => {
       };
       
       // Envoyer la requête
-      const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder", {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(updateData)
       });
@@ -1796,11 +1796,11 @@ const handleRemoveItem = async (itemId) => {
       };
       
       // Envoyer la requête de mise à jour
-      const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder", {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(updateData)
       });
@@ -1859,11 +1859,11 @@ const handleRemoveItem = async (itemId) => {
               };
               
               // Envoyer la requête de mise à jour
-              const response = await fetch("https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder", {
+              const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
                 method: "POST",
                 headers: {
                   'Content-Type': 'application/json',
-                  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                  "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
                 },
                 body: JSON.stringify(updateData)
               });

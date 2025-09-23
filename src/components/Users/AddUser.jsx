@@ -19,6 +19,7 @@ import RNPickerSelect from 'react-native-picker-select';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from 'expo-haptics';
+import { API_CONFIG } from '../../config/constants';
 
 const AnimatedForm = ({ children }) => {
     const opacity = useRef(new Animated.Value(0)).current;
@@ -59,7 +60,6 @@ const AddUser = () => {
    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
    const [currentFocus, setCurrentFocus] = useState(null);
    const [errors, setErrors] = useState({});
-   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
    const [newUser, setNewUser] = useState({
        firstname: '',
@@ -146,12 +146,12 @@ const AddUser = () => {
 
        try {
            const response = await fetch(
-               "https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/createUserWithRelations",
+               `${API_CONFIG.SUPABASE_URL}/functions/v1/createUserWithRelations`,
                {
                    method: "POST",
                    headers: {
                        "Content-Type": "application/json",
-                       "Authorization": `Bearer ${SUPABASE_ANON_KEY}` 
+                       "Authorization": `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}` 
                    },
                    body: JSON.stringify(payload),
                }

@@ -19,6 +19,7 @@ import { useWindowDimensions } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Device from 'expo-device';
 import { supabase } from "../lib/supabase";
+import { API_CONFIG } from '../config/constants';
 
 // Détection de simulateur
 const isSimulator = !Device.isDevice;
@@ -127,8 +128,6 @@ function OrderSelect() {
   const [restaurantId, setRestaurantId] = useState(null);
   const [restaurantName, setRestaurantName] = useState('RESTAURANT');
   const [expandedMenus, setExpandedMenus] = useState({});
-
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmYnljdHFodmZndWR1amdkZ3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTc0MDIsImV4cCI6MjA1MTQzMzQwMn0.9g3N_aV4M5UWGYCuCLXgFnVjdDxIEm7TJqFzIk0r2Ho";
 
   const timeOptions = [
     { label: '10 minutes', value: 10 },
@@ -265,11 +264,11 @@ function OrderSelect() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/update_preparing_by', {
+      const response = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/update_preparing_by`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
           order_id: localOrder.order_id,
@@ -310,11 +309,11 @@ function OrderSelect() {
           style: "destructive",
           onPress: async () => {
             try {
-              const updateResponse = await fetch('https://hfbyctqhvfgudujgdgqp.supabase.co/functions/v1/updateOrder', {
+              const updateResponse = await fetch(`${API_CONFIG.SUPABASE_URL}/functions/v1/updateOrder`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                  'Authorization': `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`
                 },
                 body: JSON.stringify({
                   order_id: localOrder.order_id,
