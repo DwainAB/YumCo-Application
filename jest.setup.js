@@ -44,6 +44,7 @@ jest.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
+
 beforeEach(() => {
   jest.clearAllMocks();
 });

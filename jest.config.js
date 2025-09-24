@@ -31,5 +31,6 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     'react-native-vector-icons/MaterialCommunityIcons': '<rootDir>/src/__mocks__/react-native-vector-icons.js',
+    'react-native-vector-icons/Ionicons': '<rootDir>/src/__mocks__/react-native-vector-icons.js',
   },
 };
