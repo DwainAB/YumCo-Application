@@ -7,32 +7,17 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 function CustomerAnalysisScreen() {
     const styles = useStyles();
     const { colors } = useColors();
-    const [restaurantId, setRestaurantId] = useState('');
-    const [userId, setUserId] = useState('');
+    const { restaurantId } = useRestaurantId();
     const [isLoading, setIsLoading] = useState(true);
     const [statsCustomers, setStatsCustomers] = useState(null);
     const { t } = useTranslation();
     const [theme, setTheme] = useState(''); // Nouveau state pour le thème
 
-
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                setUserId(ownerData.id);
-                console.log(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur lors de la récupération des informations utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
 
     useEffect(() => {
         const getTheme = async () => {

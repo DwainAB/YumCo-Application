@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { safeJSONParse } from '../../utils/storage';
 
 const ColorContext = createContext();
 
@@ -43,7 +44,9 @@ export const ColorProvider = ({ children }) => {
         if (storedTheme && colorThemes[storedTheme]) {
           setThemeSelected(storedTheme);
         } else {
-          console.log("No theme stored or invalid theme.");
+          // Définir le thème light par défaut au premier lancement
+          await AsyncStorage.setItem('selectedTheme', 'light');
+          setThemeSelected('light');
         }
       } catch (error) {
         console.error('Error retrieving theme:', error);
@@ -52,7 +55,7 @@ export const ColorProvider = ({ children }) => {
 
   useEffect(() => {
     checkStoredTheme();
-  }, [themeSelected]);
+  }, []);
 
   useEffect(() => {
     updateColors(themeSelected);

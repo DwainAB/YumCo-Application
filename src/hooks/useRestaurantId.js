@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeJSONParse } from '../utils/storage';
 
 export const useRestaurantId = () => {
   const [restaurantId, setRestaurantId] = useState(null);
+  const [ownerData, setOwnerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -13,21 +15,30 @@ export const useRestaurantId = () => {
         const owner = await AsyncStorage.getItem('owner');
 
         if (!owner) {
-          throw new Error('No owner data found');
+          setError('No owner data found');
+          return;
         }
 
-        const ownerData = JSON.parse(owner);
+        const parsedOwnerData = safeJSONParse(owner);
 
-        if (!ownerData.restaurantId) {
-          throw new Error('No restaurant ID found in owner data');
+        if (!parsedOwnerData) {
+          setError('Invalid owner data');
+          return;
         }
 
-        setRestaurantId(ownerData.restaurantId);
+        if (!parsedOwnerData.restaurantId) {
+          setError('No restaurant ID found in owner data');
+          return;
+        }
+
+        setOwnerData(parsedOwnerData);
+        setRestaurantId(parsedOwnerData.restaurantId);
         setError(null);
       } catch (err) {
         console.error('Error fetching restaurant ID:', err);
         setError(err.message);
         setRestaurantId(null);
+        setOwnerData(null);
       } finally {
         setLoading(false);
       }
@@ -36,5 +47,5 @@ export const useRestaurantId = () => {
     fetchRestaurantId();
   }, []);
 
-  return { restaurantId, loading, error };
+  return { restaurantId, ownerData, loading, error };
 };

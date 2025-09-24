@@ -5,17 +5,17 @@ import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
 import SelectionTableModal from "../components/Modals/SelectionTableModal";
 import { supabase } from "../lib/supabase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from '@expo/vector-icons';
 import TableEditModal from "../components/Modals/TableEditModal"; // Vous devrez créer ce composant
 import { useNavigation } from "@react-navigation/native";
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 export default function TableSettingScreen() {
     const { colors } = useColors();
     const { t } = useTranslation();
     const customStyles = styles();
     const navigation = useNavigation();
-    const [restaurantId, setRestaurantId] = useState(null);
+    const { restaurantId } = useRestaurantId();
     const { width, height } = useWindowDimensions();
 
     // États pour les valeurs sélectionnées
@@ -35,19 +35,6 @@ export default function TableSettingScreen() {
     
     // État pour stocker les données des tables
     const [tableData, setTableData] = useState([]);
-
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur récupération utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
 
     // Récupérer les données des tables depuis Supabase
     useEffect(() => {

@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, Modal, ScrollV
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWindowDimensions } from "react-native";
 import * as Haptics from 'expo-haptics';
 import { supabase } from "../lib/supabase";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import HoursModal from "../components/Modals/HoursModal"; // Importez le composant modal
 import { useNavigation } from '@react-navigation/native';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 const InformationScreen = () => {
     const [isEnabled, setIsEnabled] = useState(false);
@@ -17,9 +17,9 @@ const InformationScreen = () => {
     const [middayDeliveryEnabled, setMiddayDeliveryEnabled] = useState(false);
     const [eveningDeliveryEnabled, setEveningDeliveryEnabled] = useState(false);
     const [reservationEnabled, setReservationEnabled] = useState(false);
-    const [allYouCanEatEnabled, setAllYouCanEatEnabled] = useState(false); 
-    const [aLaCarteEnabled, setALaCarteEnabled] = useState(false); 
-    const [restaurantId, setRestaurantId] = useState(null);
+    const [allYouCanEatEnabled, setAllYouCanEatEnabled] = useState(false);
+    const [aLaCarteEnabled, setALaCarteEnabled] = useState(false);
+    const { restaurantId } = useRestaurantId();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
     const [preparationTime, setPreparationTime] = useState(15);
@@ -45,17 +45,9 @@ const InformationScreen = () => {
     const navigation = useNavigation();
 
     useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                fetchRestaurantStatus(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur récupération utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
+        if (restaurantId) {
+            fetchRestaurantStatus(restaurantId);
+        }
 
         // Ajout des listeners pour détecter l'apparition et la disparition du clavier
         const keyboardDidShowListener = Keyboard.addListener(
@@ -76,7 +68,7 @@ const InformationScreen = () => {
             keyboardDidShowListener.remove();
             keyboardDidHideListener.remove();
         };
-    }, []);
+    }, [restaurantId]);
 
     const fetchRestaurantStatus = async (id) => {
         try {

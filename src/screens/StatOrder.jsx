@@ -4,35 +4,19 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useWindowDimensions } from "react-native";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useColors } from "../components/ColorContext/ColorContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import i18n from "../components/i18n/i18n";
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 function OrdersAnalysisScreen() {
     const [currentPage, setCurrentPage] = useState(1);
     const styles = useStyles();
     const { colors } = useColors();
-    const [restaurantId, setRestaurantId] = useState('');
-    const [userId, setUserId] = useState('');
+    const { restaurantId } = useRestaurantId();
     const [statOrder, setStatOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const { t } = useTranslation();
-
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                setUserId(ownerData.id);
-                console.log(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur lors de la récupération des informations utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
 
     useEffect(() => {
         const fetchStats = async () => {

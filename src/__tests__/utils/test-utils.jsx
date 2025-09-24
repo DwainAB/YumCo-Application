@@ -90,3 +90,10 @@ export const createMockSupabaseClient = () => ({
     })),
   },
 });
+
+// Dummy test to prevent "no tests" error
+describe('Test Utils', () => {
+  it('should export test utilities', () => {
+    expect(renderWithNavigation).toBeDefined();
+  });
+});

@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { registerForPushNotificationsAsync } from '../Notifications/NotificationsOrder';
 import { useTranslation } from 'react-i18next';
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 function ContentOrder() {
     const [selectedFilter, setSelectedFilter] = useState('ALL');
@@ -46,7 +47,7 @@ function ContentOrder() {
         const fetchRestaurantId = async () => {
             try {
                 const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
+                const ownerData = safeJSONParse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 setUserId(ownerData.id);
             } catch (error) {

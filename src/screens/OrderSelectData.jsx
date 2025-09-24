@@ -17,7 +17,7 @@ import { useWindowDimensions } from "react-native";
 import { supabase } from "../lib/supabase";
 import { API_CONFIG } from '../config/constants';
 import * as Device from 'expo-device';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 // Détection de simulateur
 const isSimulator = !Device.isDevice;
@@ -46,7 +46,7 @@ function OrderSelectData() {
  const styles = useStyles();
  const [preparer, setPreparer] = useState(null);
  const [isPrinting, setIsPrinting] = useState(false);
- const [restaurantId, setRestaurantId] = useState(null);
+ const { restaurantId } = useRestaurantId();
  const [restaurantName, setRestaurantName] = useState('RESTAURANT');
  const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -54,22 +54,10 @@ function OrderSelectData() {
  const isOnSite = order.client_method === "Sur place";
 
  useEffect(() => {
-  const fetchRestaurantId = async () => {
-      try {
-          const owner = await AsyncStorage.getItem("owner");
-          const ownerData = JSON.parse(owner);                
-          setRestaurantId(ownerData.restaurantId);
-          
-          // Récupérer les informations du restaurant une fois que nous avons l'ID
-          if (ownerData.restaurantId) {
-            fetchRestaurantInfo(ownerData.restaurantId);
-          }
-      } catch (error) {
-          console.error('Erreur récupération utilisateur:', error);
-      }
-  };
-  fetchRestaurantId();
-}, []);
+  if (restaurantId) {
+    fetchRestaurantInfo(restaurantId);
+  }
+}, [restaurantId]);
 
  // Fonction pour récupérer les informations du restaurant depuis Supabase
  const fetchRestaurantInfo = async (id) => {
@@ -462,25 +450,8 @@ const toggleMenuExpand = (menuId) => {
 };
 
 // Ajouter cette fonction pour initialiser l'état d'expansion des menus dans useEffect
-// Ajouter ces lignes dans le premier useEffect qui récupère le restaurantId
+// Initialiser l'état d'expansion des menus
 useEffect(() => {
-  const fetchRestaurantId = async () => {
-      try {
-          const owner = await AsyncStorage.getItem("owner");
-          const ownerData = JSON.parse(owner);                
-          setRestaurantId(ownerData.restaurantId);
-          
-          // Récupérer les informations du restaurant une fois que nous avons l'ID
-          if (ownerData.restaurantId) {
-            fetchRestaurantInfo(ownerData.restaurantId);
-          }
-      } catch (error) {
-          console.error('Erreur récupération utilisateur:', error);
-      }
-  };
-  fetchRestaurantId();
-  
-  // Initialiser l'état d'expansion des menus
   const menus = groupMenuOptions();
   const initialExpandState = {};
   Object.keys(menus).forEach(menuId => {

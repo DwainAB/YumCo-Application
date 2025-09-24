@@ -7,12 +7,12 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 function PerformanceAnalysisScreen() {
     const styles = useStyles();
     const { colors } = useColors();
-    const [restaurantId, setRestaurantId] = useState('');
-    const [userId, setUserId] = useState('');
+    const { restaurantId, ownerData } = useRestaurantId();
     const [isLoading, setIsLoading] = useState(true);
     const [statPerformance, setStatPerformance] =useState(null)
     const { t } = useTranslation();
@@ -30,23 +30,8 @@ function PerformanceAnalysisScreen() {
                 console.error('Erreur lors de la récupération du thème:', error);
             }
         };
-        
-        getTheme();
-    }, []);
 
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                setUserId(ownerData.id);
-                console.log(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur lors de la récupération des informations utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
+        getTheme();
     }, []);
 
     useEffect(() => {

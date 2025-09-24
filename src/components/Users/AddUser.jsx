@@ -20,6 +20,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from 'expo-haptics';
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 const AnimatedForm = ({ children }) => {
     const opacity = useRef(new Animated.Value(0)).current;
@@ -93,7 +94,7 @@ const AddUser = () => {
        const fetchRestaurantId = async () => {
            try {
                const owner = await AsyncStorage.getItem("owner");
-               const ownerData = JSON.parse(owner);                
+               const ownerData = safeJSONParse(owner);                
                setRestaurantId(ownerData.restaurantId);
            } catch (error) {
                console.error('Erreur utilisateur:', error);

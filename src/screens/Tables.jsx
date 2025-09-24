@@ -3,17 +3,19 @@ import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Act
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
-import SelectionTableModal from "../components/Modals/SelectionTableModal"; 
+import SelectionTableModal from "../components/Modals/SelectionTableModal";
 import { supabase } from "../lib/supabase";
 import RestaurantDetailsModal from "../components/Modals/RestaurantDetailsModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { useRestaurantId } from '../hooks/useRestaurantId';
+import { safeJSONParse } from '../utils/storage';
 
 export default function Tables() {
     const { colors } = useColors()
     const { t } = useTranslation();
-    const customStyles = styles(); 
-    const [restaurantId, setRestaurantId] = useState(null);
+    const customStyles = styles();
+    const { restaurantId } = useRestaurantId();
     const navigation = useNavigation();
     const [isLoading, setIsLoading] = useState(true);
     const [reservationOption, setReservationOption] = useState(false);
@@ -33,20 +35,6 @@ export default function Tables() {
     // État pour stocker les données des tables
     const [tableData, setTableData] = useState([]);
 
-
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-            } catch (error) {
-                console.error('Erreur récupération utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
-
     // Récupérer les données du restaurant depuis Supabase
     useEffect(() => {
         const fetchRestaurantData = async () => {
@@ -56,7 +44,7 @@ export default function Tables() {
                 // D'abord, essayer de récupérer les données du restaurant depuis AsyncStorage
                 const restaurantData = await AsyncStorage.getItem("restaurant");
                 if (restaurantData) {
-                    const parsedData = JSON.parse(restaurantData);
+                    const parsedData = safeJSONParse(restaurantData);
                     setReservationOption(parsedData.reservation_option || false);
                 } else {
                     // Si les données ne sont pas dans AsyncStorage, les récupérer depuis Supabase

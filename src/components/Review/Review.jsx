@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWindowDimensions } from "react-native";
+import { safeJSONParse } from '../../utils/storage';
 
 function Review() {
     const [reviews, setReviews] = useState([]);
@@ -14,7 +15,7 @@ function Review() {
         const fetchPlaceId = async () => {
             try {
                 const user = await AsyncStorage.getItem("user");
-                const userObject = JSON.parse(user);
+                const userObject = safeJSONParse(user);
                 const place = userObject.place_id;
                 setPlaceId(place);
             } catch (error) {

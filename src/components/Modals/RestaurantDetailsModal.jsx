@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 
 const RestaurantDetailsModal = ({ visible, table, onClose, colors, onTableUpdate, restaurantId }) => {
@@ -117,7 +118,7 @@ const RestaurantDetailsModal = ({ visible, table, onClose, colors, onTableUpdate
       
           const userDataFromStorage = await AsyncStorage.getItem('owner');
           if (userDataFromStorage) {
-            const parsedUserData = JSON.parse(userDataFromStorage);
+            const parsedUserData = safeJSONParse(userDataFromStorage);
             
             if (parsedUserData.restaurantId) {
               fetchRestaurantInfo(parsedUserData.restaurantId);
@@ -518,7 +519,7 @@ const handleConfirmProducts = async () => {
       let responseData;
       try {
         const responseText = await response.text();
-        responseData = JSON.parse(responseText);
+        responseData = safeJSONParse(responseText);
         console.log("Réponse de l'API (étape 1):", response.status, responseData);
         
         if (!response.ok) {

@@ -4,14 +4,14 @@ import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
 import { useTranslation } from 'react-i18next';
 import { supabase } from "../lib/supabase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Modal from 'react-native-modal'; // Assurez-vous d'avoir cette dépendance
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 export default function ReservationScreen() {
     const { colors } = useColors();
     const { t } = useTranslation();
     const customStyles = styles();
-    const [restaurantId, setRestaurantId] = useState(null);
+    const { restaurantId } = useRestaurantId();
     const [reservations, setReservations] = useState([]);
     const [filteredReservations, setFilteredReservations] = useState([]);
     const [selectedReservation, setSelectedReservation] = useState(null);
@@ -50,22 +50,6 @@ export default function ReservationScreen() {
         t('next_month'),
         t('last_month')
     ];
-
-    useEffect(() => {
-        const fetchRestaurantData = async () => {
-            try {
-                const restaurantData = await AsyncStorage.getItem("restaurant");
-                if (restaurantData) {
-                    const parsedData = JSON.parse(restaurantData);
-                    setRestaurantId(parsedData.id);
-                }
-            } catch (error) {
-                console.error('Erreur récupération données restaurant:', error);
-            }
-        };
-        
-        fetchRestaurantData();
-    }, []);
 
     useEffect(() => {
         if (restaurantId) {

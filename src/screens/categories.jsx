@@ -4,11 +4,11 @@ import { GestureHandlerRootView, Swipeable, FlatList } from 'react-native-gestur
 import * as Haptics from 'expo-haptics';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
 import { supabase } from '../lib/supabase';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 const AnimatedListItem = ({ children, index }) => {
     const opacity = useRef(new Animated.Value(0)).current;
@@ -75,7 +75,7 @@ const AnimatedFormView = ({ children }) => {
 };
 
 function CategoriesScreen() {
-   const [restaurantId, setRestaurantId] = useState('');
+   const { restaurantId } = useRestaurantId();
    const { colors } = useColors();
    const { t } = useTranslation();
    const styles = useStyles();
@@ -89,19 +89,6 @@ function CategoriesScreen() {
    useEffect(() => {
        fetchCategories();
    }, [restaurantId]);
-
-   useEffect(() => {
-       const fetchRestaurantId = async () => {
-           try {
-               const owner = await AsyncStorage.getItem("owner");
-               const ownerData = JSON.parse(owner);                
-               setRestaurantId(ownerData.restaurantId);
-           } catch (error) {
-               console.error('Erreur récupération utilisateur:', error);
-           }
-       };
-       fetchRestaurantId();
-   }, []);
 
    const handleNewCategoriesInputChange = (name, value) => {
        setCategories(prevState => ({ ...prevState, [name]: value }));

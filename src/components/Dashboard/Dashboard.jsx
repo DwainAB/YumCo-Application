@@ -12,6 +12,7 @@ import { Linking } from 'react-native';
 import { Appearance, useColorScheme } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 function Dashboard() {
    const navigation = useNavigation();
@@ -65,7 +66,7 @@ function Dashboard() {
     const fetchRestaurantData = async () => {
         try {
             const owner = await AsyncStorage.getItem("owner");
-            const ownerData = JSON.parse(owner);                
+            const ownerData = safeJSONParse(owner);                
             setRestaurantId(ownerData.restaurantId);
             setUserId(ownerData.id);
             console.log(ownerData.restaurantId);
@@ -74,7 +75,7 @@ function Dashboard() {
             // D'abord vérifier si les données sont dans AsyncStorage
             const restaurantData = await AsyncStorage.getItem("restaurant");
             if (restaurantData) {
-                const parsedData = JSON.parse(restaurantData);
+                const parsedData = safeJSONParse(restaurantData);
                 setOnSiteOption(parsedData.on_site_option);
                 if (parsedData.stripe_id) {
                     setHasStripeId(true);

@@ -6,8 +6,8 @@ import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from '../lib/supabase';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 function CardOptionScreen(){
    const navigation = useNavigation();
@@ -15,28 +15,19 @@ function CardOptionScreen(){
    const { colors } = useColors();
    const styles = useStyles();
    const [userRole, setUserRole] = useState('USER');
-   const [restaurantId, setRestaurantId] = useState('');
-   const [userId, setUserId] = useState('');
+   const { restaurantId, ownerData } = useRestaurantId();
    const [isLoading, setIsLoading] = useState(true);
 
    useEffect(() => {
        const fetchUserRole = async () => {
            try {
-               // Récupérer les informations du propriétaire
-               const owner = await AsyncStorage.getItem("owner");
-               if (!owner) return;
-               
-               const ownerData = JSON.parse(owner);
-               setUserId(ownerData.id);
-               setRestaurantId(ownerData.restaurantId);
-               
                // Récupérer le rôle de l'utilisateur avec Supabase
-               if (ownerData.id && ownerData.restaurantId) {
+               if (ownerData?.id && restaurantId) {
                    const { data, error } = await supabase
                        .from('roles')
                        .select('type')
                        .eq('owner_id', ownerData.id)
-                       .eq('restaurant_id', ownerData.restaurantId)
+                       .eq('restaurant_id', restaurantId)
                        .single();
                    
                    if (error) {
@@ -51,9 +42,9 @@ function CardOptionScreen(){
                setIsLoading(false);
            }
        };
-       
+
        fetchUserRole();
-   }, []);
+   }, [ownerData, restaurantId]);
 
    if (isLoading) {
        return (

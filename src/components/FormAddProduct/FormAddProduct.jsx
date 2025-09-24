@@ -10,6 +10,7 @@ import { useWindowDimensions } from "react-native";
 import { supabase } from '../../lib/supabase'; 
 import { decode } from "base64-arraybuffer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { safeJSONParse } from '../../utils/storage';
 
 function FormAddProduct() {
     const pickerKey = useRef(0); 
@@ -34,7 +35,7 @@ function FormAddProduct() {
         const fetchRestaurantId = async () => {
             try {
                 const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
+                const ownerData = safeJSONParse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 
                 

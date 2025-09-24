@@ -95,3 +95,10 @@ export const mockReservation = {
   table_id: 1,
   status: 'confirmed',
 };
+
+// Dummy test to prevent "no tests" error
+describe('Mock Data', () => {
+  it('should export mock data', () => {
+    expect(mockRestaurant).toBeDefined();
+  });
+});

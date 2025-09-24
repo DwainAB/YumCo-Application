@@ -19,9 +19,9 @@ import * as FileSystem from 'expo-file-system';
 import { useTranslation } from 'react-i18next';
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useWindowDimensions } from "react-native";
-import { supabase } from '../lib/supabase'; 
+import { supabase } from '../lib/supabase';
 import { decode } from "base64-arraybuffer";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRestaurantId } from '../hooks/useRestaurantId';
 import HeaderSetting from "../components/HeaderSetting/HeaderSetting";
 
 function FormAddMenu() {
@@ -29,7 +29,7 @@ function FormAddMenu() {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const styles = useStyles(colors, width);
-  const [restaurantId, setRestaurantId] = useState('');
+  const { restaurantId } = useRestaurantId();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isLoading, setIsLoading] = useState(false);
   const [menuData, setMenuData] = useState({
@@ -50,20 +50,6 @@ function FormAddMenu() {
       duration: 800,
       useNativeDriver: true
     }).start();
-  }, []);
-
-  // Récupérer l'ID du restaurant
-  useEffect(() => {
-    const fetchRestaurantId = async () => {
-      try {
-        const owner = await AsyncStorage.getItem("owner");
-        const ownerData = JSON.parse(owner);
-        setRestaurantId(ownerData.restaurantId);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des informations utilisateur:', error);
-      }
-    };
-    fetchRestaurantId();
   }, []);
 
   // Gérer le changement de prix

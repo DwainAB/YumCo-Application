@@ -7,13 +7,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from 'react-i18next';
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 function HomeScreen() {
     const { colors } = useColors();
     const navigation = useNavigation();
     const styles = useStyles();
-    const [restaurantId, setRestaurantId] = useState('');
-    const [userId, setUserId] = useState('');
+    const { restaurantId, ownerData } = useRestaurantId();
     const [statOrder, setStatOrder] = useState(null);
     const [statRevenue, setStatRevenue] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,20 +31,6 @@ function HomeScreen() {
 
     
 
-    useEffect(() => {
-        const fetchRestaurantId = async () => {
-            try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                setUserId(ownerData);
-                //console.log('est',ownerData);
-            } catch (error) {
-                console.error('Erreur lors de la récupération des informations utilisateur:', error);
-            }
-        };
-        fetchRestaurantId();
-    }, []);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -125,7 +111,7 @@ function HomeScreen() {
                 {/* Header Section */}
                 <View style={styles.header}>
                     <Text style={[styles.greeting, { color: colors.colorText }]}>
-                        {t('hello')} {userId.first_name}
+                        {t('hello')} {ownerData?.first_name}
                     </Text>
                     <Text style={[styles.date, { color: colors.colorDetail }]}>
                         {formattedDate}

@@ -12,6 +12,7 @@ import { useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { supabase } from "../../lib/supabase";
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 function AllOrders({ refreshCounter, onRefresh }) {
     const [orders, setOrders] = useState([]);
@@ -57,13 +58,13 @@ function AllOrders({ refreshCounter, onRefresh }) {
             try {
                 // Récupérer les données du propriétaire
                 const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
+                const ownerData = safeJSONParse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 
                 // Récupérer les données du restaurant depuis AsyncStorage
                 const restaurantData = await AsyncStorage.getItem("restaurant");
                 if (restaurantData) {
-                    const parsedData = JSON.parse(restaurantData);
+                    const parsedData = safeJSONParse(restaurantData);
                     setOnSiteOption(parsedData.on_site_option);
                 } else {
                     // Si les données ne sont pas dans AsyncStorage, les récupérer depuis Supabase

@@ -12,6 +12,7 @@ import { useWindowDimensions } from "react-native";
 import { supabase } from '../../lib/supabase';
 import Modal from 'react-native-modal';
 import { decode } from "base64-arraybuffer";
+import { safeJSONParse } from '../../utils/storage';
 
 
 
@@ -54,7 +55,7 @@ function FormUpdate() {
         const fetchRestaurantId = async () => {
             try {
                 const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
+                const ownerData = safeJSONParse(owner);                
                 setRestaurantId(ownerData.restaurantId);
                 
                 // Récupérer le rôle de l'utilisateur avec Supabase

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { supabase } from '../../lib/supabase';
 import { API_CONFIG } from '../../config/constants';
+import { safeJSONParse } from '../../utils/storage';
 
 const Utilisateur = () => {
    const { colors } = useColors();
@@ -28,7 +29,7 @@ const Utilisateur = () => {
            try {
                const owner = await AsyncStorage.getItem("owner");
                if (!owner) throw new Error("Aucune donnée propriétaire trouvée");
-               const ownerData = JSON.parse(owner);
+               const ownerData = safeJSONParse(owner);
                if (!ownerData.restaurantId) throw new Error("Restaurant ID non trouvé");
                setUserId(ownerData.id);
                setRestaurantId(ownerData.restaurantId);
@@ -79,7 +80,7 @@ const Utilisateur = () => {
            
            const rawResponse = await response.text();
            if (!response.ok) throw new Error(`Erreur serveur: ${response.status} - ${rawResponse}`);
-           const data = JSON.parse(rawResponse);
+           const data = safeJSONParse(rawResponse);
            
            if (data?.users) setUsers(data.users);
            else {

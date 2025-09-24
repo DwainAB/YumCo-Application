@@ -14,13 +14,14 @@ import { decode } from "base64-arraybuffer";
 import Modal from 'react-native-modal';
 import { supabase } from '../lib/supabase';
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 export default function EditMenu() {
     const { t } = useTranslation();
     const { colors } = useColors();
+    const { restaurantId, ownerData } = useRestaurantId();
     const [menuList, setMenuList] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [restaurantId, setRestaurantId] = useState('');
     const [selectedMenu, setSelectedMenu] = useState(null);
     const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
     const [initialMenuImage, setInitialMenuImage] = useState(null);
@@ -48,23 +49,18 @@ export default function EditMenu() {
         additionalPrice: '0'
     });
 
-    // Récupération du restaurant ID depuis AsyncStorage
+    // Récupération du rôle de l'utilisateur avec Supabase
     useEffect(() => {
-        const fetchRestaurantId = async () => {
+        const fetchUserRole = async () => {
             try {
-                const owner = await AsyncStorage.getItem("owner");
-                const ownerData = JSON.parse(owner);                
-                setRestaurantId(ownerData.restaurantId);
-                
-                // Récupérer le rôle de l'utilisateur avec Supabase
-                if (ownerData.id && ownerData.restaurantId) {
+                if (ownerData?.id && ownerData?.restaurantId) {
                     const { data, error } = await supabase
                         .from('roles')
                         .select('type')
                         .eq('owner_id', ownerData.id)
                         .eq('restaurant_id', ownerData.restaurantId)
                         .single();
-                    
+
                     if (error) {
                         console.error('Erreur lors de la récupération du rôle:', error);
                     } else if (data) {
@@ -75,8 +71,11 @@ export default function EditMenu() {
                 console.error('Erreur lors de la récupération des informations utilisateur:', error);
             }
         };
-        fetchRestaurantId();
-    }, []);
+
+        if (ownerData) {
+            fetchUserRole();
+        }
+    }, [ownerData]);
 
     // Récupération des menus lorsque le restaurant ID est disponible
     useEffect(() => {

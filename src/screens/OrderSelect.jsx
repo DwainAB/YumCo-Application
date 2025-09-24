@@ -16,10 +16,10 @@ import { useNavigation } from "@react-navigation/native";
 import { useColors } from "../components/ColorContext/ColorContext";
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Device from 'expo-device';
 import { supabase } from "../lib/supabase";
 import { API_CONFIG } from '../config/constants';
+import { useRestaurantId } from '../hooks/useRestaurantId';
 
 // Détection de simulateur
 const isSimulator = !Device.isDevice;
@@ -125,7 +125,7 @@ function OrderSelect() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTime, setSelectedTime] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [restaurantId, setRestaurantId] = useState(null);
+  const { restaurantId } = useRestaurantId();
   const [restaurantName, setRestaurantName] = useState('RESTAURANT');
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -170,37 +170,13 @@ function OrderSelect() {
 
   const getAllStorageKeys = async () => {
     try {
-      const keys = await AsyncStorage.getAllKeys();
-      const result = await AsyncStorage.multiGet(keys);
-      
-      result.forEach(([key, value]) => {
-        try {
-          const parsedValue = JSON.parse(value);
-          console.log(`\n🔸 Clé: ${key}`);
-          console.log('📄 Valeur:', parsedValue);
-        } catch (e) {
-          console.log(`\n🔸 Clé: ${key}`);
-          console.log('📄 Valeur:', value);
-        }
-      });
-  
-      const userDataFromStorage = await AsyncStorage.getItem('owner');
-      if (userDataFromStorage) {
-        const parsedUserData = JSON.parse(userDataFromStorage);
-        console.log('\n👤 Données utilisateur détaillées:', parsedUserData);
-        setUserData(parsedUserData);
-        
-        // Récupérer l'ID du restaurant
-        if (parsedUserData.restaurantId) {
-          setRestaurantId(parsedUserData.restaurantId);
-          fetchRestaurantInfo(parsedUserData.restaurantId);
-        }
-      } else {
-        console.log('\n❌ Aucune donnée utilisateur trouvée');
+      // Récupérer les informations du restaurant
+      if (restaurantId) {
+        fetchRestaurantInfo(restaurantId);
       }
-  
+
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération du storage:', error);
+      console.error('❌ Erreur lors de la récupération des données:', error);
     }
   };
 
@@ -225,7 +201,7 @@ function OrderSelect() {
 
   useEffect(() => {
     getAllStorageKeys();
-    
+
     // Initialiser l'état d'expansion des menus
     const menus = groupMenuOptions();
     const initialExpandState = {};
@@ -233,7 +209,7 @@ function OrderSelect() {
       initialExpandState[menuId] = false; // Tous les menus sont initialement fermés
     });
     setExpandedMenus(initialExpandState);
-  }, []);
+  }, [restaurantId]);
 
   const handlePreparePress = () => {
     setIsModalVisible(true);
